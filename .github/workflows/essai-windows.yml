@@ -16,6 +16,8 @@ on:
       - "gateway/**"
       - "electron/**"
       - "src/**"
+      # La commande helix (04/10/2026) : l'étape 7 de l'essai la met en place et la lance.
+      - "cli/**"
       - "package.json"
       - "scripts/essai-windows-ci.mjs"
       - "scripts/essai-reflexion-ci.mjs"

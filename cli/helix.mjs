@@ -619,7 +619,15 @@ function cheminLisible(p, base = process.cwd()) {
   if (rel && !rel.startsWith("..") && !path.isAbsolute(rel)) return rel;
   if (!rel) return ".";
   const maison = os.homedir();
-  return absolu === maison || absolu.startsWith(`${maison}/`) ? `~${absolu.slice(maison.length)}` : absolu;
+  /*
+   * Sous Windows, le séparateur est `\` et la casse ne compte pas : avec `/`
+   * seul, aucun chemin du dossier du compte n'y était raccourci en `~`
+   * (relecture Windows du 04/10/2026).
+   */
+  const windows = process.platform === "win32";
+  const comparable = (s) => (windows ? s.toLowerCase() : s);
+  const dedans = comparable(absolu) === comparable(maison) || comparable(absolu).startsWith(comparable(`${maison}${path.sep}`));
+  return dedans ? `~${absolu.slice(maison.length)}` : absolu;
 }
 
 /** « write » + { filePath } → « Écriture index.html ». */

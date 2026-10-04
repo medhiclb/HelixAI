@@ -122,7 +122,7 @@ curl -fsSL https://raw.githubusercontent.com/medhiclb/HelixAI/main/scripts/insta
 
 新版本会在应用内提示：macOS 上一键安装；在 Windows 和 Linux 上，会提供新安装包，覆盖旧版本安装即可，数据会保留。在应用获得公证之前，每次安装新版本后，macOS 会询问一次是否允许 Helix 访问其钥匙串项目（“Helix Safe Storage”）：请选择“始终允许”。在 Windows 11 上，智能应用控制（Smart App Control）启用时会阻止未签名的应用，且不提供“仍要运行”选项。
 
-Windows 上暂不提供：`helix` 命令行。在 Windows 上，“自由”级别的全天候智能体的命令通过 PowerShell 执行。
+在 Windows 上，“自由”级别的全天候智能体的命令通过 PowerShell 执行。
 
 ## 功能
 
@@ -168,7 +168,7 @@ npm run securite     # 针对一次性实例的安全检查
 
 ### 命令行
 
-桌面应用附带 `helix` 命令。在 **设置 › 安装应用 › CLI** 中完成设置，然后：
+桌面应用附带 `helix` 命令。在 **设置 › 安装应用 › CLI** 中完成设置（在 Windows 上，随后打开新的 PowerShell 或命令提示符），然后：
 
 ```bash
 helix connexion          # 使用实例账户登录一次

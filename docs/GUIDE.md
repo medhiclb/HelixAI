@@ -222,7 +222,10 @@ L'interface est sur `http://localhost:5173`, la passerelle sur
 l'interface : il affiche, et transmet vos réponses ; modèles, outils, barrière
 d'approbation et journal restent ceux de l'instance. Sur un poste qui a le dépôt :
 `npm link` (ou `node cli/helix.mjs`). Avec l'application : Réglages > Installer les
-apps > CLI > « Mettre en place », qui pose `~/.local/bin/helix` (depuis le 25/09/2026).
+apps > CLI > « Mettre en place », qui pose `~/.local/bin/helix` (depuis le 25/09/2026) ;
+sous Windows (depuis le 04/10/2026), `%USERPROFILE%\.helix\bin\helix.cmd`, et ce dossier
+ajouté au PATH du compte (pas de droit d'administrateur ; « Retirer » enlève les deux). Ouvrir
+ensuite un nouveau PowerShell ou une nouvelle Invite de commandes.
 
 ```
 helix                          Chat interactif
@@ -784,7 +787,8 @@ node "/Applications/Helix.app/Contents/Resources/dist-gateway/motdepasse.cjs"
 ```
 
 (le nom `Helix` est celui de l'application livrée au client). Sans Node sur le poste,
-celui que Helix pose fait l'affaire (`~/.helix/data/openclaw-moteur/node/bin/node` ;
+celui que Helix pose fait l'affaire (`~/.helix/data/openclaw-moteur/node/bin/node`, ou
+`node\node.exe` sous Windows ;
 Réglages, Ligne de commande, « Mettre en place » le pose s'il manque). Jusqu'au
 28/09/2026, l'outil tournait avec le binaire de l'application (`ELECTRON_RUN_AS_NODE=1`) :
 ce n'est plus possible, le fusible RunAsNode étant fermé (SECURITE.md § 52). Essayé le

@@ -5843,6 +5843,56 @@ quand on quitte Cowork puis y revient, une session partagée ouverte par une col
 replié, l'application Electron, Windows ; `npm run securite` n'a pas tourné (consigne mémoire
 du 04/10/2026) : à passer avant la prochaine version.
 
+**Fait le 04/10/2026 : la commande `helix` sous Windows.** Demandé par Medhi : Réglages ›
+Installer les apps › CLI disait sous Windows « La ligne de commande n'est pas encore prise en
+charge sur ce système. » (`electron/ligneDeCommande.cjs`, `empechement()` rendait `"windows"` pour
+`win32`). Maintenant, sans droit d'administrateur :
+- un `helix.cmd` dans `%USERPROFILE%\.helix\bin` (pas un `.ps1` : la stratégie d'exécution par
+  défaut le refuse), qui choisit Node à chaque lancement dans le même ordre que sous macOS : celui
+  que Helix pose (`<données>\openclaw-moteur\node\node.exe`, le Node épinglé d'OpenClaw), puis
+  ceux du PATH (`where $PATH:node.exe` : jamais le dossier courant ; l'alias `WindowsApps\node.exe`
+  écarté), le premier en version 20 ou plus ; sans Node, il le dit (code 127) et « Mettre en
+  place » demande à la passerelle de poser celui de Helix (mécanisme existant, `.zip` officiel à
+  empreinte épinglée). Chemins entre guillemets, `%` doublé, début du chemin qui est celui du
+  compte écrit `%USERPROFILE%` / `%LOCALAPPDATA%` (cmd lit le fichier dans la page de code de la
+  console, pas en UTF-8 : un « Élodie » écrit en toutes lettres ne mènerait nulle part), console
+  passée en UTF-8 (`chcp 65001`) le temps du lanceur puis remise, fins de ligne CRLF ;
+- ce dossier ajouté au PATH **du compte** (`HKCU\Environment`) par Windows PowerShell : valeur
+  lue brute (`DoNotExpandEnvironmentNames`), prolongée de `;<dossier>` seulement si absente,
+  réécrite avec son type (REG_EXPAND_SZ le plus souvent), puis WM_SETTINGCHANGE par une variable
+  témoin posée et effacée, comme Chocolatey. Jamais `setx` (coupe à 1 024 caractères), jamais
+  `SetEnvironmentVariable('Path', …)` sur la valeur déjà développée (perdait les `%USERPROFILE%`
+  du PATH d'un compte neuf). « Retirer » enlève le lanceur (s'il est le nôtre) et cette seule
+  entrée : le PATH revient à l'identique. Un `helix.cmd` qui n'est pas le nôtre n'est jamais
+  remplacé (même règle `etranger` que sous macOS). Si PowerShell échoue, le lanceur est posé et
+  l'écran dit d'ajouter le dossier à la main (`erreurPath`) ;
+- l'écran : phrases propres à Windows (PATH du compte ; « ouvrez un nouveau terminal (PowerShell
+  ou Invite de commandes) »), 3 phrases nouvelles et le paragraphe de l'aide intégrée, traduits
+  dans les six langues ; README (en, fr, zh) et docs/GUIDE.md ne disent plus « non proposée sous
+  Windows » ;
+- `cli/helix.mjs` relu pour Windows : jeton et port lus dans `%USERPROFILE%\.helix\data` (là où
+  la passerelle les écrit aussi sous Windows), séance dans `%USERPROFILE%\.helix\cli-seance`,
+  aucun processus lancé, aucun navigateur ouvert, Ctrl+C par SIGINT (Node le donne sous Windows),
+  couleurs et effacements de ligne par séquences ANSI (Node les fait passer dans la console de
+  Windows 10 et 11). Un seul défaut trouvé et corrigé : les chemins du dossier du compte ne
+  s'abrégeaient pas en `~` (séparateur `/` supposé, casse comptée).
+**Vérifié ici (Mac)** : `npm run typecheck`, `node --check`, i18n 100 % ; le texte du lanceur pour
+un compte « Moumoune & Kiki Élodie » et un dossier « 100% données » (section 13 quater de
+`npm run securite`, huit contrôles : guillemets, `%` doublé, variables du compte, `where $PATH:`,
+`chcp`, message neutralisé, script du PATH sans `setx`, refus Windows retiré), lancée seule ;
+macOS inchangé (lanceur, `etat()`). **Pas vérifié** : rien n'a tourné sur Windows. L'étape 7 de
+`scripts/essai-windows-ci.mjs` (application empaquetée, machine jetable de GitHub) met la commande
+en place par le module de l'écran pour un compte « Moumoune & Kiki Élodie », lance
+`helix --version` depuis un **nouveau** PowerShell qui relit le PATH du compte (Node du PATH ;
+aucun Node, code 127 ; Node de Helix seul ; script dans un dossier accentué hors du compte, qui
+éprouve le passage en UTF-8), `cmd.exe /c helix --version`, `helix outils` contre l'instance de
+l'essai, puis « Retirer » (PATH revenu à l'identique) : elle ne tournera qu'au prochain push sur
+`main` (le workflow suit maintenant aussi `cli/**`). Ni l'écran lui-même sous Windows, ni
+Windows Terminal, ni la diffusion WM_SETTINGCHANGE vers l'Explorateur (l'essai relit le registre
+au lieu de l'attendre). Limite connue, non corrigée : après un Ctrl+C, cmd demande « Terminer le
+programme de commandes (O/N) ? » à la sortie de `helix` (comportement de tout lanceur `.cmd`, ceux
+de npm compris) ; répondre O saute la remise de la page de code de la console.
+
 **Fait le 04/10/2026 : plus aucun agent ne se déploie sous Windows après en avoir retiré un.** Vu
 chez Medhi : « EPERM: operation not permitted, realpath '…\\agents\\helix-test\\agent\\openclaw-agent.sqlite' »,
 l'agent « test » ayant été retiré avant. Cause, déduite du message et du code (pas reproduite sur
@@ -6554,8 +6604,9 @@ pas de source (c'est lui la source) : il se met à jour en installant le nouveau
    24.04 (installation, atelier, moteur, modèle, Chat, application ouverte), pas sur une
    vraie machine ; restent l'icône de la zone de notification (GNOME sans l'extension
    AppIndicator ne la montre pas), l'AppImage, images, dictée, Helix Code, machine de
-   l'agent, la vitesse réelle. Pas proposée sous Windows : la ligne de commande (OpenClaw y
-   est posé en natif depuis le 28/09/2026, § 3.4, jamais essayé sur un vrai PC) ; nulle part hors macOS : essais de code en bac à sable. Mise à jour
+   l'agent, la vitesse réelle. La ligne de commande sous Windows depuis le 04/10/2026 (`helix.cmd`,
+   PATH du compte), essayée seulement par l'essai Windows de GitHub (étape 7) ; OpenClaw y
+   est posé en natif depuis le 28/09/2026, § 3.4, jamais essayé sur un vrai PC ; nulle part hors macOS : essais de code en bac à sable. Mise à jour
    d'un clic : macOS, et Windows depuis le 27/09/2026 (écrite, jamais essayée sur un vrai PC) ;
    pas sous Linux.
 10. **Entraînement sur carte NVIDIA** : installation de PyTorch CUDA, QLoRA, comparaison
@@ -6607,7 +6658,8 @@ pas de source (c'est lui la source) : il se met à jour en installant le nouveau
 17. **Ligne de commande** : livrée avec l'application le 25/09/2026 (paquet
     `Resources/cli`, Paramètres > Installer les apps > CLI, qui pose `~/.local/bin/helix`
     et, si besoin, une ligne marquée dans `~/.zprofile` ; `electron/ligneDeCommande.cjs`).
-    Windows pas fait ; l'AppImage non plus (le `.deb` l'a). Traductions anglaise et chinoise de ses textes (`cli/textes.mjs`), si le
+    Windows depuis le 04/10/2026 (`%USERPROFILE%\.helix\bin\helix.cmd`, PATH du compte) ;
+    pas l'AppImage (le `.deb` l'a). Traductions anglaise et chinoise de ses textes (`cli/textes.mjs`), si le
     client le demande. Documenter `NODE_EXTRA_CA_CERTS` pour une instance à certificat
     auto-signé.
 18. **Employés OpenClaw et bases de connaissances** : fait le 25/09/2026 (outil

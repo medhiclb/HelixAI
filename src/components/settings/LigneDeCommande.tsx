@@ -10,14 +10,19 @@ import { t, tf } from "@/lib/i18n";
  *
  * Le bouton pose un lanceur dans ~/.local/bin (electron/ligneDeCommande.cjs),
  * sans droit d'administrateur, et ajoute ce dossier au PATH du shell s'il n'y
- * est pas. Hors de l'application de bureau (navigateur, poste sans pont), il
+ * est pas. Sous Windows (04/10/2026), un `helix.cmd` dans ~\.helix\bin, et ce
+ * dossier ajouté au PATH du compte : les phrases le disent ainsi. Hors de l'application de bureau (navigateur, poste sans pont), il
  * n'y a rien à poser : l'écran le dit au lieu d'offrir un bouton mort.
  */
 
 interface EtatCli {
   disponible: boolean;
-  /** Pourquoi elle n'est pas proposée (absent d'une application plus ancienne). */
+  /** Pourquoi elle n'est pas proposée (absent d'une application plus ancienne ; « windows » : application d'avant le 04/10/2026). */
   empechement?: "windows" | "appimage" | null;
+  /** L'application tourne sous Windows : lanceur `.cmd`, PATH du compte (absent d'une application plus ancienne). */
+  windows?: boolean;
+  /** Le dossier du lanceur (absent d'une application plus ancienne). */
+  dossier?: string;
   installe: boolean;
   aJour: boolean;
   /** Un autre programme occupe déjà ~/.local/bin/helix : il n'est jamais remplacé. */
@@ -34,6 +39,8 @@ interface EtatCli {
   node?: "prive" | "systeme" | null;
   /** Le Node de l'application n'a pas pu être posé : la raison, telle que la passerelle l'a dite. */
   erreurNode?: string;
+  /** Windows : le lanceur est posé, mais le PATH du compte n'a pas pu être modifié. */
+  erreurPath?: boolean;
 }
 
 /** La raison, dite à la personne : les deux codes de electron/main.cjs, ou le message de la passerelle. */
@@ -137,7 +144,8 @@ export function LigneDeCommande() {
                 {t("Retirer")}
               </Button>
             )}
-            {!etat.etranger && (!(etat.installe && etat.aJour) || etat.node === null) && (
+            {/* Windows : le dossier sorti du PATH du compte (ou jamais entré, erreurPath) se remet par le même bouton. */}
+            {!etat.etranger && (!(etat.installe && etat.aJour) || etat.node === null || (etat.windows === true && !etat.dansLePath)) && (
               <Button icon={occupe ? Loader2 : Check} disabled={occupe} onClick={() => void agir((p) => p.installer())}>
                 {etat.installe ? t("Mettre à jour") : t("Mettre en place")}
               </Button>
@@ -151,11 +159,16 @@ export function LigneDeCommande() {
           )}
           {!etat.installe && !etat.etranger && (
             <p className="text-xs text-muted-foreground">
-              {tf(
-                "Un petit lanceur est posé dans {0}, sans droit d'administrateur. Si ce dossier n'est pas dans le PATH de votre terminal, une ligne marquée est ajoutée à {1} ; « Retirer » enlève les deux.",
-                "~/.local/bin",
-                etat.profil.replace(/^.*\//, "~/"),
-              )}
+              {etat.windows
+                ? tf(
+                    "Un petit lanceur, helix.cmd, est posé dans {0}, sans droit d'administrateur, et ce dossier est ajouté au PATH de votre compte Windows ; « Retirer » enlève les deux.",
+                    etat.dossier ?? etat.chemin.replace(/[\\/][^\\/]*$/, ""),
+                  )
+                : tf(
+                    "Un petit lanceur est posé dans {0}, sans droit d'administrateur. Si ce dossier n'est pas dans le PATH de votre terminal, une ligne marquée est ajoutée à {1} ; « Retirer » enlève les deux.",
+                    "~/.local/bin",
+                    etat.profil.replace(/^.*\//, "~/"),
+                  )}
             </p>
           )}
           {!etat.etranger && etat.node === null && (
@@ -167,8 +180,18 @@ export function LigneDeCommande() {
           )}
           {etat.installe && etat.ligneAjoutee && (
             <p className="text-xs text-muted-foreground">
-              {tf("Ouvrez un nouveau terminal : la ligne ajoutée à {0} ne vaut que pour les terminaux ouverts ensuite.", etat.profil.replace(/^.*\//, "~/"))}
+              {etat.windows
+                ? t("Ouvrez un nouveau terminal (PowerShell ou Invite de commandes) et tapez helix : les terminaux déjà ouverts gardent l'ancien PATH.")
+                : tf("Ouvrez un nouveau terminal : la ligne ajoutée à {0} ne vaut que pour les terminaux ouverts ensuite.", etat.profil.replace(/^.*\//, "~/"))}
             </p>
+          )}
+          {etat.installe && etat.erreurPath && (
+            <InfoBox tone="warning" leading={<Info size={15} strokeWidth={1.75} />}>
+              {tf(
+                "La commande est posée, mais le dossier {0} n'a pas pu être ajouté au PATH de votre compte. Ajoutez-le vous-même dans les variables d'environnement de votre compte (Paramètres Windows), puis ouvrez un nouveau terminal.",
+                etat.dossier ?? etat.chemin,
+              )}
+            </InfoBox>
           )}
 
           {erreur && (

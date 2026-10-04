@@ -41,7 +41,11 @@
  *  6. la réflexion du modèle (29/09/2026) : le flux brut d'une question qui
  *     fait réfléchir, au moteur seul, par le relais et par le Chat de Helix,
  *     pour le modèle de l'essai et `--reflexion-modeles` (scripts/essai-reflexion-ci.mjs) ;
- *  7. réussi ou non, dans `--sortie` : le journal de cet essai, celui de
+ *  7. la commande `helix` (04/10/2026) : mise en place comme par l'écran
+ *     (`helix.cmd`, PATH du compte), lancée depuis un nouveau PowerShell qui
+ *     relit ce PATH, pour un compte « Moumoune & Kiki Élodie », puis retirée
+ *     (le PATH du compte de la machine jetable est modifié, puis rendu) ;
+ *  8. réussi ou non, dans `--sortie` : le journal de cet essai, celui de
  *     l'application (sa sortie), `passerelle.log`, la liste de
  *     `%USERPROFILE%\.lmstudio` et le contenu des `*install-location.json`.
  *
@@ -56,7 +60,8 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
-import { copyFileSync, createWriteStream, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { copyFileSync, cpSync, createWriteStream, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -556,11 +561,165 @@ function garderLesJournaux() {
   }
 }
 
+/* ── 7. La commande helix (04/10/2026) ──────────────────────────────────── */
+
+const POWERSHELL = join(process.env.SystemRoot || "C:\\Windows", "System32", "WindowsPowerShell", "v1.0", "powershell.exe");
+
+/** Un PowerShell neuf, script encodé (aucun guillemet à échapper ; les chemins arrivent par l'environnement). */
+function powershell(script, env = {}) {
+  const r = spawnSync(POWERSHELL, ["-NoLogo", "-NoProfile", "-NonInteractive", "-EncodedCommand", Buffer.from(script, "utf16le").toString("base64")], {
+    encoding: "utf8",
+    timeout: 180_000,
+    windowsHide: true,
+    env: { ...process.env, ...env },
+  });
+  return { code: r.status, sortie: String(r.stdout ?? "").trim(), erreur: String(r.stderr ?? "").trim() };
+}
+
+/** La valeur brute du PATH du compte (sans remplacer les %…%) et son type, lus dans le registre. */
+function pathDuCompte() {
+  const r = powershell(
+    "$c = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey('Environment'); " +
+      "$v = [string]$c.GetValue('Path', '', [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames); " +
+      "$g = if (@($c.GetValueNames()) -contains 'Path') { [string]$c.GetValueKind('Path') } else { 'absent' }; " +
+      "[Console]::Out.Write($g + ' ' + [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($v)))",
+  );
+  const [genre = "?", b64 = ""] = r.sortie.split(" ");
+  return { genre, valeur: Buffer.from(b64, "base64").toString("utf8"), lu: r.code === 0 };
+}
+
+/**
+ * Comme un terminal ouvert après coup : le PATH relu dans le registre (celui
+ * du compte, où l'application a mis son dossier), et non hérité de ce
+ * processus, qui ne voit pas le changement. `machine` : y ajouter le PATH de
+ * la machine ; sinon le compte et System32 seulement (aucun Node de la
+ * machine, pour savoir lequel le lanceur a pris). `en plus` : un dossier mis
+ * en dernier.
+ */
+function nouveauTerminal(commande, { machine = false, enPlus = "", env = {} } = {}) {
+  const path =
+    (machine ? "[Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + " : "") +
+    "[Environment]::GetEnvironmentVariable('Path', 'User') + ';' + $env:SystemRoot + '\\System32' + ';' + $env:HELIX_ESSAI_EN_PLUS";
+  return powershell(`$env:Path = ${path}; ${commande}; exit $LASTEXITCODE`, { HELIX_ESSAI_EN_PLUS: enPlus, ...env });
+}
+
+/**
+ * La commande `helix` mise en place comme par le bouton « Mettre en place »
+ * (electron/ligneDeCommande.cjs, chargé hors d'Electron), pour un compte au
+ * nom difficile (« Moumoune & Kiki Élodie » : espace, `&`, accent), puis
+ * lancée depuis un nouveau PowerShell qui relit le PATH du compte :
+ *  a. avec le Node du PATH ;
+ *  b. sans aucun Node : le lanceur le dit, code 127 ;
+ *  c. avec le Node que Helix pose (`openclaw-moteur\node\node.exe`), seul ;
+ *  d. un lanceur dont le script est dans un dossier accentué hors du compte
+ *     (le chemin reste écrit en toutes lettres : passage de la console en UTF-8) ;
+ *  e. `helix outils` contre l'instance de l'essai : le jeton et le port lus
+ *     dans les données, comme sur un poste ;
+ *  f. « Retirer » : le lanceur et l'entrée du PATH s'en vont, le PATH du
+ *     compte revient à l'identique, type compris.
+ * Le compte de la machine jetable n'est pas renommé : ce sont USERPROFILE et
+ * LOCALAPPDATA qui le désignent, pour le module comme pour le lanceur.
+ */
+async function essaiLigneDeCommande() {
+  dire("7. La commande helix : mise en place comme l'écran, puis lancée depuis un nouveau PowerShell");
+  const cliApp = join(dirname(APP), "resources", "cli");
+  if (!verifier("le paquet porte la ligne de commande (resources\\cli\\helix.mjs)", existsSync(join(cliApp, "helix.mjs")), cliApp)) return;
+  const compte = join(TMP, "Moumoune & Kiki Élodie");
+  const local = join(compte, "AppData", "Local");
+  const cliCompte = join(local, "Programs", "Helix & Cie", "resources", "cli");
+  cpSync(cliApp, cliCompte, { recursive: true });
+  const avant = pathDuCompte();
+  dire(`   PATH du compte avant : ${avant.genre}, ${avant.valeur.length} caractères`);
+  if (!verifier("le PATH du compte se lit dans le registre", avant.lu, avant.genre)) return;
+
+  const sauve = { USERPROFILE: process.env.USERPROFILE, LOCALAPPDATA: process.env.LOCALAPPDATA, APPDATA: process.env.APPDATA, HELIX_DATA_DIR: process.env.HELIX_DATA_DIR };
+  process.env.USERPROFILE = compte;
+  process.env.LOCALAPPDATA = local;
+  process.env.APPDATA = join(compte, "AppData", "Roaming");
+  delete process.env.HELIX_DATA_DIR;
+  const compteEnv = { USERPROFILE: compte, LOCALAPPDATA: local, APPDATA: process.env.APPDATA };
+  try {
+    const ligneDeCommande = createRequire(import.meta.url)(join(RACINE, "electron", "ligneDeCommande.cjs"));
+    const scriptCli = join(cliCompte, "helix.mjs");
+    const pose = await ligneDeCommande.installer({ script: scriptCli });
+    const lanceur = join(compte, ".helix", "bin", "helix.cmd");
+    dire(`   état rendu : ${JSON.stringify({ ...pose, node: pose.node })}`);
+    verifier("« Mettre en place » : helix.cmd posé dans le dossier du compte, à jour, dossier dans le PATH du compte", pose.installe && pose.aJour && pose.ligneAjoutee && pose.dansLePath && !pose.erreurPath && existsSync(lanceur), JSON.stringify(pose));
+    const contenu = existsSync(lanceur) ? readFileSync(lanceur, "utf8") : "";
+    writeFileSync(join(SORTIE, "helix.cmd.txt"), contenu);
+    verifier("le lanceur désigne le compte par ses variables (%USERPROFILE%, %LOCALAPPDATA%), pas en toutes lettres", contenu.includes("%LOCALAPPDATA%\\Programs\\Helix & Cie") && contenu.includes("%USERPROFILE%\\.helix\\data") && !contenu.includes("Élodie"), contenu.slice(0, 600));
+    const apres = pathDuCompte();
+    verifier("PATH du compte : l'ancienne valeur, prolongée de notre seul dossier, type gardé", apres.genre === avant.genre.replace("absent", "ExpandString") && apres.valeur.startsWith(avant.valeur) && apres.valeur.slice(avant.valeur.length).replace(/^;/, "") === join(compte, ".helix", "bin"), `${apres.genre} …${apres.valeur.slice(-200)}`);
+    const deNouveau = await ligneDeCommande.installer({ script: scriptCli });
+    verifier("une seconde mise en place n'ajoute pas le dossier une deuxième fois", pathDuCompte().valeur === apres.valeur && deNouveau.installe, pathDuCompte().valeur.slice(-200));
+
+    // a. Le Node du PATH (celui qui fait tourner cet essai), mis après le PATH du compte.
+    const parPath = nouveauTerminal("helix --version", { enPlus: dirname(process.execPath), env: compteEnv });
+    dire(`   a. helix --version (Node du PATH) : code ${parPath.code}, « ${parPath.sortie} » ${parPath.erreur.slice(0, 300)}`);
+    verifier("a. un nouveau PowerShell trouve helix par le PATH du compte, avec le Node du PATH", parPath.code === 0 && /CLI \d+\.\d+\.\d+/.test(parPath.sortie), `${parPath.code} ${parPath.sortie} ${parPath.erreur.slice(0, 300)}`);
+    const parCmd = nouveauTerminal("cmd.exe /d /c helix --version", { enPlus: dirname(process.execPath), env: compteEnv });
+    verifier("a. de même depuis l'Invite de commandes", parCmd.code === 0 && /CLI \d+\.\d+\.\d+/.test(parCmd.sortie), `${parCmd.code} ${parCmd.sortie} ${parCmd.erreur.slice(0, 300)}`);
+
+    // b. Aucun Node : ni dans le PATH (compte et System32 seulement), ni celui de Helix. Sauf si le PATH du compte de la machine en a déjà un.
+    const nodeDuCompte = nouveauTerminal("if (Get-Command node.exe -ErrorAction SilentlyContinue) { exit 0 } else { exit 9 }", { env: compteEnv });
+    if (nodeDuCompte.code === 9) {
+      const sansNode = nouveauTerminal("helix --version", { env: compteEnv });
+      dire(`   b. helix --version (aucun Node) : code ${sansNode.code}, ${sansNode.erreur.slice(0, 300)}`);
+      verifier("b. sans Node, le lanceur le dit (code 127), sans planter", sansNode.code === 127 && /Node 20/.test(sansNode.erreur), `${sansNode.code} ${sansNode.sortie} ${sansNode.erreur.slice(0, 300)}`);
+    } else dire("   b. le PATH du compte de cette machine a déjà un Node : les cas « aucun Node » et « Node de Helix seul » ne sont pas concluants");
+
+    // c. Le Node de Helix seul, à sa place (`<données>\openclaw-moteur\node\node.exe`).
+    const prive = join(compte, ".helix", "data", "openclaw-moteur", "node", "node.exe");
+    mkdirSync(dirname(prive), { recursive: true });
+    copyFileSync(process.execPath, prive);
+    const parPrive = nouveauTerminal("helix --version", { env: compteEnv });
+    dire(`   c. helix --version (Node de Helix) : code ${parPrive.code}, « ${parPrive.sortie} » ${parPrive.erreur.slice(0, 300)}`);
+    verifier("c. sans Node dans le PATH, le lanceur prend celui que Helix pose", parPrive.code === 0 && /CLI \d+\.\d+\.\d+/.test(parPrive.sortie), `${parPrive.code} ${parPrive.sortie} ${parPrive.erreur.slice(0, 300)}`);
+    const etatPrive = await ligneDeCommande.etat({ script: scriptCli });
+    verifier("c. l'écran voit ce Node comme celui de l'application", etatPrive.node === "prive", etatPrive.node);
+
+    // d. Un script dans un dossier accentué hors du compte : écrit en toutes lettres dans le lanceur.
+    const ailleurs = join(TMP, "Applis é & 100% Cie", "cli");
+    cpSync(cliApp, ailleurs, { recursive: true });
+    const lanceurAilleurs = join(TMP, "helix-ailleurs.cmd");
+    writeFileSync(lanceurAilleurs, ligneDeCommande.contenuLanceurWindows({ script: join(ailleurs, "helix.mjs") }));
+    const accents = nouveauTerminal("& $env:HELIX_ESSAI_LANCEUR --version", { env: { ...compteEnv, HELIX_ESSAI_LANCEUR: lanceurAilleurs } });
+    dire(`   d. lanceur au script accentué : code ${accents.code}, « ${accents.sortie} » ${accents.erreur.slice(0, 300)}`);
+    verifier("d. un chemin accentué, avec & et %, écrit en toutes lettres dans le lanceur, mène bien au script", accents.code === 0 && /CLI \d+\.\d+\.\d+/.test(accents.sortie), `${accents.code} ${accents.sortie} ${accents.erreur.slice(0, 300)}`);
+
+    // e. Contre l'instance de l'essai, si elle répond encore : jeton et port lus dans ses données.
+    const vivante = await fetch(`${G}/health`, { signal: AbortSignal.timeout(3000) }).then((r) => r.ok, () => false);
+    if (vivante) {
+      const outils = nouveauTerminal("helix outils", { env: { ...compteEnv, HELIX_DATA_DIR: DONNEES } });
+      writeFileSync(join(SORTIE, "helix-outils.txt"), `${outils.code}\n${outils.sortie}\n-- stderr --\n${outils.erreur}`);
+      verifier("e. helix outils parle à l'instance de ce poste (jeton et port lus dans ses données)", outils.code === 0 && /Outils et connecteurs/.test(outils.sortie), `${outils.code} ${outils.sortie.slice(0, 200)} ${outils.erreur.slice(0, 300)}`);
+    } else dire("   e. l'instance de l'essai ne répond plus : helix outils n'est pas essayé");
+
+    // f. Retirer.
+    const retire = await ligneDeCommande.retirer({ script: scriptCli });
+    const fin = pathDuCompte();
+    verifier("f. « Retirer » : helix.cmd enlevé, PATH du compte revenu à l'identique (valeur et type)", !retire.installe && !existsSync(lanceur) && fin.valeur === avant.valeur && (fin.genre === avant.genre || (avant.genre === "absent" && fin.genre === "absent")), `${fin.genre} …${fin.valeur.slice(-200)}`);
+    const plusLa = nouveauTerminal("if (Get-Command helix -ErrorAction SilentlyContinue) { exit 0 } else { exit 9 }", { env: compteEnv });
+    verifier("f. un nouveau PowerShell ne trouve plus helix", plusLa.code === 9, `${plusLa.code} ${plusLa.sortie}`);
+  } finally {
+    for (const [nom, valeur] of Object.entries(sauve)) {
+      if (valeur === undefined) delete process.env[nom];
+      else process.env[nom] = valeur;
+    }
+  }
+}
+
 try {
   await etapes();
 } catch (err) {
   verifier("l'essai s'est déroulé sans exception", false, err?.stack ?? err);
 } finally {
+  // La commande helix, que le parcours ait abouti ou non ; avant l'arrêt de l'application, pour « helix outils ».
+  try {
+    await essaiLigneDeCommande();
+  } catch (err) {
+    verifier("7. l'essai de la commande helix s'est déroulé sans exception", false, err?.stack ?? err);
+  }
   dire(`Durée : ${((Date.now() - debut) / 60_000).toFixed(1)} min.`);
   arreterApplication();
   await attendre(3000);

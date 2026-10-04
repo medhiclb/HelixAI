@@ -79,7 +79,7 @@ contextBridge.exposeInMainWorld("helix", {
    * ouverte aux collègues : l'adresse d'écoute se choisit au démarrage.
    */
   redemarrerPasserelle: () => ipcRenderer.invoke("helix:passerelle-redemarrer"),
-  /** La ligne de commande `helix` : état, pose du lanceur dans ~/.local/bin, retrait. */
+  /** La ligne de commande `helix` : état, pose du lanceur dans ~/.local/bin (helix.cmd dans ~\.helix\bin sous Windows), retrait. */
   ligneDeCommande: {
     etat: () => ipcRenderer.invoke("helix:cli-etat"),
     installer: () => ipcRenderer.invoke("helix:cli-installer"),

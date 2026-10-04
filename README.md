@@ -147,7 +147,7 @@ macOS asks once after each new version for Helix to access its keychain item ("H
 Storage"): choose "Always Allow". On Windows 11, Smart App Control, when active, blocks unsigned
 apps and does not offer to run them anyway.
 
-Not offered on Windows: the `helix` command line. On Windows, the commands of an always-on agent
+On Windows, the commands of an always-on agent
 at the "Free" level go through PowerShell.
 
 ## Features
@@ -226,8 +226,8 @@ Signing and notarisation are ready and only wait for an Apple certificate: see
 
 ### Command line
 
-The desktop app ships the `helix` command. Set it up from **Settings › Install the apps › CLI**,
-then:
+The desktop app ships the `helix` command. Set it up from **Settings › Install the apps › CLI**
+(on Windows, then open a new PowerShell or Command Prompt), then:
 
 ```bash
 helix connexion          # sign in once with your instance account
