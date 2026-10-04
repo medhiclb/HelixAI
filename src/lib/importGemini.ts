@@ -326,7 +326,8 @@ export function dateActivite(brut: string): { iso: string | null } | null {
   if (pm && h < 12) h += 12;
   if (am && h === 12) h = 0;
   let decalage: number | undefined;
-  const numerique = /(?:UTC|GMT)\s*([+-−])\s*(\d{1,2})(?::?(\d{2}))?/.exec(s);
+  // « [+-−] » était une plage, du « + » au « − » (U+2212) : des milliers de caractères (CodeQL, 04/10/2026). Trois signes, rien d'autre.
+  const numerique = /(?:UTC|GMT)\s*([+\-−])\s*(\d{1,2})(?::?(\d{2}))?/.exec(s);
   if (numerique) decalage = (numerique[1] === "+" ? 1 : -1) * (Number(numerique[2]) * 60 + Number(numerique[3] ?? 0));
   else {
     const abr = /\b([A-Z]{1,5})\s*$/.exec(s)?.[1];

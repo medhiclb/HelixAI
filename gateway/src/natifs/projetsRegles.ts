@@ -199,7 +199,9 @@ export function classer(o: OutilListe, serveur = ""): "lecture" | "ecriture" {
   const a = o.annotations ?? {};
   if (a.readOnlyHint === false || a.destructiveHint === true) return "ecriture";
   // Un nom qui répète celui du service (`clickup_search`) se lit sans lui : c'est le verbe qui suit qui compte.
-  const mots = motsDe(o.name).replace(serveur ? new RegExp(`^${serveur}_`) : /^$/, "");
+  // Sans expression régulière : le nom du service y entrait tel quel, ses caractères spéciaux compris (CodeQL, 04/10/2026).
+  const nom = motsDe(o.name);
+  const mots = serveur && nom.startsWith(`${serveur}_`) ? nom.slice(serveur.length + 1) : nom;
   if (!mots || ECRIT.test(mots)) return "ecriture";
   if (a.readOnlyHint === true || LIT.test(mots)) return "lecture";
   return "ecriture";
