@@ -32,11 +32,11 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/medhiclb/HelixAI/releases/download/v2026.1002.1/Helix-2026.1002.1-arm64.dmg"><img alt="macOS（Apple シリコン）版をダウンロード" src="https://img.shields.io/badge/macOS-Apple%20Silicon-111111?style=for-the-badge&logo=apple&logoColor=white" /></a>
-  <a href="https://github.com/medhiclb/HelixAI/releases/download/v2026.1002.1/Helix-2026.1002.1-x64.dmg"><img alt="macOS（Intel）版をダウンロード" src="https://img.shields.io/badge/macOS-Intel-111111?style=for-the-badge&logo=apple&logoColor=white" /></a>
-  <a href="https://github.com/medhiclb/HelixAI/releases/download/v2026.1002.1/Helix-Setup-2026.1002.1-x64.exe"><img alt="Windows（x64）版をダウンロード" src="https://img.shields.io/badge/Windows-x64-0a5fb4?style=for-the-badge&logo=windows&logoColor=white" /></a>
-  <a href="https://github.com/medhiclb/HelixAI/releases/download/v2026.1002.1/helix-plateforme_2026.1002.1_amd64.deb"><img alt="Ubuntu、Debian 版（.deb）をダウンロード" src="https://img.shields.io/badge/Ubuntu%20%2F%20Debian-.deb-c2410c?style=for-the-badge&logo=ubuntu&logoColor=white" /></a>
-  <a href="https://github.com/medhiclb/HelixAI/releases/download/v2026.1002.1/Helix-2026.1002.1.AppImage"><img alt="Linux 版（AppImage）をダウンロード" src="https://img.shields.io/badge/Linux-AppImage-3f3f46?style=for-the-badge&logo=linux&logoColor=white" /></a>
+  <a href="https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/Helix-2026.1004.1-arm64.dmg"><img alt="macOS（Apple シリコン）版をダウンロード" src="https://img.shields.io/badge/macOS-Apple%20Silicon-111111?style=for-the-badge&logo=apple&logoColor=white" /></a>
+  <a href="https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/Helix-2026.1004.1-x64.dmg"><img alt="macOS（Intel）版をダウンロード" src="https://img.shields.io/badge/macOS-Intel-111111?style=for-the-badge&logo=apple&logoColor=white" /></a>
+  <a href="https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/Helix-Setup-2026.1004.1-x64.exe"><img alt="Windows（x64）版をダウンロード" src="https://img.shields.io/badge/Windows-x64-0a5fb4?style=for-the-badge&logo=windows&logoColor=white" /></a>
+  <a href="https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/helix-plateforme_2026.1004.1_amd64.deb"><img alt="Ubuntu、Debian 版（.deb）をダウンロード" src="https://img.shields.io/badge/Ubuntu%20%2F%20Debian-.deb-c2410c?style=for-the-badge&logo=ubuntu&logoColor=white" /></a>
+  <a href="https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/Helix-2026.1004.1.AppImage"><img alt="Linux 版（AppImage）をダウンロード" src="https://img.shields.io/badge/Linux-AppImage-3f3f46?style=for-the-badge&logo=linux&logoColor=white" /></a>
 </p>
 
 <p align="center">
@@ -116,16 +116,16 @@
 ## インストール
 
 お使いのシステム用のパッケージを
-[v2026.1002.1 リリース](https://github.com/medhiclb/HelixAI/releases/tag/v2026.1002.1)からダウンロードしてください。
-SHA-256 チェックサム：[`SHA256SUMS.txt`](https://github.com/medhiclb/HelixAI/releases/download/v2026.1002.1/SHA256SUMS.txt)。
+[v2026.1004.1 リリース](https://github.com/medhiclb/HelixAI/releases/tag/v2026.1004.1)からダウンロードしてください。
+SHA-256 チェックサム：[`SHA256SUMS.txt`](https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/SHA256SUMS.txt)。
 
 | プラットフォーム | ダウンロード | インストール方法 |
 |---|---|---|
-| **macOS**（Apple シリコン） | [Helix-2026.1002.1-arm64.dmg](https://github.com/medhiclb/HelixAI/releases/download/v2026.1002.1/Helix-2026.1002.1-arm64.dmg) | ディスクイメージを開き、Helix をアプリケーションフォルダーにドラッグします。初回起動時：「システム設定」›「プライバシーとセキュリティ」›「このまま開く」 |
-| **macOS**（Intel） | [Helix-2026.1002.1-x64.dmg](https://github.com/medhiclb/HelixAI/releases/download/v2026.1002.1/Helix-2026.1002.1-x64.dmg) | 上と同じです。ローカルモデルは、Helix が自動でインストールする llama.cpp で動きます。 |
-| **Windows 10/11**（x64） | [Helix-Setup-2026.1002.1-x64.exe](https://github.com/medhiclb/HelixAI/releases/download/v2026.1002.1/Helix-Setup-2026.1002.1-x64.exe) | インストーラーを実行します（管理者権限は不要です）。SmartScreen が表示された場合：「詳細情報」›「実行」 |
-| **Ubuntu、Debian**（x64） | [helix-plateforme_2026.1002.1_amd64.deb](https://github.com/medhiclb/HelixAI/releases/download/v2026.1002.1/helix-plateforme_2026.1002.1_amd64.deb) | `sudo apt install ./helix-plateforme_2026.1002.1_amd64.deb` |
-| **その他の Linux**（x64） | [Helix-2026.1002.1.AppImage](https://github.com/medhiclb/HelixAI/releases/download/v2026.1002.1/Helix-2026.1002.1.AppImage) | `chmod +x Helix-2026.1002.1.AppImage` の後、実行します。Ubuntu 24.04 では `.deb` をおすすめします |
+| **macOS**（Apple シリコン） | [Helix-2026.1004.1-arm64.dmg](https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/Helix-2026.1004.1-arm64.dmg) | ディスクイメージを開き、Helix をアプリケーションフォルダーにドラッグします。初回起動時：「システム設定」›「プライバシーとセキュリティ」›「このまま開く」 |
+| **macOS**（Intel） | [Helix-2026.1004.1-x64.dmg](https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/Helix-2026.1004.1-x64.dmg) | 上と同じです。ローカルモデルは、Helix が自動でインストールする llama.cpp で動きます。 |
+| **Windows 10/11**（x64） | [Helix-Setup-2026.1004.1-x64.exe](https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/Helix-Setup-2026.1004.1-x64.exe) | インストーラーを実行します（管理者権限は不要です）。SmartScreen が表示された場合：「詳細情報」›「実行」 |
+| **Ubuntu、Debian**（x64） | [helix-plateforme_2026.1004.1_amd64.deb](https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/helix-plateforme_2026.1004.1_amd64.deb) | `sudo apt install ./helix-plateforme_2026.1004.1_amd64.deb` |
+| **その他の Linux**（x64） | [Helix-2026.1004.1.AppImage](https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/Helix-2026.1004.1.AppImage) | `chmod +x Helix-2026.1004.1.AppImage` の後、実行します。Ubuntu 24.04 では `.deb` をおすすめします |
 
 **macOS ではコマンド 1 つで**（推奨）：ディスクイメージを `SHA256SUMS.txt` とコード署名で確認したうえで、
 Gatekeeper の確認なしにアプリがインストールされます。
