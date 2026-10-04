@@ -9621,6 +9621,46 @@ console.log("\n44. Sept langues, et l'arabe de droite à gauche : déclarations,
   verifier("aide intégrée : « Changer la langue » cite les sept langues et le sens d'écriture de l'arabe, traduit dans les six catalogues", texte("src", "lib", "aide.ts").includes(cleAide) && /en espagnol, en allemand ou en arabe/.test(texte("src", "lib", "aide.ts")) && /de droite à gauche/.test(texte("src", "lib", "aide.ts")) && CATALOGUES.every((l) => (json("src", "i18n", l + ".json")[cleAide] ?? "").length > 10), "aide.ts");
 }
 
+/*
+ * 45. Retirer un agent sous Windows, et OpenCode qui ne démarre pas sous Linux (04/10/2026).
+ *
+ * Sous Windows, effacer la base d'un agent que l'instance OpenClaw tient
+ * ouverte la laisse « en attente de suppression » : plus aucun agent ne se
+ * déployait (vu chez Medhi : « EPERM … realpath … helix-test\agent\openclaw-agent.sqlite »).
+ * Sous Linux, l'écran Code restait sur l'installation d'OpenCode : une seule
+ * variante était essayée.
+ */
+console.log("\n45. Agent retiré sous Windows (instance arrêtée avant d'effacer, fichier coincé libéré) ; variantes d'OpenCode (04/10/2026)");
+{
+  const employes = readFileSync(join(RACINE, "gateway", "src", "employes.ts"), "utf8");
+  const corpsRetirer = employes.slice(employes.indexOf("async function retirer("), employes.indexOf("export async function supprimer("));
+  const arret = corpsRetirer.indexOf('if (process.platform === "win32") await arreterProcessus();');
+  const effacement = corpsRetirer.indexOf('rmSync(join(dossier(), "agents", nomOpenClaw(e.id))');
+  verifier("retrait d'un agent : sous Windows, l'instance OpenClaw est arrêtée avant que ses dossiers soient effacés", arret > 0 && effacement > arret, `${arret} ${effacement}`);
+  verifier("retrait d'un agent : l'instance est relancée ensuite s'il reste des agents (reconfigurer)", corpsRetirer.indexOf("await reconfigurer(reste)") > effacement);
+  const motif = employes.match(/const FICHIER_AGENT_COINCE = (\/.+\/i);/)?.[1];
+  const re = motif ? new Function(`return ${motif}`)() : null;
+  const vu = "[openclaw] The CLI command failed. [openclaw] Reason: EPERM: operation not permitted, realpath 'C:\\Users\\Moumoune & Kiki\\.helix\\data\\openclaw\\agents\\helix-test\\agent\\openclaw-agent.sqlite'";
+  verifier(
+    "fichier d'agent coincé : le message vu chez Medhi est reconnu, pas un autre EPERM ni un agent qui n'est pas de Helix",
+    Boolean(re) && re.test(vu) && !re.test("EPERM: operation not permitted, open 'C:\\x\\config.json'") && !re.test("EPERM: operation not permitted, realpath 'C:\\x\\agents\\main\\agent\\a.sqlite'"),
+    motif,
+  );
+  verifier(
+    "fichier d'agent coincé : sous Windows seulement, instance arrêtée puis relancée, commande refaite une seule fois, rien d'effacé",
+    /!r\.ok && !reprise && process\.platform === "win32" && FICHIER_AGENT_COINCE\.test/.test(employes) && /return oc\(args, delaiMs, true\)/.test(employes),
+  );
+
+  const opencode = readFileSync(join(RACINE, "gateway", "src", "opencodePrive.ts"), "utf8");
+  const linux = opencode.slice(opencode.indexOf('"linux-x64": ['), opencode.indexOf('"linux-arm64": ['));
+  const ordre = ["opencode-linux-x64.tar.gz", "opencode-linux-x64-baseline.tar.gz", "opencode-linux-x64-musl.tar.gz", "opencode-linux-x64-baseline-musl.tar.gz"].map((f) => linux.indexOf(`"${f}"`));
+  verifier("OpenCode sous Linux x64 : variante ordinaire, puis baseline, puis musl, chacune avec son empreinte", ordre.every((i, k) => i > 0 && (k === 0 || i > ordre[k - 1])) && (linux.match(/sha256: "[0-9a-f]{64}"/g) ?? []).length === 4, JSON.stringify(ordre));
+  verifier(
+    "OpenCode : on ne passe à la variante suivante que si la précédente ne démarre pas (pas sur une panne de réseau ni une empreinte fausse)",
+    /if \(!\(err instanceof NeDemarrePas\)\) throw err;/.test(opencode) && /throw new NeDemarrePas\(/.test(opencode),
+  );
+}
+
 console.log(`\n${reussis} vérification(s) réussie(s), ${echecs.length} échec(s).`);
 if (echecs.length) {
   console.log("Échecs :");

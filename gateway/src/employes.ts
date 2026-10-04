@@ -1633,11 +1633,32 @@ async function instanceMuette(): Promise<string | null> {
   return t("L'instance de vos agents ne répond pas. Elle va être relancée : réessayez dans une minute.");
 }
 
+/**
+ * Le fichier d'un agent retiré, resté « en attente de suppression » sous
+ * Windows parce que l'instance le tenait ouvert (voir `retirer`). Node le dit
+ * « EPERM » sur `realpath`. Les PC retirés avant le correctif du 04/10/2026
+ * restent dans cet état tant que la même instance tourne.
+ */
+const FICHIER_AGENT_COINCE = /EPERM[\s\S]{0,200}realpath[\s\S]{0,600}[\\/]agents[\\/]helix-/i;
+
 /** Commande OpenClaw contre l'instance dédiée. */
-async function oc(args: string[], delaiMs = 60_000): Promise<Sortie> {
+async function oc(args: string[], delaiMs = 60_000, reprise = false): Promise<Sortie> {
   const { moteur, raison } = await detecterMoteur();
   if (!moteur) return { ok: false, sortie: "", erreur: raison ?? t("OpenClaw introuvable.") };
-  return executer(moteur.lancement.fichier, [...moteur.lancement.prefixe, ...args], envOpenClaw(moteur), delaiMs);
+  const r = await executer(moteur.lancement.fichier, [...moteur.lancement.prefixe, ...args], envOpenClaw(moteur), delaiMs);
+  /*
+   * Un fichier d'agent coincé (voir `FICHIER_AGENT_COINCE`) : l'instance est
+   * arrêtée, ce qui le libère (Windows termine alors l'effacement), relancée
+   * s'il y a des agents, et la commande refaite une fois. Rien n'est effacé
+   * ici : le dossier vide qui reste part au prochain balayage.
+   */
+  if (!r.ok && !reprise && process.platform === "win32" && FICHIER_AGENT_COINCE.test(`${r.erreur}\n${r.sortie}`)) {
+    console.warn("[employes] OpenClaw bute sur le fichier d'un agent retiré : instance relancée pour le libérer.");
+    await arreterProcessus();
+    if ((await charger()).length > 0) await demarrerProcessus(moteur).catch(() => undefined);
+    return oc(args, delaiMs, true);
+  }
+  return r;
 }
 
 /**
@@ -2402,8 +2423,20 @@ async function retirer(e: Employe, reste: Employe[]): Promise<void> {
   // Son espace de travail disparaît vraiment : OpenClaw, lui, le mettrait à la corbeille.
   rmSync(espaceDe(e.id), { recursive: true, force: true });
   await oc(["agents", "delete", nomOpenClaw(e.id), "--force", "--json"]);
-  rmSync(join(dossier(), "agents", nomOpenClaw(e.id)), { recursive: true, force: true });
   await oc(["agents", "delete", nomCourrier(e.id), "--force", "--json"]);
+  /*
+   * Sous Windows, l'instance arrêtée avant d'effacer ses dossiers (04/10/2026).
+   * OpenClaw garde ouverte la base de chaque agent (`openclaw-agent.sqlite`).
+   * Effacé pendant qu'il la tient, le fichier ne disparaît pas sous Windows :
+   * il reste « en attente de suppression » tant que le processus vit, et toute
+   * commande OpenClaw qui parcourt les agents bute dessus (« EPERM: operation
+   * not permitted, realpath … helix-test\agent\openclaw-agent.sqlite »). Vu
+   * sur le PC de Medhi : après le retrait de l'agent « test », plus aucun agent
+   * ne se déployait. macOS et Linux effacent un fichier ouvert sans histoire.
+   * `reconfigurer`, plus bas, relance l'instance s'il reste des agents.
+   */
+  if (process.platform === "win32") await arreterProcessus();
+  rmSync(join(dossier(), "agents", nomOpenClaw(e.id)), { recursive: true, force: true });
   rmSync(join(dossier(), "agents", nomCourrier(e.id)), { recursive: true, force: true });
   // Ses mémoires mises de côté, et la trace de ce qu'il a lu : elles n'ont plus de propriétaire à qui revenir.
   rmSync(dossierMemoire(e.id), { recursive: true, force: true });

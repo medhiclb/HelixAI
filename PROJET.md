@@ -5802,6 +5802,20 @@ de cette section) ; ce qui est dit plus bas des « phrases encore en anglais » 
   « Toujours autoriser ») sont traduits sans avoir été lus sur un système dans ces langues ;
   relecture par des personnes dont c'est la langue.
 
+**Fait le 04/10/2026 : plus aucun agent ne se déploie sous Windows après en avoir retiré un.** Vu
+chez Medhi : « EPERM: operation not permitted, realpath '…\\agents\\helix-test\\agent\\openclaw-agent.sqlite' »,
+l'agent « test » ayant été retiré avant. Cause, déduite du message et du code (pas reproduite sur
+un Windows) : `retirer` effaçait le dossier de l'agent pendant que l'instance OpenClaw tenait sa
+base ouverte ; sous Windows le fichier reste alors « en attente de suppression » tant que le
+processus vit, et toute commande OpenClaw qui parcourt les agents bute dessus (Node le dit EPERM
+sur `realpath`). macOS et Linux effacent un fichier ouvert sans histoire. Corrigé dans
+`employes.ts` : sous Windows, l'instance est arrêtée avant d'effacer les dossiers de l'agent, puis
+relancée s'il en reste (`reconfigurer`) ; et pour les postes déjà coincés, une commande qui échoue
+sur ce motif précis (`FICHIER_AGENT_COINCE`) arrête et relance l'instance, ce qui libère le
+fichier, puis est refaite une fois (rien n'est effacé à cette occasion). Contrôlé par la section 45
+de `npm run securite`. Sur un poste coincé, quitter Helix (« Quitter » dans la zone de
+notification) suffit aussi : l'instance s'arrête avec lui.
+
 **Fait le 02/10/2026 : l'écran Code ne s'ouvre pas sous Linux (« Réessayer »).** Signalé par
 Medhi. « Réessayer » n'existe que sur l'écran d'installation d'OpenCode (`InstallerOpencode.tsx`) :
 c'est l'installation qui échouait, pas la session. Essai écrit pour voir : `scripts/essai-code-ci.mjs`
