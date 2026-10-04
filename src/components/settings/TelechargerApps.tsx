@@ -17,10 +17,28 @@ import { t, tf, taille } from "@/lib/i18n";
  * elle-même, dans sa version exacte (gateway/src/telechargement.ts).
  *
  * Ce qui n'existe pas est dit comme tel, sans bouton qui ne mène nulle part :
- * Windows et Linux ne sont pas encore construits, il n'y a pas d'application
- * mobile. La ligne de commande, elle, est livrée avec l'application de bureau
+ * il n'y a pas d'application mobile. Ce que l'instance ne sert pas elle-même
+ * (Windows, Linux, et macOS quand elle ne tourne pas sur un Mac) mène au
+ * paquet de la même version sur la page de publication (04/10/2026). La ligne de commande, elle, est livrée avec l'application de bureau
  * depuis le 25/09/2026 (onglet CLI, LigneDeCommande.tsx).
  */
+
+/**
+ * Les paquets publiés pour chaque version, tels que la publication les nomme
+ * (README, page de publication). La version est celle de l'interface, donc de
+ * l'instance qui la sert.
+ */
+const PUBLIES: Record<Plateforme, { fichier: (v: string) => string; detail: string }[]> = {
+  macos: [
+    { fichier: (v) => `Helix-${v}-arm64.dmg`, detail: "Apple Silicon" },
+    { fichier: (v) => `Helix-${v}-x64.dmg`, detail: "Intel" },
+  ],
+  windows: [{ fichier: (v) => `Helix-Setup-${v}-x64.exe`, detail: "Windows 10/11, x64" }],
+  linux: [
+    { fichier: (v) => `helix-plateforme_${v}_amd64.deb`, detail: "Ubuntu, Debian, x64" },
+    { fichier: (v) => `Helix-${v}.AppImage`, detail: "AppImage, x64" },
+  ],
+};
 
 const PLATEFORMES: { id: Plateforme; label: string }[] = [
   { id: "macos", label: "macOS" },
@@ -176,9 +194,31 @@ export function TelechargerApps() {
               </div>
             </div>
           ) : (
-            <p className="mt-4 rounded-xl border border-dashed border-border px-4 py-3 text-sm text-muted-foreground">
-              {paquet?.raison ?? t("Indisponible.")}
-            </p>
+            <div className="mt-4 space-y-3">
+              <p className="text-sm text-muted-foreground">{paquet?.raison ?? t("Indisponible.")}</p>
+              {/* Le paquet de la même version, sur la page de publication : sans lui, l'onglet ne menait nulle part. */}
+              {PUBLIES[plateforme].map((p) => (
+                <a
+                  key={p.fichier(__HELIX_VERSION__)}
+                  href={`${branding.urls.sourceCode}/releases/download/v${__HELIX_VERSION__}/${p.fichier(__HELIX_VERSION__)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex flex-wrap items-center gap-3 rounded-xl border border-border px-4 py-3 hover:bg-muted/50"
+                >
+                  <Download size={18} strokeWidth={1.75} className="shrink-0 text-foreground" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block break-all text-sm font-medium text-foreground">{p.fichier(__HELIX_VERSION__)}</span>
+                    <span className="block text-xs text-muted-foreground">{p.detail}</span>
+                  </span>
+                </a>
+              ))}
+              <p className="text-xs text-muted-foreground">
+                {tf("Même version que votre instance ({0}), depuis la page de publication.", __HELIX_VERSION__)}{" "}
+                <a className="underline" href={`${branding.urls.sourceCode}/releases/tag/v${__HELIX_VERSION__}`} target="_blank" rel="noreferrer">
+                  {t("Ouvrir la page")}
+                </a>
+              </p>
+            </div>
           )}
         </Card>
       )}

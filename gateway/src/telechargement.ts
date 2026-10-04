@@ -31,8 +31,8 @@ const exec = promisify(execFile);
  *
  * Il ne sert que la plateforme sur laquelle l'instance tourne : une instance
  * sur Mac ne peut pas fabriquer l'application Windows. Les paquets Windows et
- * Linux ne sont pas encore construits (décision du client, 21/09/2026) ; l'écran
- * le dit au lieu d'afficher un bouton qui ne mène nulle part.
+ * Linux sont publiés avec chaque version depuis le 27/09/2026 : pour eux,
+ * l'écran mène au paquet de la même version sur la page de publication.
  *
  * Tant que l'application n'est pas signée par Apple, macOS la bloque au
  * premier lancement après un téléchargement. L'écran explique le geste
@@ -111,7 +111,13 @@ export function etat(plateforme: Plateforme): EtatPaquet {
       plateforme,
       disponible: false,
       pret: false,
-      raison: t("L'instance ne sert que l'application macOS. Pour Windows et Linux, installez le paquet fourni par votre prestataire."),
+      /*
+       * Phrase sans « Pour Windows et Linux » (04/10/2026) : sous Windows,
+       * l'onglet Windows disait « l'instance ne sert que l'application macOS »,
+       * qui se lisait comme une erreur de système. L'écran propose à la suite
+       * le paquet de la même version sur la page de publication (TelechargerApps.tsx).
+       */
+      raison: t("Votre instance ne sert elle-même que l'application macOS, et seulement quand elle tourne sur un Mac."),
     };
   }
   if (process.platform !== "darwin") {
