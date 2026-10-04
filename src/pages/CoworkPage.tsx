@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
-import { PanelRight, TriangleAlert } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { FolderOpen, PanelRight, TriangleAlert } from "lucide-react";
 import { LogoMark } from "@/components/ui/Logo";
 import { IconButton } from "@/components/ui/IconButton";
 import { Composer } from "@/components/chat/Composer";
@@ -17,12 +18,15 @@ import { useMcp } from "@/hooks/useMcp";
 import { useModels } from "@/hooks/useModels";
 import { ConfirmerDossier } from "@/components/cowork/ConfirmerDossier";
 import { CoworkPanel, type TouchedFile } from "@/components/cowork/CoworkPanel";
-import { useChat, type Message } from "@/hooks/useChat";
+import { arreterReponse, useChat, type Message } from "@/hooks/useChat";
+import { useSessions } from "@/hooks/useSessions";
+import { estCowork, getSession, memoriserConnaissances } from "@/lib/store/sessions";
 import { useProfile } from "@/hooks/useProfile";
 import { useAttachments } from "@/hooks/useAttachments";
 import { buildSystemPrompt, type NiveauRaisonnement } from "@/lib/store/profile";
 import { useCompetences } from "@/hooks/useCompetences";
 import { currentUser, prenom } from "@/lib/store/identity";
+import { Button } from "@/components/ui/Button";
 import { branding } from "@/config/branding";
 import { t, tf } from "@/lib/i18n";
 
@@ -222,6 +226,16 @@ function touchedFiles(messages: Message[]): TouchedFile[] {
   return [...found.values()];
 }
 
+/**
+ * La dernière session de Cowork affichée dans cette fenêtre (04/10/2026).
+ * Revenir dans Cowork après un passage au Chat la rouvre : on retombait sur un
+ * Cowork vierge, le travail en cours introuvable depuis Cowork (signalé par
+ * Medhi). Gardée en mémoire de la fenêtre, pas sur le disque : au lancement
+ * suivant, Cowork s'ouvre sur l'accueil, et la session sur la liste de gauche.
+ * « Nouvelle session » l'oublie.
+ */
+let derniereSessionCowork: string | null = null;
+
 /** Ecran Cowork (captures 6 a 8), branché sur le runtime avec outils. */
 export function CoworkPage() {
   /*
@@ -339,7 +353,115 @@ export function CoworkPage() {
     origin: "local",
     tools: true,
     connaissances: bases,
+    // Une session de Cowork, rangée à part des Chats, avec son dossier (04/10/2026).
+    surface: "cowork",
+    dossier: toutLePoste ? "poste" : workspace,
   });
+
+  /*
+   * L'adresse dit quelle session est affichée, comme dans Code et le Chat :
+   * `/cowork?c=<id>` une session de la liste, `/cowork` l'accueil. Une
+   * réponse qui s'écrit encore continue hors de l'écran, et se rouvre en
+   * direct depuis la liste (useChat, `open`).
+   */
+  const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
+  const demandee = params.get("c");
+  const { open: ouvrirSession, reset: viderEcran } = chat;
+  const premierPassage = useRef(true);
+  useEffect(() => {
+    const retour = premierPassage.current;
+    premierPassage.current = false;
+    if (!demandee) {
+      // Retour dans Cowork (depuis le Chat ou une autre page) : la dernière session revient.
+      const derniere = retour && derniereSessionCowork ? getSession(derniereSessionCowork) : undefined;
+      if (derniere && estCowork(derniere)) {
+        setParams({ c: derniere.id }, { replace: true });
+        return;
+      }
+      // « Nouvelle session », ou rien à reprendre : un Cowork neuf, sans les bases de la session précédente.
+      derniereSessionCowork = null;
+      viderEcran();
+      setBases([]);
+      return;
+    }
+    // Déjà affichée : la session qui vient de naître, dont l'adresse vient d'être posée.
+    if (chat.session?.id === demandee) return;
+    const session = getSession(demandee);
+    if (session && !estCowork(session)) {
+      // Un Chat ordinaire se rouvre dans le Chat, là où il a été mené.
+      navigate(`/?c=${encodeURIComponent(session.id)}`, { replace: true });
+      return;
+    }
+    if (session) {
+      ouvrirSession(session);
+      setBases(session.connaissances ?? []);
+      derniereSessionCowork = session.id;
+    } else {
+      // Introuvable ici (supprimée, ou pas encore relue) : l'accueil, sans rien écrire.
+      viderEcran();
+      setBases([]);
+    }
+    // Seule l'adresse décide, comme dans Code.
+  }, [demandee]);
+
+  /*
+   * Une session vient de naître (première demande) : l'adresse la désigne,
+   * pour que la barre latérale la montre active et qu'un retour la retrouve.
+   */
+  const idEnCours = chat.session?.id ?? null;
+  useEffect(() => {
+    if (!idEnCours) return;
+    derniereSessionCowork = idEnCours;
+    if (idEnCours !== demandee) setParams({ c: idEnCours }, { replace: true });
+  }, [idEnCours]);
+
+  // Les bases cochées sont retenues avec la session, comme dans le Chat.
+  useEffect(() => {
+    if (!idEnCours) return;
+    const session = getSession(idEnCours);
+    if (!session || session.ownerId !== currentUser().id) return;
+    if (!session.connaissances && bases.length === 0) return;
+    memoriserConnaissances(idEnCours, bases);
+  }, [idEnCours, bases]);
+
+  /*
+   * La session affichée vient d'être supprimée (barre latérale, autre
+   * fenêtre) : l'écran repart à neuf, sans quoi la suite s'enregistrerait
+   * dans une session disparue, donc nulle part (même garde que le Chat).
+   */
+  const { sessions: sessionsCowork } = useSessions("cowork");
+  useEffect(() => {
+    if (idEnCours && !getSession(idEnCours)) {
+      arreterReponse(idEnCours);
+      derniereSessionCowork = null;
+      navigate("/cowork", { replace: true });
+    }
+  }, [sessionsCowork, idEnCours]);
+
+  /*
+   * La session rouverte travaillait dans un autre dossier. Le dossier de
+   * travail est un réglage de l'instance, commun à tous ses agents (et, sur
+   * une instance partagée, protégé par le mot de passe de l'administrateur) :
+   * le changer d'office en rouvrant une session déplacerait le périmètre de
+   * tout le monde sans qu'on l'ait demandé. L'écran le dit, et propose de le
+   * reprendre d'un clic. Seulement pour ses propres sessions : celui d'une
+   * collègue désigne un dossier de son poste à elle.
+   */
+  const sessionAffichee = idEnCours ? (sessionsCowork.find((x) => x.id === idEnCours) ?? null) : null;
+  const dossierActuel = toutLePoste ? "poste" : workspace;
+  const dossierDeLaSession =
+    sessionAffichee?.dossier &&
+    sessionAffichee.ownerId === currentUser().id &&
+    dossierActuel &&
+    sessionAffichee.dossier !== dossierActuel &&
+    !chat.busy
+      ? sessionAffichee.dossier
+      : null;
+  // Le nom du dossier, comme sur la puce ; le chemin entier au survol (un chemin complet prenait six lignes).
+  const nomDossier = (d: string) =>
+    d === "poste" ? t("Tout mon poste") : d.replace(/[\\/]+$/, "").split(/[\\/]/).pop() || d;
+  const cheminLisible = (d: string) => (d === "poste" ? t("Tout mon poste") : d);
 
   const files = useMemo(() => touchedFiles(chat.messages), [chat.messages]);
 
@@ -394,6 +516,29 @@ export function CoworkPage() {
    */
   const avertissements = (
     <>
+      {dossierDeLaSession && dossierActuel && (
+        <InfoBox
+          tone="muted"
+          className="mt-2"
+          leading={<FolderOpen size={15} strokeWidth={1.75} />}
+        >
+          <p dir="auto" title={`${cheminLisible(dossierDeLaSession)}\n${cheminLisible(dossierActuel)}`}>
+            {tf("Cette session travaillait dans « {0} ». L'agent a maintenant accès à « {1} ».", nomDossier(dossierDeLaSession), nomDossier(dossierActuel))}
+          </p>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="mt-2"
+            onClick={() =>
+              void changerWorkspace(dossierDeLaSession).then((r) => {
+                if (r.confirmation) setDossierAConfirmer(dossierDeLaSession);
+              })
+            }
+          >
+            {t("Reprendre ce dossier")}
+          </Button>
+        </InfoBox>
+      )}
       {erreurWorkspace && (
         <InfoBox
           tone="warning"

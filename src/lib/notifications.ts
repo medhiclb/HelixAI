@@ -1,7 +1,7 @@
 import { currentUser } from "@/lib/store/identity";
 import { features } from "@/config/branding";
 import { chargerEmployes } from "@/lib/employes";
-import { visibleTo, estArchivee } from "@/lib/store/sessions";
+import { visibleTo, estArchivee, estCowork } from "@/lib/store/sessions";
 import { SESSIONS_CHANGED } from "@/hooks/useSessions";
 import { abonnerExecutions } from "@/lib/executions";
 import { visibleTo as tachesVisibles } from "@/lib/store/tasks";
@@ -301,7 +301,8 @@ function suivrePartages(): void {
         genre: "partage",
         titre: t("Un chat vous a été partagé"),
         detail: s.title,
-        lien: `/?c=${s.id}`,
+        // Une session de Cowork s'ouvre dans Cowork (04/10/2026), avec ses outils.
+        lien: estCowork(s) ? `/cowork?c=${s.id}` : `/?c=${s.id}`,
       });
     }
     connus = ids;

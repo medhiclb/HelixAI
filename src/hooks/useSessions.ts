@@ -4,6 +4,7 @@ import {
   archiverSession,
   deleteSession,
   estArchivee,
+  estCowork,
   renommerSession,
   visibleTo,
   type Session,
@@ -19,8 +20,12 @@ export function notifySessionsChanged(): void {
 /**
  * Sessions visibles par l'utilisateur connecté (les siennes + les partagées),
  * séparées en deux listes : celles de la barre latérale, et ses archives.
+ *
+ * `surface` : les Chats (par défaut) ou les sessions de Cowork, jamais les
+ * deux mêlés (04/10/2026, store/sessions.ts, `surface`). Une session de
+ * Cowork rouverte dans le Chat y perdait ses outils et son dossier.
  */
-export function useSessions() {
+export function useSessions(surface: "chat" | "cowork" = "chat") {
   const [toutes, setToutes] = useState<Session[]>(() => visibleTo(currentUser()));
 
   const refresh = useCallback(() => {
@@ -39,11 +44,12 @@ export function useSessions() {
 
   const { sessions, archivees } = useMemo(() => {
     const moi = currentUser();
+    const ici = toutes.filter((s) => estCowork(s) === (surface === "cowork"));
     return {
-      sessions: toutes.filter((s) => !estArchivee(s, moi)),
-      archivees: toutes.filter((s) => estArchivee(s, moi)),
+      sessions: ici.filter((s) => !estArchivee(s, moi)),
+      archivees: ici.filter((s) => estArchivee(s, moi)),
     };
-  }, [toutes]);
+  }, [toutes, surface]);
 
   const remove = useCallback(
     (id: string) => {

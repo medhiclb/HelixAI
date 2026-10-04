@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams, useLocation } from "react-router-dom";
+import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import { TriangleAlert } from "lucide-react";
 import { LogoMark } from "@/components/ui/Logo";
 import { Composer } from "@/components/chat/Composer";
@@ -22,7 +22,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useAttachments } from "@/hooks/useAttachments";
 import { useModels } from "@/hooks/useModels";
 import { buildSystemPrompt, type NiveauRaisonnement } from "@/lib/store/profile";
-import { getSession, memoriserAgent, memoriserConnaissances, rattacherProjet } from "@/lib/store/sessions";
+import { estCowork, getSession, memoriserAgent, memoriserConnaissances, rattacherProjet } from "@/lib/store/sessions";
 import { currentUser } from "@/lib/store/identity";
 import { useSessions, notifySessionsChanged } from "@/hooks/useSessions";
 import { useAgents } from "@/hooks/useAgents";
@@ -140,6 +140,7 @@ export function HomePage() {
   // cliquer « Nouveau Chat » depuis une conversation en cours la réinitialise.
   const [params] = useSearchParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const sessionId = params.get("c");
   /*
    * « /?projet=<id> » ouvre un chat neuf déjà destiné à un projet : c'est le
@@ -166,6 +167,15 @@ export function HomePage() {
       return;
     }
     const session = getSession(sessionId);
+    /*
+     * Une session de Cowork demandée à l'adresse d'un Chat (lien d'avant le
+     * 04/10/2026, notification, page d'un projet) : elle s'ouvre dans Cowork,
+     * avec ses outils. Ouverte ici, elle continuait sans outils ni dossier.
+     */
+    if (session && estCowork(session) && features.cowork) {
+      navigate(`/cowork?c=${encodeURIComponent(session.id)}`, { replace: true });
+      return;
+    }
     if (session) {
       open(session);
       /*
@@ -178,7 +188,7 @@ export function HomePage() {
       setAgentId(session.agentId ?? DEFAULT_AGENT.id);
       setBasesChoisies(session.connaissances ?? []);
     }
-  }, [sessionId, projetDemande, location.key, open, reset]);
+  }, [sessionId, projetDemande, location.key, open, reset, navigate]);
 
   // Relu à chaque changement de conversation, pour afficher le classement à jour.
   const { sessions } = useSessions();

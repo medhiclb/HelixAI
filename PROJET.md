@@ -5802,6 +5802,47 @@ de cette section) ; ce qui est dit plus bas des « phrases encore en anglais » 
   « Toujours autoriser ») sont traduits sans avoir été lus sur un système dans ces langues ;
   relecture par des personnes dont c'est la langue.
 
+**Fait le 04/10/2026 : Cowork a ses sessions, comme Code.** Demandé par Medhi : « comme la
+session Code, il doit avoir une session Cowork, car partir du Chat renvoie à l'interface
+normale ». Ce qui manquait, dans le code : une conversation de Cowork était un Chat comme un
+autre (`useChat` sans marque, `CoworkPage.tsx`) ; la barre latérale montrait en Cowork la liste
+des Chats (`Sidebar.tsx`, seul Code avait la sienne), où la session de Cowork se mêlait aux Chats
+et se rouvrait dans le Chat (`/?c=`), sans outils ni dossier ; « Nouveau Chat » menait au Chat ;
+`CoworkPage` ne lisait aucune adresse, et revenir dans Cowork donnait un Cowork vierge. Fait :
+- une session de Cowork est un Chat marqué `surface: "cowork"` dans le même stockage
+  (`store/sessions.ts`, pas de second registre), avec le dossier de travail de sa dernière demande
+  (`dossier`, « poste » pour tout le poste). Les Chats et Cowork ont chacun leur liste
+  (`useSessions(surface)`) : **changement voulu** de l'existant, les sessions de Cowork ne sont
+  plus dans la liste des Chats, parce qu'elles y perdaient leurs outils. Les conversations de
+  Cowork d'avant ce jour n'ont pas la marque et restent dans les Chats ;
+- en Cowork, la barre latérale montre « Sessions de Cowork », les plus récentes en haut, avec les
+  gestes d'un Chat (renommer, partager, archiver, supprimer, archives repliées) ; « Nouvelle
+  session » en tête ; la recherche filtre les sessions ;
+- l'adresse dit la session affichée (`/cowork?c=<id>`) ; revenir dans Cowork depuis le Chat
+  rouvre la dernière session affichée dans la fenêtre (gardée en mémoire de la fenêtre, pas sur
+  le disque : au lancement suivant, l'accueil et la liste) ; une session de Cowork demandée à
+  l'adresse d'un Chat (lien ancien, notification de partage) s'ouvre dans Cowork, et un Chat
+  demandé dans Cowork s'ouvre dans le Chat ; la session supprimée pendant qu'on la regarde
+  ramène à l'accueil ;
+- rouvrir une session reprend sa conversation et ses bases de connaissances. Le dossier, non :
+  c'est un réglage de l'instance commun à tous ses agents (et protégé par le mot de passe sur
+  une instance partagée) ; si la session travaillait ailleurs, l'écran le dit et propose
+  « Reprendre ce dossier » (seulement pour ses propres sessions) ;
+- aide intégrée (article Cowork) et six catalogues (100 %).
+
+*Vu à l'écran* (instance jetable, faux moteur, Vite, navigateur à 800 et 1 280 px), en français
+puis en arabe de droite à gauche : demande écrite dans Cowork, la session apparaît dans
+« Sessions de Cowork » et l'adresse la désigne ; passage au Chat (liste des Chats sans elle) ;
+retour à Cowork par la pastille : la session est rouverte avec sa conversation ; « Nouvelle
+session » puis clic dans la liste : rouverte ; `/?c=<session de Cowork>` renvoie à Cowork ; un
+Chat ordinaire n'apparaît que dans les Chats ; dossier de l'instance changé : l'encart apparaît,
+« Reprendre ce dossier » remet le dossier et l'encart disparaît ; page rechargée après avoir
+effacé la copie locale des Chats : la marque et le dossier reviennent de l'instance.
+*Pas vu* : une vraie réponse avec outils (faux moteur, texte seul), une réponse encore en cours
+quand on quitte Cowork puis y revient, une session partagée ouverte par une collègue, le rail
+replié, l'application Electron, Windows ; `npm run securite` n'a pas tourné (consigne mémoire
+du 04/10/2026) : à passer avant la prochaine version.
+
 **Fait le 04/10/2026 : plus aucun agent ne se déploie sous Windows après en avoir retiré un.** Vu
 chez Medhi : « EPERM: operation not permitted, realpath '…\\agents\\helix-test\\agent\\openclaw-agent.sqlite' »,
 l'agent « test » ayant été retiré avant. Cause, déduite du message et du code (pas reproduite sur

@@ -152,7 +152,31 @@ export interface Session {
    * longue, se propose sans rien écrire par-dessus le Chat déjà là.
    */
   importe?: { source: string; cle: string; messages: number };
+  /**
+   * Écran où la conversation est menée (04/10/2026). Absent : un Chat ;
+   * « cowork » : une session de Cowork, qui se liste et se rouvre dans
+   * Cowork, avec ses outils, et ne se mélange plus aux Chats. Avant, une
+   * conversation de Cowork était un Chat comme un autre : elle apparaissait
+   * dans la liste des Chats et s'y rouvrait sans outils ni dossier, et rien
+   * ne la retrouvait depuis Cowork (signalé par Medhi le 04/10/2026). Les
+   * conversations de Cowork plus anciennes n'ont pas ce champ : rien ne
+   * permet de les distinguer, elles restent dans les Chats.
+   *
+   * Classement seulement, comme `projectId` : ce champ ne donne et ne retire
+   * aucun droit (`voitConversation`, gateway/src/authz.ts).
+   */
+  surface?: "cowork";
+  /**
+   * Session de Cowork : le dossier où l'agent travaillait à la dernière
+   * demande, ou « poste » pour tout le poste. Le dossier de travail est un
+   * réglage de l'instance, commun à tous ses agents : rouvrir la session ne le
+   * change pas d'office, l'écran propose de le reprendre (CoworkPage).
+   */
+  dossier?: string;
 }
+
+/** Session de Cowork (voir `surface`). */
+export const estCowork = (s: Pick<Session, "surface">): boolean => s.surface === "cowork";
 
 /** Marque une modification qui ne fait pas remonter le Chat dans la liste (voir `modifieLe`). */
 const touche = <T extends Session>(s: T): T => ({ ...s, modifieLe: new Date().toISOString() });
@@ -209,6 +233,8 @@ export function createSession(opts: {
   title: string;
   origin: SessionOrigin;
   modelUid?: string;
+  surface?: Session["surface"];
+  dossier?: string;
 }): Session {
   const now = new Date().toISOString();
   const session: Session = {
@@ -221,6 +247,9 @@ export function createSession(opts: {
     organisationId: opts.owner.organisationId,
     origin: opts.origin,
     modelUid: opts.modelUid,
+    // Champs absents plutôt que vides : la forme d'un Chat ordinaire, celle que les anciens postes attendent.
+    ...(opts.surface ? { surface: opts.surface } : {}),
+    ...(opts.dossier ? { dossier: opts.dossier } : {}),
     messages: [],
     createdAt: now,
     updatedAt: now,
@@ -260,6 +289,14 @@ export function memoriserAgent(id: string, agentId: string, agentNom: string): v
 export function memoriserConnaissances(id: string, connaissances: string[]): void {
   const cle = (l?: string[]) => [...(l ?? [])].sort().join(",");
   persist(all().map((s) => (s.id === id && cle(s.connaissances) !== cle(connaissances) ? touche({ ...s, connaissances }) : s)));
+}
+
+/** Retient le dossier d'une session de Cowork ; même règle que l'agent pour `updatedAt`. */
+export function memoriserDossier(id: string, dossier: string): void {
+  const sessions = all();
+  // Appelé à chaque demande : rien à écrire quand le dossier n'a pas changé, ni quand la session n'est pas là.
+  if (!sessions.some((s) => s.id === id && s.dossier !== dossier)) return;
+  persist(sessions.map((s) => (s.id === id ? touche({ ...s, dossier }) : s)));
 }
 
 /**

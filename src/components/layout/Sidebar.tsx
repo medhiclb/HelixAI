@@ -7,6 +7,7 @@ import {
   PanelLeft,
   Plus,
   MessageCircle,
+  AppWindow,
   SlidersHorizontal,
   CircleHelp,
   Cloud,
@@ -48,8 +49,11 @@ function LigneSession({
   onArchiver,
   onSupprimer,
   onRenommer,
+  libelleNom = t("Nom du chat"),
 }: {
   session: Session;
+  /** Nom du champ de renommage, pour les lecteurs d'écran : « chat » ou « session ». */
+  libelleNom?: string;
   actif: boolean;
   archivee: boolean;
   onOuvrir: () => void;
@@ -80,7 +84,7 @@ function LigneSession({
         <input
           autoFocus
           value={edition}
-          aria-label={t("Nom du chat")}
+          aria-label={libelleNom}
           maxLength={120}
           onChange={(e) => setEdition(e.target.value)}
           onFocus={(e) => e.currentTarget.select()}
@@ -187,9 +191,17 @@ function LigneSession({
  * se défait d'un clic, et **supprimer**, qui efface les messages pour de bon.
  * Les archives se replient en bas de la liste : on les retrouve, elles
  * n'encombrent pas.
+ *
+ * En mode Cowork, la même liste montre les sessions de Cowork, et elles
+ * seules, qui se rouvrent dans Cowork (`/cowork?c=<id>`), comme Code a les
+ * siennes (demandé par Medhi le 04/10/2026). Mêmes gestes que pour un Chat :
+ * c'est la même conversation enregistrée, marquée par son écran
+ * (store/sessions.ts, `surface`).
  */
-function SessionList({ recherche = "" }: { recherche?: string }) {
-  const { sessions, archivees, remove, archiver, renommer, refresh } = useSessions();
+function SessionList({ recherche = "", surface = "chat" }: { recherche?: string; surface?: "chat" | "cowork" }) {
+  const { sessions, archivees, remove, archiver, renommer, refresh } = useSessions(surface);
+  const cowork = surface === "cowork";
+  const base = cowork ? "/cowork" : "/";
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const activeId = params.get("c");
@@ -206,7 +218,7 @@ function SessionList({ recherche = "" }: { recherche?: string }) {
 
   const supprimer = (s: Session) => {
     remove(s.id);
-    if (s.id === activeId) navigate("/");
+    if (s.id === activeId) navigate(base);
     /*
      * Prévient aussi l'écran du Chat. Un chat tout juste commencé n'a pas son
      * identifiant dans l'adresse (elle reste « / ») : le supprimer laissait
@@ -220,10 +232,16 @@ function SessionList({ recherche = "" }: { recherche?: string }) {
     return (
       <div className="flex min-h-[140px] flex-1 flex-col items-center justify-center gap-3 px-8 py-6 text-center">
         <span className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-          <MessageCircle size={20} strokeWidth={1.75} className="text-muted-foreground" />
+          {cowork ? (
+            <AppWindow size={20} strokeWidth={1.75} className="text-muted-foreground" />
+          ) : (
+            <MessageCircle size={20} strokeWidth={1.75} className="text-muted-foreground" />
+          )}
         </span>
         <p className="text-xs leading-relaxed text-muted-foreground">
-          {t("Vos chats apparaîtront ici une fois que vous commencerez à discuter !")}
+          {cowork
+            ? t("Vos sessions de Cowork apparaîtront ici : chaque demande se retrouve et se reprend d'un clic.")
+            : t("Vos chats apparaîtront ici une fois que vous commencerez à discuter !")}
         </p>
       </div>
     );
@@ -232,13 +250,17 @@ function SessionList({ recherche = "" }: { recherche?: string }) {
   return (
     <div className="flex-1 overflow-y-auto px-3 pt-3">
       <p className="px-1 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-        {t("Chats")}
+        {cowork ? t("Sessions de Cowork") : t("Chats")}
       </p>
       {visibles.length === 0 && (
         <p className="px-1 pb-2 text-xs text-muted-foreground">
           {terme
-            ? t("Aucun chat ne correspond à votre recherche.")
-            : t("Tous vos chats sont archivés.")}
+            ? cowork
+              ? t("Aucune session ne correspond à votre recherche.")
+              : t("Aucun chat ne correspond à votre recherche.")
+            : cowork
+              ? t("Toutes vos sessions de Cowork sont archivées.")
+              : t("Tous vos chats sont archivés.")}
         </p>
       )}
       <ul className="space-y-0.5">
@@ -248,7 +270,8 @@ function SessionList({ recherche = "" }: { recherche?: string }) {
             session={s}
             actif={s.id === activeId}
             archivee={false}
-            onOuvrir={() => navigate(`/?c=${s.id}`)}
+            onOuvrir={() => navigate(`${base}?c=${s.id}`)}
+            libelleNom={cowork ? t("Nom de la session") : undefined}
             onPartager={() => setSharing(s.id)}
             onArchiver={() => archiver(s.id, true)}
             onSupprimer={() => supprimer(s)}
@@ -277,7 +300,9 @@ function SessionList({ recherche = "" }: { recherche?: string }) {
             <ul className="space-y-0.5 pt-0.5">
               {archivesVisibles.length === 0 && (
                 <li className="px-1 py-1 text-xs text-muted-foreground">
-                  {t("Aucun chat archivé ne correspond à votre recherche.")}
+                  {cowork
+                    ? t("Aucune session archivée ne correspond à votre recherche.")
+                    : t("Aucun chat archivé ne correspond à votre recherche.")}
                 </li>
               )}
               {archivesVisibles.map((s) => (
@@ -286,7 +311,8 @@ function SessionList({ recherche = "" }: { recherche?: string }) {
                   session={s}
                   actif={s.id === activeId}
                   archivee
-                  onOuvrir={() => navigate(`/?c=${s.id}`)}
+                  onOuvrir={() => navigate(`${base}?c=${s.id}`)}
+                  libelleNom={cowork ? t("Nom de la session") : undefined}
                   onPartager={() => setSharing(s.id)}
                   onArchiver={() => archiver(s.id, false)}
                   onSupprimer={() => supprimer(s)}
@@ -431,9 +457,18 @@ function SecondaryItem({ item }: { item: NavItem }) {
  */
 const enModeCode = (chemin: string) => chemin === "/code" || chemin.startsWith("/code/");
 
+/** Le mode Cowork a aussi sa liste, ses sessions (04/10/2026) : voir `SessionList`. */
+const enModeCowork = (chemin: string) => chemin === "/cowork";
+
+/** Où mène « Nouveau Chat » / « Nouvelle session » : l'accueil de l'écran où l'on est. */
+const accueilDu = (modeCode: boolean, modeCowork: boolean) => (modeCode ? "/code" : modeCowork ? "/cowork" : "/");
+
 function ExpandedSidebar({ onToggle }: { onToggle: () => void }) {
   const navigate = useNavigate();
-  const modeCode = enModeCode(useLocation().pathname);
+  const chemin = useLocation().pathname;
+  const modeCode = enModeCode(chemin);
+  const modeCowork = enModeCowork(chemin);
+  const modeSessions = modeCode || modeCowork;
   const [recherche, setRecherche] = useState("");
   const [aide, setAide] = useState(false);
   return (
@@ -466,11 +501,11 @@ function ExpandedSidebar({ onToggle }: { onToggle: () => void }) {
         <div className="shrink-0 px-3 pt-3">
           <button
             type="button"
-            onClick={() => navigate(modeCode ? "/code" : "/")}
+            onClick={() => navigate(accueilDu(modeCode, modeCowork))}
             className="flex w-full items-center gap-2.5 rounded-xl border border-sidebar-border bg-sidebar-active px-3 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-muted"
           >
             <Plus size={18} strokeWidth={1.75} />
-            <span>{modeCode ? t("Nouvelle session") : t("Nouveau Chat")}</span>
+            <span>{modeSessions ? t("Nouvelle session") : t("Nouveau Chat")}</span>
           </button>
         </div>
 
@@ -485,15 +520,19 @@ function ExpandedSidebar({ onToggle }: { onToggle: () => void }) {
         <div className="shrink-0 px-3 pt-2">
           <SearchInput
             variant="ghost"
-            placeholder={modeCode ? t("Rechercher une session...") : t("Rechercher un chat...")}
-            aria-label={modeCode ? t("Rechercher une session") : t("Rechercher un chat")}
+            placeholder={modeSessions ? t("Rechercher une session...") : t("Rechercher un chat...")}
+            aria-label={modeSessions ? t("Rechercher une session") : t("Rechercher un chat")}
             value={recherche}
             onChange={(e) => setRecherche(e.target.value)}
           />
         </div>
 
-        {/* Liste des chats (ou des sessions de Code, en mode Code), ou état vide */}
-        {modeCode ? <SessionsCodeListe recherche={recherche} /> : <SessionList recherche={recherche} />}
+        {/* Liste des chats (ou des sessions de Code ou de Cowork, dans ces modes), ou état vide */}
+        {modeCode ? (
+          <SessionsCodeListe recherche={recherche} />
+        ) : (
+          <SessionList key={modeCowork ? "cowork" : "chat"} recherche={recherche} surface={modeCowork ? "cowork" : "chat"} />
+        )}
       </div>
 
       {/* Pied de barre */}
@@ -572,7 +611,10 @@ function RailItem({ item, primaire }: { item: NavItem; primaire?: boolean }) {
 
 function CollapsedSidebar({ onToggle }: { onToggle: () => void }) {
   const navigate = useNavigate();
-  const modeCode = enModeCode(useLocation().pathname);
+  const chemin = useLocation().pathname;
+  const modeCode = enModeCode(chemin);
+  const modeCowork = enModeCowork(chemin);
+  const nouveau = modeCode || modeCowork ? t("Nouvelle session") : t("Nouveau Chat");
   const [aide, setAide] = useState(false);
   return (
     /*
@@ -602,9 +644,9 @@ function CollapsedSidebar({ onToggle }: { onToggle: () => void }) {
 
         <button
           type="button"
-          aria-label={modeCode ? t("Nouvelle session") : t("Nouveau Chat")}
-          title={modeCode ? t("Nouvelle session") : t("Nouveau Chat")}
-          onClick={() => navigate(modeCode ? "/code" : "/")}
+          aria-label={nouveau}
+          title={nouveau}
+          onClick={() => navigate(accueilDu(modeCode, modeCowork))}
           className="mt-3 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-sidebar-border bg-sidebar-active text-foreground shadow-sm transition-colors hover:bg-muted"
         >
           <Plus size={18} strokeWidth={1.75} />

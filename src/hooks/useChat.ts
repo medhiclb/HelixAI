@@ -13,6 +13,7 @@ import {
   getSession,
   updateSession,
   deriveTitle,
+  memoriserDossier,
   type Session,
   type SessionOrigin,
   type StoredMessage,
@@ -291,6 +292,10 @@ interface Options {
   agent?: string;
   /** La bascule « Rechercher sur le web » du menu « + » (28/09/2026). */
   web?: boolean;
+  /** Écran qui mène la conversation : « cowork » la range dans les sessions de Cowork (store/sessions.ts, `surface`). */
+  surface?: Session["surface"];
+  /** Session de Cowork : le dossier de travail du moment, retenu à chaque demande (store/sessions.ts, `dossier`). */
+  dossier?: string;
 }
 
 /** Enregistre l'historique d'un Chat : celui de l'écran, ou celui d'une réponse qui a continué sans lui. */
@@ -813,11 +818,16 @@ export function useChat(options: Options) {
         title: deriveTitle(titre),
         origin: options.origin ?? "local",
         modelUid: options.model,
+        surface: options.surface,
+        dossier: options.dossier,
       });
       notifySessionsChanged();
+    } else if (options.dossier && sessionRef.current.ownerId === currentUser().id) {
+      // Le dossier a pu changer depuis la demande précédente : la session retient celui où elle travaille maintenant.
+      memoriserDossier(sessionRef.current.id, options.dossier);
     }
     return sessionRef.current;
-  }, [options.origin, options.model]);
+  }, [options.origin, options.model, options.surface, options.dossier]);
 
   const send = useCallback(
     async (text: string, pieces: Attachment[] = []) => {
