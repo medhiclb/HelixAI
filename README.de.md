@@ -33,11 +33,11 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/Helix-2026.1004.1-arm64.dmg"><img alt="Für macOS herunterladen (Apple Silicon)" src="https://img.shields.io/badge/macOS-Apple%20Silicon-111111?style=for-the-badge&logo=apple&logoColor=white" /></a>
-  <a href="https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/Helix-2026.1004.1-x64.dmg"><img alt="Für macOS herunterladen (Intel)" src="https://img.shields.io/badge/macOS-Intel-111111?style=for-the-badge&logo=apple&logoColor=white" /></a>
-  <a href="https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/Helix-Setup-2026.1004.1-x64.exe"><img alt="Für Windows herunterladen (x64)" src="https://img.shields.io/badge/Windows-x64-0a5fb4?style=for-the-badge&logo=windows&logoColor=white" /></a>
-  <a href="https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/helix-plateforme_2026.1004.1_amd64.deb"><img alt="Für Ubuntu und Debian herunterladen (.deb)" src="https://img.shields.io/badge/Ubuntu%20%2F%20Debian-.deb-c2410c?style=for-the-badge&logo=ubuntu&logoColor=white" /></a>
-  <a href="https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/Helix-2026.1004.1.AppImage"><img alt="Für Linux herunterladen (AppImage)" src="https://img.shields.io/badge/Linux-AppImage-3f3f46?style=for-the-badge&logo=linux&logoColor=white" /></a>
+  <a href="https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.2/Helix-2026.1004.2-arm64.dmg"><img alt="Für macOS herunterladen (Apple Silicon)" src="https://img.shields.io/badge/macOS-Apple%20Silicon-111111?style=for-the-badge&logo=apple&logoColor=white" /></a>
+  <a href="https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.2/Helix-2026.1004.2-x64.dmg"><img alt="Für macOS herunterladen (Intel)" src="https://img.shields.io/badge/macOS-Intel-111111?style=for-the-badge&logo=apple&logoColor=white" /></a>
+  <a href="https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.2/Helix-Setup-2026.1004.2-x64.exe"><img alt="Für Windows herunterladen (x64)" src="https://img.shields.io/badge/Windows-x64-0a5fb4?style=for-the-badge&logo=windows&logoColor=white" /></a>
+  <a href="https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.2/helix-plateforme_2026.1004.2_amd64.deb"><img alt="Für Ubuntu und Debian herunterladen (.deb)" src="https://img.shields.io/badge/Ubuntu%20%2F%20Debian-.deb-c2410c?style=for-the-badge&logo=ubuntu&logoColor=white" /></a>
+  <a href="https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.2/Helix-2026.1004.2.AppImage"><img alt="Für Linux herunterladen (AppImage)" src="https://img.shields.io/badge/Linux-AppImage-3f3f46?style=for-the-badge&logo=linux&logoColor=white" /></a>
 </p>
 
 <p align="center">
@@ -122,16 +122,16 @@
 ## Installation
 
 Laden Sie das Paket für Ihr System aus der
-[Version v2026.1004.1](https://github.com/medhiclb/HelixAI/releases/tag/v2026.1004.1) herunter.
-SHA-256-Prüfsummen: [`SHA256SUMS.txt`](https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/SHA256SUMS.txt).
+[Version v2026.1004.2](https://github.com/medhiclb/HelixAI/releases/tag/v2026.1004.2) herunter.
+SHA-256-Prüfsummen: [`SHA256SUMS.txt`](https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.2/SHA256SUMS.txt).
 
 | Plattform | Download | Installation |
 |---|---|---|
-| **macOS** (Apple Silicon) | [Helix-2026.1004.1-arm64.dmg](https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/Helix-2026.1004.1-arm64.dmg) | Öffnen Sie das Disk-Image und ziehen Sie Helix in den Ordner „Programme“. Beim ersten Start: Systemeinstellungen › Datenschutz & Sicherheit › „Dennoch öffnen“ |
-| **macOS** (Intel) | [Helix-2026.1004.1-x64.dmg](https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/Helix-2026.1004.1-x64.dmg) | Wie oben. Lokale Modelle laufen mit llama.cpp, das Helix selbst installiert. |
-| **Windows 10/11** (x64) | [Helix-Setup-2026.1004.1-x64.exe](https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/Helix-Setup-2026.1004.1-x64.exe) | Führen Sie das Installationsprogramm aus (keine Administratorrechte nötig). Falls SmartScreen erscheint: „Weitere Informationen“ › „Trotzdem ausführen“ |
-| **Ubuntu, Debian** (x64) | [helix-plateforme_2026.1004.1_amd64.deb](https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/helix-plateforme_2026.1004.1_amd64.deb) | `sudo apt install ./helix-plateforme_2026.1004.1_amd64.deb` |
-| **Andere Linux-Systeme** (x64) | [Helix-2026.1004.1.AppImage](https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/Helix-2026.1004.1.AppImage) | `chmod +x Helix-2026.1004.1.AppImage`, dann ausführen. Unter Ubuntu 24.04 besser das `.deb` verwenden |
+| **macOS** (Apple Silicon) | [Helix-2026.1004.2-arm64.dmg](https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.2/Helix-2026.1004.2-arm64.dmg) | Öffnen Sie das Disk-Image und ziehen Sie Helix in den Ordner „Programme“. Beim ersten Start: Systemeinstellungen › Datenschutz & Sicherheit › „Dennoch öffnen“ |
+| **macOS** (Intel) | [Helix-2026.1004.2-x64.dmg](https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.2/Helix-2026.1004.2-x64.dmg) | Wie oben. Lokale Modelle laufen mit llama.cpp, das Helix selbst installiert. |
+| **Windows 10/11** (x64) | [Helix-Setup-2026.1004.2-x64.exe](https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.2/Helix-Setup-2026.1004.2-x64.exe) | Führen Sie das Installationsprogramm aus (keine Administratorrechte nötig). Falls SmartScreen erscheint: „Weitere Informationen“ › „Trotzdem ausführen“ |
+| **Ubuntu, Debian** (x64) | [helix-plateforme_2026.1004.2_amd64.deb](https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.2/helix-plateforme_2026.1004.2_amd64.deb) | `sudo apt install ./helix-plateforme_2026.1004.2_amd64.deb` |
+| **Andere Linux-Systeme** (x64) | [Helix-2026.1004.2.AppImage](https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.2/Helix-2026.1004.2.AppImage) | `chmod +x Helix-2026.1004.2.AppImage`, dann ausführen. Unter Ubuntu 24.04 besser das `.deb` verwenden |
 
 **macOS, mit einem Befehl** (empfohlen): Die Anwendung wird ohne die Gatekeeper-Abfrage
 installiert, nachdem das Disk-Image gegen `SHA256SUMS.txt` und seine Codesignatur geprüft wurde:

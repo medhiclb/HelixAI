@@ -34,11 +34,11 @@
 </p>
 
 <p align="center" dir="ltr">
-  <a href="https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/Helix-2026.1004.1-arm64.dmg"><img alt="تنزيل لنظام macOS (Apple Silicon)" src="https://img.shields.io/badge/macOS-Apple%20Silicon-111111?style=for-the-badge&logo=apple&logoColor=white" /></a>
-  <a href="https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/Helix-2026.1004.1-x64.dmg"><img alt="تنزيل لنظام macOS (Intel)" src="https://img.shields.io/badge/macOS-Intel-111111?style=for-the-badge&logo=apple&logoColor=white" /></a>
-  <a href="https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/Helix-Setup-2026.1004.1-x64.exe"><img alt="تنزيل لنظام Windows (x64)" src="https://img.shields.io/badge/Windows-x64-0a5fb4?style=for-the-badge&logo=windows&logoColor=white" /></a>
-  <a href="https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/helix-plateforme_2026.1004.1_amd64.deb"><img alt="تنزيل لنظامي Ubuntu وDebian (.deb)" src="https://img.shields.io/badge/Ubuntu%20%2F%20Debian-.deb-c2410c?style=for-the-badge&logo=ubuntu&logoColor=white" /></a>
-  <a href="https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/Helix-2026.1004.1.AppImage"><img alt="تنزيل لنظام Linux (AppImage)" src="https://img.shields.io/badge/Linux-AppImage-3f3f46?style=for-the-badge&logo=linux&logoColor=white" /></a>
+  <a href="https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.2/Helix-2026.1004.2-arm64.dmg"><img alt="تنزيل لنظام macOS (Apple Silicon)" src="https://img.shields.io/badge/macOS-Apple%20Silicon-111111?style=for-the-badge&logo=apple&logoColor=white" /></a>
+  <a href="https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.2/Helix-2026.1004.2-x64.dmg"><img alt="تنزيل لنظام macOS (Intel)" src="https://img.shields.io/badge/macOS-Intel-111111?style=for-the-badge&logo=apple&logoColor=white" /></a>
+  <a href="https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.2/Helix-Setup-2026.1004.2-x64.exe"><img alt="تنزيل لنظام Windows (x64)" src="https://img.shields.io/badge/Windows-x64-0a5fb4?style=for-the-badge&logo=windows&logoColor=white" /></a>
+  <a href="https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.2/helix-plateforme_2026.1004.2_amd64.deb"><img alt="تنزيل لنظامي Ubuntu وDebian (.deb)" src="https://img.shields.io/badge/Ubuntu%20%2F%20Debian-.deb-c2410c?style=for-the-badge&logo=ubuntu&logoColor=white" /></a>
+  <a href="https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.2/Helix-2026.1004.2.AppImage"><img alt="تنزيل لنظام Linux (AppImage)" src="https://img.shields.io/badge/Linux-AppImage-3f3f46?style=for-the-badge&logo=linux&logoColor=white" /></a>
 </p>
 
 <p align="center">
@@ -118,16 +118,16 @@
 ## التثبيت
 
 نزّل الحزمة المناسبة لنظامك من
-[الإصدار v2026.1004.1](https://github.com/medhiclb/HelixAI/releases/tag/v2026.1004.1).
-مجاميع التحقق SHA-256: [`SHA256SUMS.txt`](https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/SHA256SUMS.txt).
+[الإصدار v2026.1004.2](https://github.com/medhiclb/HelixAI/releases/tag/v2026.1004.2).
+مجاميع التحقق SHA-256: [`SHA256SUMS.txt`](https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.2/SHA256SUMS.txt).
 
 | المنصة | التنزيل | التثبيت |
 |---|---|---|
-| <span dir="ltr">**macOS** (Apple Silicon)</span> | [Helix-2026.1004.1-arm64.dmg](https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/Helix-2026.1004.1-arm64.dmg) | افتح صورة القرص واسحب Helix إلى مجلد التطبيقات. عند أول تشغيل: إعدادات النظام › الخصوصية والأمان › «فتح على أي حال» |
-| <span dir="ltr">**macOS** (Intel)</span> | [Helix-2026.1004.1-x64.dmg](https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/Helix-2026.1004.1-x64.dmg) | كما في السطر السابق. تعمل النماذج المحلية على llama.cpp، الذي يثبّته Helix بنفسه. |
-| <span dir="ltr">**Windows 10/11** (x64)</span> | [Helix-Setup-2026.1004.1-x64.exe](https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/Helix-Setup-2026.1004.1-x64.exe) | شغّل برنامج التثبيت (لا حاجة إلى صلاحيات المسؤول). إذا ظهر SmartScreen: «مزيد من المعلومات» › «التشغيل على أي حال» |
-| <span dir="ltr">**Ubuntu, Debian** (x64)</span> | [helix-plateforme_2026.1004.1_amd64.deb](https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/helix-plateforme_2026.1004.1_amd64.deb) | <code dir="ltr">sudo apt install ./helix-plateforme_2026.1004.1_amd64.deb</code> |
-| **توزيعات Linux الأخرى** <span dir="ltr">(x64)</span> | [Helix-2026.1004.1.AppImage](https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.1/Helix-2026.1004.1.AppImage) | <code dir="ltr">chmod +x Helix-2026.1004.1.AppImage</code> ثم شغّله. على Ubuntu 24.04، يُفضَّل ملف <code dir="ltr">.deb</code> |
+| <span dir="ltr">**macOS** (Apple Silicon)</span> | [Helix-2026.1004.2-arm64.dmg](https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.2/Helix-2026.1004.2-arm64.dmg) | افتح صورة القرص واسحب Helix إلى مجلد التطبيقات. عند أول تشغيل: إعدادات النظام › الخصوصية والأمان › «فتح على أي حال» |
+| <span dir="ltr">**macOS** (Intel)</span> | [Helix-2026.1004.2-x64.dmg](https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.2/Helix-2026.1004.2-x64.dmg) | كما في السطر السابق. تعمل النماذج المحلية على llama.cpp، الذي يثبّته Helix بنفسه. |
+| <span dir="ltr">**Windows 10/11** (x64)</span> | [Helix-Setup-2026.1004.2-x64.exe](https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.2/Helix-Setup-2026.1004.2-x64.exe) | شغّل برنامج التثبيت (لا حاجة إلى صلاحيات المسؤول). إذا ظهر SmartScreen: «مزيد من المعلومات» › «التشغيل على أي حال» |
+| <span dir="ltr">**Ubuntu, Debian** (x64)</span> | [helix-plateforme_2026.1004.2_amd64.deb](https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.2/helix-plateforme_2026.1004.2_amd64.deb) | <code dir="ltr">sudo apt install ./helix-plateforme_2026.1004.2_amd64.deb</code> |
+| **توزيعات Linux الأخرى** <span dir="ltr">(x64)</span> | [Helix-2026.1004.2.AppImage](https://github.com/medhiclb/HelixAI/releases/download/v2026.1004.2/Helix-2026.1004.2.AppImage) | <code dir="ltr">chmod +x Helix-2026.1004.2.AppImage</code> ثم شغّله. على Ubuntu 24.04، يُفضَّل ملف <code dir="ltr">.deb</code> |
 
 **macOS، بأمر واحد** (موصى به): يُثبَّت التطبيق من دون رسالة Gatekeeper، بعد التحقق من صورة
 القرص مقابل `SHA256SUMS.txt` ومن توقيعها البرمجي:
