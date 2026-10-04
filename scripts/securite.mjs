@@ -5901,6 +5901,67 @@ console.log(JSON.stringify(r));`;
     }
   }
 
+  /*
+   * La commande `helix` sous Windows (04/10/2026) : un `helix.cmd` et le PATH
+   * du compte. Ici, ce qui se vérifie sans Windows : le texte du lanceur pour
+   * un compte « Moumoune & Kiki Élodie » et une application dans un dossier
+   * « 100% » (guillemets, `%` doublé, compte écrit par ses variables, console
+   * en UTF-8), et le script du PATH (registre lu brut, type gardé, jamais
+   * `setx`). Le lancement réel se fait sur la machine Windows de GitHub
+   * (scripts/essai-windows-ci.mjs, étape 7).
+   */
+  {
+    const ligneCli = exiger(join(RACINE, "electron", "ligneDeCommande.cjs"));
+    const compteW = "C:\\Users\\Moumoune & Kiki Élodie";
+    const envW = { USERPROFILE: compteW, LOCALAPPDATA: `${compteW}\\AppData\\Local`, APPDATA: `${compteW}\\AppData\\Roaming` };
+    const cmd = ligneCli.contenuLanceurWindows({
+      script: `${compteW}\\AppData\\Local\\Programs\\Helix\\resources\\cli\\helix.mjs`,
+      prive: "D:\\100% données\\openclaw-moteur\\node\\node.exe",
+      nom: "Essai & (Cie)",
+      env: envW,
+    });
+    const lignesCmd = cmd.split("\r\n");
+    verifier("commande helix, Windows : lanceur en CRLF, posé par l'application (reconnu pour « Retirer »)", !/[^\r]\n/.test(cmd) && cmd.includes("posé par l'application"), JSON.stringify(cmd.slice(0, 120)));
+    verifier(
+      "commande helix, Windows : le compte s'écrit par sa variable (aucun « Élodie » ni « & Kiki » en toutes lettres), `%` doublé ailleurs",
+      cmd.includes('set "HELIX_SCRIPT=%LOCALAPPDATA%\\Programs\\Helix\\resources\\cli\\helix.mjs"') && cmd.includes('set "HELIX_NODE=D:\\100%% données\\') && !cmd.includes("Élodie") && !cmd.includes("& Kiki"),
+      lignesCmd.filter((l) => l.startsWith("set ")).join(" | "),
+    );
+    verifier(
+      "commande helix, Windows : chaque chemin entre guillemets, arguments passés tels quels (%*)",
+      lignesCmd.includes('"%HELIX_NODE%" "%HELIX_SCRIPT%" %*') && /if exist "%HELIX_NODE%" "%HELIX_NODE%" -e /.test(cmd) && !/%HELIX_(NODE|SCRIPT)%/.test(cmd.replace(/"%HELIX_(NODE|SCRIPT)%"/g, "")),
+      lignesCmd.find((l) => l.includes("%*")),
+    );
+    verifier(
+      "commande helix, Windows : Node cherché dans le PATH seul (where $PATH:), sans l'alias du Microsoft Store, console en UTF-8 puis remise",
+      /where\.exe \$PATH:node\.exe/.test(cmd) && /findstr\.exe \/v \/i \/l WindowsApps/.test(cmd) && /chcp\.com 65001 >nul/.test(cmd) && (cmd.match(/chcp\.com %HELIX_PAGE% >nul/g) ?? []).length === 2,
+      "where / chcp",
+    );
+    verifier(
+      "commande helix, Windows : le message sans Node neutralise &, ( et ) du nom (cmd les lirait comme des ordres)",
+      lignesCmd.some((l) => l.startsWith(">&2 echo helix : Node 20 ou plus est introuvable") && l.includes("Essai ^& ^(Cie^)")),
+      lignesCmd.find((l) => l.includes("introuvable")),
+    );
+    const scriptPath = ligneCli.SCRIPT_PATH_WINDOWS;
+    const sourceLigne = sansCommentaires(src("electron", "ligneDeCommande.cjs"));
+    verifier(
+      "commande helix, Windows : PATH du compte lu brut dans le registre (DoNotExpandEnvironmentNames) et réécrit avec son type, jamais par setx ni SetEnvironmentVariable('Path')",
+      /DoNotExpandEnvironmentNames/.test(scriptPath) && /SetValue\('Path', \$nouveau, \$genre\)/.test(scriptPath) && /CurrentUser/.test(scriptPath) && !/LocalMachine/.test(scriptPath) &&
+        !/\bsetx\b/i.test(scriptPath) && !/SetEnvironmentVariable\('Path'/i.test(scriptPath) && !/["'`]setx/i.test(sourceLigne),
+      "SCRIPT_PATH_WINDOWS",
+    );
+    verifier(
+      "commande helix, Windows : ajouter prolonge la valeur lue ; une lecture qui échoue arrête tout avant d'écrire",
+      /\$nouveau = \$brut \+ ';' \+ \$dossier/.test(scriptPath) && /\$ErrorActionPreference = 'Stop'/.test(scriptPath) && /if \(\$present\) \{ \[Console\]::Out\.Write\('deja'\); exit 0 \}/.test(scriptPath),
+      "SCRIPT_PATH_WINDOWS",
+    );
+    verifier(
+      "commande helix, Windows : plus refusée (empechement ne rend plus « windows »), et l'écran ne le dit plus",
+      !/"windows"/.test(sourceLigne.match(/const empechement = [^\n]*/)?.[0] ?? '"windows"') && /etat\.windows/.test(src("src", "components", "settings", "LigneDeCommande.tsx")),
+      "ligneDeCommande.cjs / LigneDeCommande.tsx",
+    );
+  }
+
   // 2. Le banc d'essai des pages : Internet, mais ni la machine ni le réseau local.
   let filtreReseau = null;
   try {

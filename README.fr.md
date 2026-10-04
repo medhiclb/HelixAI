@@ -155,7 +155,7 @@ nouvelle version l'accès de Helix à sa clé du trousseau (« Helix Safe Storag
 Control), quand il est actif, bloque les applications non signées sans proposer de les lancer
 quand même.
 
-Non proposée sous Windows : la ligne de commande `helix`. Sous Windows, les commandes d'un agent
+Sous Windows, les commandes d'un agent
 toujours actif au palier « Libre » passent par PowerShell.
 
 ## Fonctions
@@ -243,7 +243,8 @@ La signature et la notarisation sont prêtes et n'attendent qu'un certificat App
 ### Ligne de commande
 
 L'application de bureau fournit la commande `helix`. Mettez-la en place depuis
-**Réglages › Installer les apps › CLI**, puis :
+**Réglages › Installer les apps › CLI** (sous Windows, ouvrez ensuite un nouveau PowerShell ou une
+nouvelle Invite de commandes), puis :
 
 ```bash
 helix connexion          # se connecter une fois avec son compte de l'instance
