@@ -152,7 +152,7 @@ puede acceder a su elemento del llavero («Helix Safe Storage»): elige «Permit
 Windows 11, Smart App Control, cuando está activo, bloquea las aplicaciones sin firmar y no
 ofrece ejecutarlas de todas formas.
 
-No se ofrece en Windows: la línea de comandos `helix`. En Windows, los comandos de un agente
+En Windows, los comandos de un agente
 siempre activo en el nivel «Libre» pasan por PowerShell.
 
 ## Funciones
@@ -241,7 +241,7 @@ La firma y la notarización están listas y solo esperan un certificado de Apple
 ### Línea de comandos
 
 La aplicación de escritorio incluye el comando `helix`. Configúralo desde
-**Ajustes › Instalar las apps › CLI** y después:
+**Ajustes › Instalar las apps › CLI** (en Windows, abre después un nuevo PowerShell o Símbolo del sistema) y después:
 
 ```bash
 helix connexion          # inicia sesión una vez con tu cuenta de la instancia

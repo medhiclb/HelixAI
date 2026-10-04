@@ -156,7 +156,7 @@ einmal, ob Helix auf seinen Schlüsselbundeintrag („Helix Safe Storage“) zug
 Sie „Immer erlauben“. Unter Windows 11 blockiert Smart App Control, wenn es aktiv ist,
 unsignierte Anwendungen und bietet nicht an, sie trotzdem auszuführen.
 
-Unter Windows nicht angeboten: die Befehlszeile `helix`. Unter Windows laufen die Befehle eines
+Unter Windows laufen die Befehle eines
 dauerhaft aktiven Agenten auf der Stufe „Frei“ über PowerShell.
 
 ## Funktionen
@@ -249,7 +249,7 @@ Signierung und Notarisierung sind vorbereitet und warten nur auf ein Apple-Zerti
 ### Befehlszeile
 
 Die Desktop-Anwendung liefert den Befehl `helix` mit. Richten Sie ihn unter
-**Einstellungen › Apps installieren › CLI** ein, dann:
+**Einstellungen › Apps installieren › CLI** ein (unter Windows öffnen Sie danach ein neues PowerShell- oder Eingabeaufforderungsfenster), dann:
 
 ```bash
 helix connexion          # einmal mit dem Konto Ihrer Instanz anmelden
