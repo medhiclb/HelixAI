@@ -105,7 +105,7 @@ console.log("B. Disposition du Node privé et installation par npm");
   verifier("installation : npm lancé par node et npm-cli.js (jamais npm.cmd, jamais bin/npm)", /executer\(d\.node, \[d\.npmCli, \.\.\.args\]/.test(source) && !/join\(binNode, "npm"\)/.test(source) && !/npm\.cmd/.test(source), "npm lancé autrement");
   verifier("installation : la vérification lance OpenClaw comme il sera lancé (node.exe openclaw.mjs sous Windows)", /executer\(lancement\.fichier, \[\.\.\.lancement\.prefixe, "--version"\]/.test(source), "vérification autrement");
   const msg = P.sansChemins("EPERM: operation not permitted, rename 'C:\\Users\\Jean Dupont\\.helix\\data\\x' -> \\\\serveur\\partage\\y (/Users/jean/.npm/_logs) https://registry.npmjs.org/openclaw");
-  verifier("message de npm à l'écran : sans chemin de la machine (Windows, UNC, Unix), l'adresse du registre gardée", !/Users\\|serveur|\/Users\/jean/.test(msg) && msg.includes("registry.npmjs.org"), msg);
+  verifier("message de npm à l'écran : sans chemin de la machine (Windows, UNC, Unix), l'adresse du registre gardée", !/Users\\|serveur|\/Users\/jean/.test(msg) && /https:\/\/registry\.npmjs\.org\//.test(msg), msg);
 }
 
 console.log("C. Trouver OpenClaw et le lancer sans cmd.exe");

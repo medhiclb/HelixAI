@@ -61,7 +61,8 @@ const portLibre = () =>
       s.close(() => ok(port));
     });
   });
-const attendre = (ms) => new Promise((r) => setTimeout(r, ms));
+// Bornée : une durée venue d'un faux serveur ne fige pas l'essai (CodeQL, 04/10/2026).
+const attendre = (ms) => new Promise((r) => setTimeout(r, Math.min(Math.max(0, Number(ms) || 0), 120_000)));
 const vivant = (pid) => {
   try {
     process.kill(pid, 0);

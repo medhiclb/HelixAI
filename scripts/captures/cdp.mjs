@@ -26,6 +26,13 @@ const CHROMES = [
 
 const attendre = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/**
+ * Une valeur écrite dans du code JavaScript envoyé à la page : `JSON.stringify`,
+ * plus `<`, `>`, `/` et les fins de ligne Unicode échappés, pour qu'aucune
+ * valeur ne puisse fermer une balise ni couper la ligne (CodeQL, 04/10/2026).
+ */
+export const enJs = (v) => JSON.stringify(v).replace(/[<>/\u2028\u2029]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`);
+
 export async function lancerChrome({ largeur = 1280, hauteur = 800, densite = 2, langue = "en" } = {}) {
   const binaire = CHROMES.find((c) => existsSync(c));
   if (!binaire) throw new Error("Chrome introuvable : donnez son chemin dans CHROME.");
@@ -257,7 +264,7 @@ class Onglet {
   /** Clic sur le premier élément qui répond au sélecteur CSS. */
   async cliquerSelecteur(selecteur) {
     const r = await this.eval(`(() => {
-      const e = document.querySelector(${JSON.stringify(selecteur)});
+      const e = document.querySelector(${enJs(selecteur)});
       if (!e) return null;
       e.scrollIntoView({ block: "nearest" });
       const b = e.getBoundingClientRect();
@@ -277,7 +284,7 @@ class Onglet {
 
   /** Fait défiler l'élément qui répond au sélecteur (ou la page) jusqu'à `haut` pixels. */
   async defiler(selecteur, haut) {
-    await this.eval(`(() => { const e = ${selecteur ? `document.querySelector(${JSON.stringify(selecteur)})` : "document.scrollingElement"}; if (e) e.scrollTop = ${haut}; })()`);
+    await this.eval(`(() => { const e = ${selecteur ? `document.querySelector(${enJs(selecteur)})` : "document.scrollingElement"}; if (e) e.scrollTop = ${haut}; })()`);
   }
 
   /** Tape du texte comme un clavier (caractère par caractère, `pause` entre deux). */

@@ -149,19 +149,31 @@ function reglesDeStyle(css, fichier) {
   return regles;
 }
 
+/** Applique `f` jusqu'à ce que le texte ne change plus. */
+function jusquAStable(texte, f) {
+  let avant;
+  do {
+    avant = texte;
+    texte = f(texte);
+  } while (texte !== avant);
+  return texte;
+}
+
 /** Lit un SVG en arbre `[balise, attributs, enfants]`. */
 function lireSvg(fichier) {
-  const texte = readFileSync(join(DOSSIER, fichier), "utf8")
-    .replace(/<\?xml[\s\S]*?\?>/g, "")
-    .replace(/<!DOCTYPE[\s\S]*?>/gi, "")
-    .replace(/<!--[\s\S]*?-->/g, "");
+  // Jusqu'à ce que rien ne bouge : un retrait peut en faire apparaître un autre (« <!-<!---->- »), CodeQL 04/10/2026.
+  const texte = jusquAStable(readFileSync(join(DOSSIER, fichier), "utf8"), (s) =>
+    s.replace(/<\?xml[\s\S]*?\?>/g, "").replace(/<!DOCTYPE[\s\S]*?>/gi, "").replace(/<!--[\s\S]*?-->/g, ""),
+  );
 
   // Feuilles de style d'abord : elles s'appliquent partout dans le document.
   let classes = {};
-  const sansStyle = texte.replace(/<style[^>]*>([\s\S]*?)<\/style>/g, (_, css) => {
-    classes = { ...classes, ...reglesDeStyle(css, fichier) };
-    return "";
-  });
+  const sansStyle = jusquAStable(texte, (s) =>
+    s.replace(/<style[^>]*>([\s\S]*?)<\/style>/g, (_, css) => {
+      classes = { ...classes, ...reglesDeStyle(css, fichier) };
+      return "";
+    }),
+  );
 
   const racine = { balise: "#", attributs: {}, enfants: [] };
   const pile = [racine];

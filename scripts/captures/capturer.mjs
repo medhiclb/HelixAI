@@ -45,7 +45,7 @@ import { createServer as serveurNet } from "node:net";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { lancerChrome } from "./cdp.mjs";
+import { enJs, lancerChrome } from "./cdp.mjs";
 import { demarrerFauxModele } from "./faux-modele.mjs";
 
 const ICI = dirname(fileURLToPath(import.meta.url));
@@ -712,7 +712,7 @@ try {
     await chrome.attendreTexte(T("Sur quoi voulez-vous travailler ?"));
     await pause(1000);
     const debut = scene.demo.question.slice(0, 8);
-    if (await chrome.eval(`[...document.querySelectorAll("aside li button, nav li button, li button")].some((b) => (b.getAttribute("title") ?? "").startsWith(${JSON.stringify(debut)}))`)) {
+    if (await chrome.eval(`[...document.querySelectorAll("aside li button, nav li button, li button")].some((b) => (b.getAttribute("title") ?? "").startsWith(${enJs(debut)}))`)) {
       await chrome.cliquerSelecteur(`li button[title^=${JSON.stringify(debut)}]`);
       await chrome.attendreQue(sources, { quoi: "le Chat de la démonstration" });
       await pause(800);
@@ -785,7 +785,7 @@ try {
     await chrome.attendreTexte(scene.entrainement.nom);
     await pause(600);
     await chrome.cliquer(scene.entrainement.nom, { selecteur: "button, a, p, span, div", contient: true });
-    await chrome.attendreQue(`[...document.querySelectorAll("textarea, input")].some((e) => e.value === ${JSON.stringify(scene.entrainement.exemples[0][0])})`, { quoi: "les exemples" });
+    await chrome.attendreQue(`[...document.querySelectorAll("textarea, input")].some((e) => e.value === ${enJs(scene.entrainement.exemples[0][0])})`, { quoi: "les exemples" });
     await pause(1000);
     // Même cadrage que les autres langues : « Tous les modèles » en haut, le titre de la page au-dessus, hors champ.
     await chrome.eval(`(() => {

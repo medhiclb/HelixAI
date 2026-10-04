@@ -210,7 +210,7 @@ try {
     const d2 = join(TMP, "donnees-e");
     preparer(d2, process.execPath);
     const portReste = await portLibre();
-    const script = `require("http").createServer((q, r) => { r.setHeader("content-type", "application/json"); r.end(${JSON.stringify(reponse)}); }).listen(${portReste}, "127.0.0.1");`;
+    const script = `require("http").createServer((q, r) => { r.setHeader("content-type", "application/json"); r.end(${JSON.stringify(reponse).replace(/[<>/\u2028\u2029]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`)}); }).listen(${Number(portReste)}, "127.0.0.1");`;
     const reste = spawn(join(d2, "llamacpp", "b11146", "llama-server"), ["-e", script], { stdio: "ignore" });
     intrus.push(() => reste.kill());
     // Qu'il écoute vraiment avant la passerelle (une copie de 100 Mo démarre lentement sur une machine chargée).

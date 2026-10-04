@@ -120,7 +120,7 @@ function contenuLanceur({ script: scriptCli = script(), prive = nodePrive(), nom
     `  "$NODE" -e ${guillemets(verifier)} 2>/dev/null || continue`,
     `  exec "$NODE" ${guillemets(scriptCli)} "$@"`,
     "done",
-    `echo ${guillemets(`helix : Node ${NODE_MINIMUM} ou plus est introuvable sur cet ordinateur. Ouvrez ${nom}, Paramètres, Ligne de commande : « Mettre en place » pose le Node de ${nom}.`)} >&2`,
+    `echo ${guillemets(`helix : Node ${NODE_MINIMUM} ou plus est introuvable sur cet ordinateur. Ouvrez ${nom}, Réglages › Installer les apps › CLI : « Mettre en place » pose le Node de ${nom}.`)} >&2`,
     "exit 127",
     "",
   ].join("\n");
@@ -188,7 +188,7 @@ function contenuLanceurWindows({ script: scriptCli = script(), prive = nodePrive
     `for /f "delims=" %%n in ('${systeme}\\where.exe $PATH:node.exe 2^>nul ^| ${systeme}\\findstr.exe /v /i /l WindowsApps') do (`,
     `  "%%n" -e "${verifier}" >nul 2>&1 && (set "HELIX_NODE=%%n" & goto lancer)`,
     ")",
-    `>&2 echo ${texteEcho(`helix : Node ${NODE_MINIMUM} ou plus est introuvable sur cet ordinateur. Ouvrez ${nom}, Paramètres, Ligne de commande : « Mettre en place » pose le Node de ${nom}.`)}`,
+    `>&2 echo ${texteEcho(`helix : Node ${NODE_MINIMUM} ou plus est introuvable sur cet ordinateur. Ouvrez ${nom}, Réglages › Installer les apps › CLI : « Mettre en place » pose le Node de ${nom}.`)}`,
     `if defined HELIX_PAGE ${systeme}\\chcp.com %HELIX_PAGE% >nul`,
     "exit /b 127",
     ":lancer",

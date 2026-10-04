@@ -436,7 +436,7 @@ try {
   const ferme = await api(passerelle, "/helix/connecteurs/connecter", { id: "palmier" });
   verifier(
     "application fermée : refus clair « Ouvrez Palmier Pro, puis réessayez », avec la page de téléchargement officielle, rien n'est branché",
-    ferme.statut === 400 && /Ouvrez Palmier Pro, puis réessayez/.test(ferme.message) && ferme.message.includes("https://github.com/palmier-io/palmier-pro/releases/latest") && !(ferme.etat?.installes ?? []).some((c) => c.id === "palmier"),
+    ferme.statut === 400 && /Ouvrez Palmier Pro, puis réessayez/.test(ferme.message) && /(^|[\s«(])https:\/\/github\.com\/palmier-io\/palmier-pro\/releases\/latest(?=$|[\s».,;)])/.test(ferme.message) && !(ferme.etat?.installes ?? []).some((c) => c.id === "palmier"),
     ferme.message,
   );
 
