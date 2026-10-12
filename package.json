@@ -196,7 +196,7 @@
     "pdfjs-dist": "^6.3.289",
     "pg": "^8.23.0",
     "postcss": "^8.4.49",
-    "tailwindcss": "^3.4.17",
+    "tailwindcss": "^4.3.3",
     "typescript": "^5.6.3",
     "vite": "^6.0.5"
   }
