@@ -373,7 +373,9 @@ if (process.argv.includes("--installation")) {
   console.log(`  (installation : ${Math.round((Date.now() - debutInstallation) / 1000)} s)`);
   const etat = JSON.parse(/ETAT (.*)/.exec(sortie)?.[1] ?? "null");
   const lancement = JSON.parse(/LANCEMENT (.*)/.exec(sortie)?.[1] ?? "null");
-  const reussie = etat?.etape === "termine" && etat.version === "2026.9.4";
+  // La version que Helix installe, lue dans le code (2026.10.7 depuis le 24/10/2026).
+  const eprouvee = lire("gateway", "src", "installationOpenClaw.ts").match(/VERSION_OPENCLAW_EPROUVEE = "([\d.]+)"/)?.[1] ?? "?";
+  const reussie = etat?.etape === "termine" && etat.version === eprouvee;
   if (vcAbsent) {
     const etape = JSON.parse(/ETAPE_VISUALCPP (.*)/.exec(sortie)?.[1] ?? "null");
     const code = /\[visual-cpp\] installeur terminé : code (\S+)/.exec(sortie)?.[1];
@@ -476,7 +478,7 @@ if (process.argv.includes("--installation")) {
   }
   // Toute la sortie à l'écran quand l'installation échoue : c'est elle qu'on lit dans le journal de GitHub.
   if (!reussie) console.log(sortie.split(/\r?\n/).map((l) => `    | ${l}`).join("\n"));
-  verifier("installation réelle : Node épinglé, puis openclaw@2026.9.4 par npm-cli.js avec --prefix, vérifié", reussie, sortie.slice(-600));
+  verifier(`installation réelle : Node épinglé, puis openclaw@${eprouvee} par npm-cli.js avec --prefix, vérifié`, reussie, sortie.slice(-600));
   verifier("installation réelle : rien hors du dossier de données jetable (dossier personnel vide de .openclaw et de .npm-global)", !existsSync(join(maison, ".openclaw")) && !existsSync(join(maison, ".npm-global")), "écrit hors du dossier");
   if (lancement) {
     const port = await new Promise((ok) => {

@@ -915,6 +915,7 @@
   "La mise à jour n'a pas abouti, et le retour à OpenClaw {0} non plus : {1}": "Das Update ist nicht gelungen, und die Rückkehr zu OpenClaw {0} auch nicht: {1}",
   "La mission « {0} » n'a pas pu être planifiée : {1}": "Der Auftrag „{0}“ konnte nicht geplant werden: {1}",
   "La mission n'a pas pu être lancée.": "Der Auftrag konnte nicht gestartet werden.",
+  "La nouvelle version d'OpenClaw n'ouvre pas les données de vos agents.": "Die neue Version von OpenClaw kann die Daten Ihrer Agenten nicht öffnen.",
   "La page a répondu {0}.": "Die Seite hat {0} geantwortet.",
   "La passerelle n'est pas encore prête.": "Das Gateway ist noch nicht bereit.",
   "La période est vide : « jusqu_a » doit suivre « depuis ».": "Der Zeitraum ist leer: „jusqu_a“ muss nach „depuis“ liegen.",

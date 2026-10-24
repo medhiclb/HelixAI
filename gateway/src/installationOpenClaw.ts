@@ -57,7 +57,7 @@ import { detecterVisualCpp, installerVisualCpp } from "./visualCpp.ts";
  */
 
 /** Version d'OpenClaw sur laquelle la configuration écrite par Helix a été éprouvée. */
-export const VERSION_OPENCLAW_EPROUVEE = "2026.9.4";
+export const VERSION_OPENCLAW_EPROUVEE = "2026.10.7";
 
 /**
  * Les dépendances que npm résout pour OpenClaw et pour les serveurs d'outils
@@ -81,7 +81,7 @@ export const VERSION_OPENCLAW_EPROUVEE = "2026.9.4";
  * l'essai** : une version publiée après elle est refusée (`ETARGET … with a
  * date before`), et le contrôle 14 bis de `npm run securite` le rappelle.
  */
-export const DEPENDANCES_NPM_AVANT = "2026-09-27T00:00:00.000Z";
+export const DEPENDANCES_NPM_AVANT = "2026-10-24T08:00:00.000Z";
 
 const racine = () =>
   join(process.env.HELIX_DATA_DIR ?? join(homedir(), ".helix", "data"), "openclaw-moteur");

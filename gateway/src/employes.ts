@@ -2834,9 +2834,37 @@ export const crochetsMiseAJour: Crochets = {
   apres: async () => {
     moteurCache = null;
     configurationFaite = false;
+    /*
+     * Les migrations de la nouvelle version, instance arrêtée, avant de
+     * relancer quoi que ce soit (essai de 2026.9.4 vers 2026.10.7 sur ce Mac,
+     * 24/10/2026) : la 2026.10 change le schéma de la base de chaque agent, et
+     * sans `doctor --fix` la passerelle démarrait (« ready ») mais refusait
+     * tout agent (« SqliteSchemaMismatchError … run "openclaw doctor --fix" »).
+     * `--non-interactive` : les migrations sûres seulement, sans question.
+     */
+    if (existsSync(dossier())) {
+      const reparation = await oc(["doctor", "--fix", "--non-interactive"], 5 * 60_000);
+      if (!reparation.ok) console.warn(`[employes] openclaw doctor après la mise à jour : ${(reparation.erreur || reparation.sortie).slice(-400)}`);
+    }
     enMaintenance = false;
+    const journal = join(dossier(), "journaux", "console.log");
+    const lu = existsSync(journal) ? statSync(journal).size : 0;
     await assurerMarche();
     if ((await charger()).length > 0 && !processus) throw new Error(t("OpenClaw ne redémarre pas."));
+    /*
+     * Démarrée ne veut pas dire utilisable : la même erreur de base se lit au
+     * journal dans les secondes qui suivent « ready ». Vue, la mise à jour
+     * échoue, et `retablir` remet les données mises de côté et l'ancienne
+     * version (avant : elles étaient effacées ici, et les agents restaient
+     * muets).
+     */
+    if ((await charger()).length > 0) {
+      await new Promise((r) => setTimeout(r, 15_000));
+      const apres = existsSync(journal) ? readFileSync(journal).subarray(lu).toString("utf8") : "";
+      if (/SqliteSchemaMismatchError|Sessions remain unavailable/.test(apres)) {
+        throw new Error(t("La nouvelle version d'OpenClaw n'ouvre pas les données de vos agents."));
+      }
+    }
     rmSync(miseDeCote(), { recursive: true, force: true });
   },
   retablir: async () => {

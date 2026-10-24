@@ -915,6 +915,7 @@
   "La mise à jour n'a pas abouti, et le retour à OpenClaw {0} non plus : {1}": "更新は完了せず、OpenClaw {0} への復帰もできませんでした：{1}",
   "La mission « {0} » n'a pas pu être planifiée : {1}": "ミッション「{0}」をスケジュールできませんでした：{1}",
   "La mission n'a pas pu être lancée.": "ミッションを開始できませんでした。",
+  "La nouvelle version d'OpenClaw n'ouvre pas les données de vos agents.": "新しいバージョンの OpenClaw はエージェントのデータを開けません。",
   "La page a répondu {0}.": "ページの応答は {0} でした。",
   "La passerelle n'est pas encore prête.": "ゲートウェイの準備がまだできていません。",
   "La période est vide : « jusqu_a » doit suivre « depuis ».": "期間が空です。「jusqu_a」は「depuis」より後でなければなりません。",

@@ -6364,6 +6364,30 @@ Electron (préchargement, `nouveautes.json` dans le vrai profil, lien ouvert dan
 système), une vraie mise à jour d'un clic suivie du premier lancement, l'API GitHub appelée depuis
 `net.fetch` d'Electron, un poste rattaché (la doublure ne joue pas le coffre), Windows et Linux.
 
+**Fait le 24/10/2026 : OpenClaw 2026.10.7, décidé par Medhi.** « installe la dernière version stable », puis « va
+regarder sur le github openclaw la dernière version stable » : la publication marquée « Latest » sur
+github.com/openclaw/openclaw, 2026.10.7 (la 2026.9.34 est leur branche `extended-stable`). `VERSION_OPENCLAW_EPROUVEE`
+passe à 2026.10.7 et `DEPENDANCES_NPM_AVANT` au 2026-10-24T08:00:00Z (openclaw@2026.10.7 publié à 07:36 UTC). Arbre
+résolu à cette date : 545 versions, dont sept paquets d'autres éditeurs publiés depuis le 17/10 (fast-uri 3.1.9,
+body-parser 2.4.0, on-finished 2.4.2, jose 6.2.13, strtok3 10.6.2, @babel/types et @babel/helper-string-parser 8.0.8) ;
+la même date vaut pour les serveurs d'outils lancés par `npx`. Mêmes scripts d'installation (preinstall, postinstall)
+et même point d'entrée (`openclaw.mjs`) qu'en 2026.9.4 ; Node 24.22.1 exigé (`engines`), posé depuis la 2026.1024.3.
+- **Essai réel sur ce Mac** (passerelle jetable, faux serveur de modèles, jamais Eden ni l'OpenClaw de Helix, ni LM
+  Studio) : OpenClaw 2026.9.4 installé par Helix, un agent déployé qui répond ; puis la mise à jour par Helix vers la
+  2026.10.7. **Premier essai : cassé.** La mise à jour se disait réussie (passerelle « ready »), l'agent était là,
+  mais il ne répondait plus : « SqliteSchemaMismatchError … Stop the Gateway, run "openclaw doctor --fix" ». La 2026.10
+  change le schéma de la base de chaque agent. Pire : la mise de côté des données avait été effacée, sans retour
+  possible.
+- **Corrigé** (`crochetsMiseAJour.apres`, employes.ts) : `openclaw doctor --fix --non-interactive` (migrations sûres
+  seulement), instance arrêtée, avant de la relancer ; puis, 15 s après le démarrage, le journal de la console est
+  relu, et `SqliteSchemaMismatchError` ou « Sessions remain unavailable » font échouer la mise à jour, ce qui déclenche
+  `retablir` (données mises de côté remises, ancienne version réinstallée). **Second essai, de zéro : vert**, la mise à
+  jour aboutit et l'agent répond. `doctor --lint --json` et `--session-sqlite validate` ne voient pas cette erreur
+  (essayés le même jour) : c'est le journal qui la dit.
+- **Pas essayé** : le retour en arrière quand le journal montre l'erreur (le chemin est celui de toute mise à jour
+  ratée, essayé à sa création), une installation neuve en 2026.10.7 sur ce Mac (l'essai OpenClaw sous Windows la fait
+  sur trois machines), des agents avec canaux (Telegram, WhatsApp…) et des conversations anciennes en nombre.
+
 **Fait le 24/10/2026 : « le modèle s'installe pas, ça charge à l'infini » sur des PC, et les dépendances.**
 Signalé par Medhi, pour des personnes sous Windows. Lu dans l'essai Windows de GitHub de la 2026.1024.2
 (run 40093536932, journaux de LM Studio en artefact) :
