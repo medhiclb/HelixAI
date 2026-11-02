@@ -10,7 +10,7 @@ refaite à l'envers.
 
 | | |
 |---|---|
-| Version | 2026.1024.3 (`package.json`) |
+| Version | 2026.1102.1 (`package.json`) |
 | Dernière mise à jour | 30 septembre 2026 |
 | Vérifié | `npm run securite` : 2290 contrôles, 0 échec (30/09/2026, sur le code fusionné avec les vrais catalogues) ; `npm run typecheck` ; relevés à 100 % dans les six catalogues (interface 3 893 phrases, passerelle 1 503) ; essai Windows sur GitHub Actions ; `essai:cli`, `essai:vscode`, `essai:palmier` |
 | Reste à essayer | sur les vraies machines : § 5, « Ce qui reste à essayer sur les postes de Medhi » |
@@ -7665,6 +7665,9 @@ retouche, avatars synchronisés, veille marketing ou publication sociale dans ce
 studio : ces capacités de Solial ne sont pas des fonctions locales de Wan.
 
 ---
+
+
+**Publication du 02/11/2026, version 2026.1102.1** : demandée par Medhi après l’envoi des sources. Paquets fabriqués dans `/private/tmp/helix-release-2026.1102.1.noindex`, avec la clé d’éditeur existante, sans remplacer l’application du poste. Contenu : OpenClaw 2026.10.7, imports OpenCode/Zcode, conseiller local et studio vidéo. Les essais de vrais modèles vidéo et les gains matériels ne sont pas mesurés ici. Publication conditionnée aux contrôles et aux fichiers de mise à jour signés.
 
 ## 6. Ce qu'il ne faut pas refaire
 
