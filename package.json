@@ -41,7 +41,12 @@
     "typecheck:gateway": "tsc --noEmit -p tsconfig.gateway.json",
     "package:signe": "node scripts/signature/construire.mjs",
     "cle:editeur": "node scripts/signature/cle-editeur.mjs",
-    "verifier:signature": "node scripts/signature/verifier.mjs"
+    "verifier:signature": "node scripts/signature/verifier.mjs",
+    "essai:imports-code": "node scripts/essai-import-code.mjs",
+    "essai:optimisation": "node scripts/essai-optimisation.mjs",
+    "essai:scenario-video": "node scripts/essai-scenario-video.mjs",
+    "essai:ajouts-http": "node scripts/essai-ajouts-http.mjs",
+    "essai:studio-video": "node scripts/essai-studio-video.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",

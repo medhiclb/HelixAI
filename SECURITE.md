@@ -7002,3 +7002,47 @@ surtout, où des fichiers peuvent rester tenus),
 l'ouverture du fichier par le Bloc-notes sous Windows et par l'éditeur sous Linux, et le parcours
 complet à l'écran dans Electron (préchargement, canal réel du `utilityProcess`). Ces voies ne se
 vérifient qu'avec la vraie application.
+
+
+## 70. Imports OpenCode/Zcode, conseil local et studio vidéo (2 novembre 2026)
+
+Les nouveaux imports empruntent `handleImportLogiciels` : pas de lecture d'historiques
+sur une instance partagée ou depuis un compte membre, pas de jeton dans l'adresse,
+séance et jeton d'instance en en-têtes, boucle locale exigée. `importCodeLocal.ts`
+n'accepte aucun chemin venant d'une requête : seulement les emplacements des deux
+logiciels. Les identifiants proviennent du relevé et sont validés avant le SQL.
+SQLite est ouvert en lecture seule, par le Node privé existant ou l'utilitaire
+système, sans démarrer le logiciel ni lire ses clés. Les tables de messages et parties
+sont les seules lues pour le contenu. Échec de lecture : erreur, aucune écriture.
+
+Les routes d'optimisation figurent dans EXECUTION et redemandent la séance. Le mode et
+le conseil sont réservés à l'administrateur ; le changement est journalisé sans
+contenu de conseil. Pas d'adresse arbitraire ni de commandes fournies par le modèle.
+Le conseil n'utilise qu'un backend LM Studio/llama.cpp activé, sur localhost,
+127.0.0.1 ou ::1, sans identifiants dans l'adresse et sans redirection. Les instances
+chargées sont distinguées des modèles disponibles pour éviter un chargement JIT
+supplémentaire. Un seul conseil en cours, 120 s au plus. Le réglage n'agit qu'aux
+chargements suivants et n'écrase pas de données si sa lecture a échoué.
+
+La route de scénario vidéo est également dans EXECUTION, sous séance. Brief de
+2 000 caractères au plus ; modèle local seulement, sans outils ; trois scènes en
+JSON, chacune de 2 000 caractères au plus, relues avant usage. Son routage précède
+la route générique vidéo (défaut trouvé par `essai-ajouts-http.mjs`). Les clips gardent
+les droits de l'index images existant. Les projets du studio utilisent les droits,
+la persistance chiffrée et le cycle RGPD des projets. L'export WebM ne contacte aucun
+service, lit les clips par les routes authentifiées, libère les adresses temporaires
+et les pistes ; erreur/annulation rejette au lieu de télécharger un résultat partiel.
+La préparation du prompt de génération vidéo est aussi locale, sans repli cloud.
+
+Contrôles : `essai-import-code.mjs`, `essai-optimisation.mjs`,
+`essai-scenario-video.mjs`, `essai-ajouts-http.mjs` ; assemblage de deux clips
+artificiels exécuté dans le navigateur. Limites : aucun vrai Zcode ni génération Wan
+essayés dans cette passe ; aucune mesure de gain de performances ; export et suivi
+à essayer dans l'application empaquetée. La fermeture de l'instance perd le registre
+en mémoire des travaux ; les clips générés restent sur le disque, mais un lien scène
+non enregistré avant fermeture peut devoir être repris séparément.
+
+Bilan du 02/11 : batterie complète 2 720 contrôles, zéro échec ; essai HTTP des
+nouvelles routes également exécuté séparément. Typecheck et six catalogues complets
+(interface et passerelle). La section 55 rejoue désormais ces quatre scripts lors
+des prochaines batteries. Aucun changement envoyé sur GitHub ni version publiée.

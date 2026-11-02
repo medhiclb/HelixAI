@@ -1,3 +1,4 @@
+import { backendLocalSur } from "./optimisationLocale.ts";
 import { redirectionPour, refusSortie } from "./sortieReseau.ts";
 import { models, resolve } from "./router.ts";
 import { backendById, loadModel } from "./backends.ts";
@@ -40,6 +41,7 @@ export async function completer(
   messages: Message[],
   options: {
     qui: string;
+    localSeulement?: boolean;
     maxTokens?: number;
     delaiMs?: number;
     /**
@@ -63,6 +65,7 @@ export async function completer(
   if ("error" in choix) return { ok: false, message: choix.error };
   const { model } = choix;
   const backend = backendById(model.backendId);
+  if (options.localSeulement && (!backend || !backendLocalSur(backend))) return { ok: false, message: t("Aucun modèle de texte local disponible.") };
   if (!backend) return { ok: false, message: tf("Moteur introuvable pour {0}.", model.id) };
   /*
    * Un modèle téléchargé mais pas en mémoire : Helix le charge avec ses
@@ -111,7 +114,7 @@ export async function completer(
   const envoyer = (corps: Record<string, unknown>) =>
     fetch(`${backend.baseUrl}/chat/completions`, {
       method: "POST",
-      redirect: redirectionPour(backend),
+      redirect: options.localSeulement ? "error" : redirectionPour(backend),
       headers: {
         "Content-Type": "application/json",
         ...(backend.entetes ?? {}),

@@ -1,3 +1,4 @@
+import { OptimisationLocale } from "@/components/settings/OptimisationLocale";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { reduirePhoto } from "@/lib/photo";
 import {
@@ -1369,6 +1370,7 @@ export function ModelesLocauxSettings() {
       </Card>
       {/* L'application LM Studio, ou Bionic, qui s'ouvrait toute seule (23/10/2026) : rien ne s'affiche sans application LM Studio sur la machine. */}
       <MoteurLmStudioCarte />
+      <Card className="mt-4"><OptimisationLocale /></Card>
     </SettingsPage>
   );
 }
@@ -1595,7 +1597,7 @@ export function ImportSettings() {
   return (
     <SettingsPage
       title={t("Importer depuis d'autres IA")}
-      subtitle={t("Reprenez vos Chats, projets et instructions de ChatGPT, Claude, Gemini, Claude Code, Codex ou Cursor.")}
+      subtitle={t("Reprenez vos Chats, projets et instructions depuis vos autres outils d’IA.")}
     >
       <ImporterChats />
     </SettingsPage>

@@ -8,7 +8,7 @@ import { Card } from "@/components/settings/SettingsShell";
 import { NOM_SOURCE, completerChats, lireExport, lireLogiciel, logicielsDuPoste, type ChatImporte, type Import, type LogicielTrouve } from "@/lib/importChats";
 import { instance } from "@/lib/instance";
 import { ajouterSessionsImportees, chatsDejaImportes, placeOccupeeParLesChats, type Session } from "@/lib/store/sessions";
-import { createProject } from "@/lib/store/projects";
+import { createProject, updateProject, visibleTo as projetsVisibles } from "@/lib/store/projects";
 import { createAgent } from "@/lib/store/agents";
 import { currentUser } from "@/lib/store/identity";
 import { newId } from "@/lib/store/storage";
@@ -174,9 +174,12 @@ export function ImporterChats() {
         const description = [p.description, p.instructions ? `${t("Instructions du projet d'origine :")}\n${p.instructions}` : ""]
           .filter(Boolean)
           .join("\n\n");
-        const projet = createProject(moi, p.nom, description);
+        const existant = projetsVisibles(moi).find(x => x.ownerId === moi.id && x.importe?.source === donnees.source && x.importe.cle === p.cle);
+        const projet = existant ?? createProject(moi, p.nom, description);
+        if (!existant) updateProject(projet.id, { ...(p.dossierCode ? { dossierCode: p.dossierCode } : {}), importe: { source: donnees.source, cle: p.cle } });
         projetsHelix.set(p.cle, projet.id);
-        bilanEnCours.projets++;
+        if (!existant) bilanEnCours.projets++;
+        if (existant) continue;
         if (avecAgents && p.instructions) {
           createAgent(moi, {
             name: p.nom,

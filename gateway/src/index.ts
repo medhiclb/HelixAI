@@ -1,3 +1,4 @@
+import { preparerScenario } from "./videosScenario.ts";
 // En premier : sous Windows, rien de ce que lance la passerelle n'ouvre de console (processus.ts).
 import "./processus.ts";
 import http from "node:http";
@@ -23,7 +24,7 @@ import {
 } from "./reseau.ts";
 import { estAdministrateur, origineDuRole } from "./roles.ts";
 import { estProtege } from "./zonesProtegees.ts";
-import { PORT, HOST, surLeReseau } from "./config.ts";
+import { PORT, HOST, surLeReseau, tousLesBackends } from "./config.ts";
 import {
   discover,
   loadModel,
@@ -81,6 +82,7 @@ import { chmodSync, readFileSync, writeFileSync } from "node:fs";
 import { join as joindre } from "node:path";
 import { homedir as dossierPersonnel } from "node:os";
 import * as images from "./images.ts";
+import * as optimisation from "./optimisationLocale.ts";
 import { contenuLogiciel, logicielsTrouves, pageLogiciel } from "./importLocal.ts";
 import * as entrainement from "./entrainement.ts";
 import { choisirDesign, corrigerPages, estApplication, estDemandeDeSite, preparerDesign, projetDejaCommence } from "./design.ts";
@@ -1901,6 +1903,9 @@ const EXECUTION: { methode: string; chemin: string }[] = [
   { methode: "POST", chemin: "/helix/emplacement-modeles" },
   { methode: "POST", chemin: "/helix/emplacement-modeles/verifier" },
   // Le moteur de LM Studio que Helix peut démarrer (23/10/2026) : l'état de la machine, et le choix de l'administrateur.
+  { methode: "GET", chemin: "/helix/optimisation-locale" },
+  { methode: "POST", chemin: "/helix/optimisation-locale" },
+  { methode: "POST", chemin: "/helix/optimisation-locale/conseil" },
   { methode: "GET", chemin: "/helix/moteur-lmstudio" },
   { methode: "POST", chemin: "/helix/moteur-lmstudio" },
   { methode: "POST", chemin: "/helix/mcp/toggle" },
@@ -1974,6 +1979,7 @@ const EXECUTION: { methode: string; chemin: string }[] = [
   { methode: "POST", chemin: "/helix/videos/desinstaller" },
   { methode: "POST", chemin: "/helix/videos/choisir" },
   { methode: "POST", chemin: "/helix/videos/creer" },
+  { methode: "POST", chemin: "/helix/videos/scenario" },
   { methode: "POST", chemin: "/helix/dictee" },
   /*
    * Approuver une action, ou desserrer le niveau d'approbation, engage une
@@ -5979,6 +5985,23 @@ const traiter = (
     if (req.method === "GET" && path === "/helix/emplacement-modeles") return handleEmplacementEtat(req, res, url);
     if (req.method === "POST" && path === "/helix/emplacement-modeles") return handleEmplacementChoix(req, res, url);
     if (req.method === "POST" && path === "/helix/emplacement-modeles/verifier") return handleEmplacementVerifier(req, res, url);
+    if (path === "/helix/optimisation-locale" || path === "/helix/optimisation-locale/conseil") {
+      const qui = await demandeur(req, url);
+      if (!qui) return send(res, 401, sansSeance());
+      const admin = await estAdministrateur(qui.userId);
+      if (path.endsWith("/conseil") && req.method === "POST") {
+        if (!admin) return send(res, 403, { error: { message: t("Seul l'administrateur de l'instance peut modifier ce réglage.") } });
+        try { return send(res, 200, await optimisation.demanderConseilLocal(tousLesBackends(), detectHardware())); }
+        catch (e) { return send(res, 409, { error: { message: e instanceof Error ? e.message : t("Demande refusée.") } }); }
+      }
+      if (path === "/helix/optimisation-locale" && req.method === "POST") {
+        if (!admin) return send(res, 403, { error: { message: t("Seul l'administrateur de l'instance peut modifier ce réglage.") } });
+        const corps = await readJson(req) as { mode?: unknown };
+        if (corps.mode !== "standard" && corps.mode !== "automatique") return send(res, 400, { error: { message: t("Choix inconnu.") } });
+        await optimisation.reglerOptimisation(corps.mode, qui.userId);
+      } else if (req.method !== "GET" || path.endsWith("/conseil")) return send(res, 405, {});
+      return send(res, 200, { ...optimisation.diagnosticOptimisation(detectHardware()), admin });
+    }
     if (req.method === "GET" && path === "/helix/moteur-lmstudio") return handleMoteurLmStudioEtat(req, res, url);
     if (req.method === "POST" && path === "/helix/moteur-lmstudio") return handleMoteurLmStudioChoix(req, res, url);
     if (req.method === "POST" && path === "/helix/auth/create")
@@ -6167,6 +6190,14 @@ const traiter = (
     if (req.method === "POST" && path === "/helix/machine/arreter") return handleMachineAction(req, res, url, "arreter");
     if (req.method === "POST" && path === "/helix/machine/effacer") return handleMachineAction(req, res, url, "effacer");
     if (req.method === "GET" && path === "/helix/machine/ecran") return handleMachineEcran(req, res, url);
+    if (req.method === "POST" && path === "/helix/videos/scenario") {
+      const qui = await demandeur(req, url);
+      if (!qui) return send(res, 401, sansSeance());
+      const corps = await readJson(req) as { brief?: unknown };
+      if (typeof corps.brief !== "string" || !corps.brief.trim() || corps.brief.length > 2000) return send(res, 400, { error: { message: t("Décrivez votre vidéo en 2 000 caractères au plus.") } });
+      try { return send(res, 200, { scenes: await preparerScenario(corps.brief, qui.userId) }); }
+      catch (e) { return send(res, 409, { error: { message: e instanceof Error ? e.message : t("Demande refusée.") } }); }
+    }
     if (path === "/helix/videos" || path.startsWith("/helix/videos/")) return handleVideos(req, res, url, path.slice("/helix/videos".length).replace(/^\//, ""));
     if (req.method === "GET" && path === "/helix/images") return handleImagesEtat(req, res, url);
     // La recherche sur le web du Chat : permise ou non par le profil, et le moteur que la puce nomme (rechercheWeb.ts).
@@ -6598,6 +6629,7 @@ async function preparerMagasin(): Promise<void> {
   await chargerReglagesEcran();
   // Le moteur de LM Studio que Helix peut démarrer (23/10/2026) : connu avant la première découverte, qui lancerait `lms`.
   await chargerChoixMoteur();
+  await optimisation.chargerOptimisation();
   // Mode « machine de l'agent » choisi : elle démarre avec l'instance, sans attendre la première demande.
   if (configEcran().mode === "sandbox") void demarrerMachine().catch(() => undefined);
   // Les clés de modèles cloud doivent être des backends dès la première requête.

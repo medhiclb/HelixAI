@@ -1466,3 +1466,28 @@ paiement branché. (« Créer une compétence » et le téléchargement direct, 
 
 **À éprouver avant de le promettre** : le bot de réunion dans une vraie réunion
 Google Meet (il l'a été face à une réunion simulée).
+
+
+## Studio vidéo
+
+Entrée « Studio vidéo » dans la navigation, route `/videos`. Projets libres ou
+canevas « Vidéo produit » et « Histoire courte ». Nom, brief, préparation de trois
+scènes par le modèle local de texte ; scènes éditables, déplaçables et duplicables,
+jusqu'à douze. Modèle vidéo et format se choisissent dans le panneau de réglages.
+Chaque scène possède son suivi, son aperçu et son téléchargement. Un bouton lance les
+scènes manquantes dans l'ordre ; le montage final s'exporte en WebM. Le texte explique
+les clips courts sans son et l'assemblage en temps réel, qui demande de garder la
+fenêtre ouverte. Les erreurs restent à côté des scènes ; les contrôles de génération
+sont indisponibles tant que le moteur n'est pas prêt.
+
+## Reprise des projets de code et optimisation locale
+
+Réglages, Importer : OpenCode et Zcode apparaissent lorsqu'un historique local est
+trouvé. La sélection montre projets et Chats ; le projet repris apparaît dans Projets
+avec « Continuer dans Code », vers son dossier existant. Un second import de la même
+source réutilise le projet.
+
+Réglages, Modèles locaux : diagnostic matériel, conseils déterministes, bascule du
+profil de chargement par l'administrateur et consultation d'une instance locale de
+texte déjà chargée. Le débit de cette consultation inclut la lecture initiale ;
+aucun gain avant/après n'est annoncé.

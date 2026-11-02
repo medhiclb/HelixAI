@@ -35,7 +35,7 @@ export function ImageChip({
   onFormat,
   genre = "image",
 }: {
-  onFermer: () => void;
+  onFermer?: () => void;
   format: Format;
   onFormat: (f: Format) => void;
   /** « video » : la même pastille pour les vidéos (27/09/2026), mêmes modèles proposés selon la machine. */
@@ -198,14 +198,14 @@ export function ImageChip({
           </div>
         )}
       </Popover>
-      <button
+      {onFermer && <button
         type="button"
         onClick={onFermer}
         aria-label={video ? t("Ne plus créer de vidéo") : t("Ne plus créer d'image")}
         className="me-1 inline-flex h-6 w-6 items-center justify-center rounded-full hover:bg-primary/15"
       >
         <X size={13} strokeWidth={2} />
-      </button>
+      </button>}
     </div>
   );
 }

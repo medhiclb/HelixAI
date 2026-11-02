@@ -16,6 +16,7 @@ import { fournisseurDuBackend } from "./prixPublies.ts";
 import { calculSurProcesseur, detectHardware, relaisApresDefaillance } from "./provision.ts";
 import { aEssayer, essayerModele, noterEssai } from "./santeModeles.ts";
 import { canalOuvert, ecouterLApplication, envoyerALApplication } from "./canalApplication.ts";
+import { optionsOptimisees } from "./optimisationLocale.ts";
 import { reveilPermis } from "./reglagesMoteur.ts";
 
 const exec = promisify(execFile);
@@ -840,6 +841,10 @@ const TTL_SECONDES = "1200";
  * attendent leur tour dans le moteur, sans rien mêler.
  */
 export function optionsDeChargement(): string[] {
+  return optionsOptimisees(optionsStandard());
+}
+
+function optionsStandard(): string[] {
   const go = totalmem() / 1024 ** 3;
   const gpu = optionGpu();
   const processeur = calculSurProcesseur(detectHardware());

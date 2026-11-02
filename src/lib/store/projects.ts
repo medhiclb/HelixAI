@@ -1,3 +1,4 @@
+import type { StudioVideo } from "../studioVideo";
 import { storage, newId } from "./storage";
 import type { User } from "./identity";
 import { allAccounts } from "./accounts";
@@ -37,6 +38,10 @@ export interface Project {
   members: ProjectMember[];
   /** Bases de connaissances consultées par les Chats rangés dans ce projet (chacun n'y lit que ce qu'il voit). */
   connaissances?: string[];
+  /** Dossier déjà existant, importé depuis un outil de code. Aucune copie des fichiers. */
+  dossierCode?: string;
+  studioVideo?: StudioVideo;
+  importe?: { source: string; cle: string };
   createdAt: string;
   updatedAt: string;
 }

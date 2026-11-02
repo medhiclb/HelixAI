@@ -31,6 +31,14 @@ export interface Article {
 
 const ARTICLES: Article[] = [
   {
+    id: "studio-video",
+    titre: t("Studio vidéo"),
+    resume: t("Préparez vos scènes, créez vos clips sur cette machine et assemblez votre vidéo."),
+    motsCles: ["video", "wan", "scene", "clip", "montage", "studio"],
+    lien: "/videos",
+    corps: t("Créez un projet vidéo, puis décrivez votre idée. « Préparer les scènes » propose trois plans avec un modèle de texte local. Vous pouvez aussi écrire les scènes vous-même, les déplacer et les dupliquer. Choisissez un modèle dans les réglages de la vidéo : son téléchargement indique la place nécessaire. Wan produit des clips courts sans son. Générez chaque scène, ou les scènes manquantes dans l'ordre. Gardez le studio ouvert pour enchaîner les scènes et exporter le montage WebM. Chaque clip peut aussi être téléchargé séparément. Les projets sont enregistrés dans votre instance."),
+  },
+  {
     id: "demarrer",
     titre: t("Premiers pas"),
     resume: tf("Ce que {0} fait, et par où commencer.", branding.name),

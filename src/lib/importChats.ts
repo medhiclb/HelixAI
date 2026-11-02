@@ -170,6 +170,7 @@ export interface ChatImporte {
 }
 
 export interface ProjetImporte {
+  dossierCode?: string;
   cle: string;
   nom: string;
   description: string;
@@ -179,7 +180,7 @@ export interface ProjetImporte {
 }
 
 export interface Import {
-  source: "chatgpt" | "claude" | "gemini" | "claude-code" | "codex" | "cursor";
+  source: "chatgpt" | "claude" | "gemini" | "claude-code" | "codex" | "cursor" | "opencode" | "zcode";
   chats: ChatImporte[];
   projets: ProjetImporte[];
   /** Instructions générales reprises d'un logiciel du poste (CLAUDE.md, AGENTS.md). */
@@ -197,13 +198,15 @@ export const NOM_SOURCE: Record<Import["source"], string> = {
   gemini: "Gemini",
   "claude-code": "Claude Code",
   codex: "Codex",
+  opencode: "OpenCode",
+  zcode: "Zcode",
   // Absent jusqu'ici : un import Cursor s'affichait « undefined : 3 Chat(s) » et créait l'agent « Comme dans undefined ».
   cursor: "Cursor",
 };
 
 /** Logiciel d'IA trouvé sur ce poste (gateway/src/importLocal.ts). */
 export interface LogicielTrouve {
-  id: "claude-code" | "codex" | "cursor" | "chatgpt" | "claude";
+  id: "claude-code" | "codex" | "cursor" | "chatgpt" | "claude" | "opencode" | "zcode";
   nom: string;
   lisible: boolean;
   conversations: number;

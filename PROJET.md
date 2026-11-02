@@ -7574,6 +7574,98 @@ individuelle, SIREN 994 907 145), partout ; mentions légales et section
 « Logiciel HelixAI » du site helix-agence.fr à jour.
 ---
 
+## Ajouts du 2 novembre 2026 : reprise des projets, conseil local et studio vidéo
+
+Demandé par Medhi dans Codex : reprendre les projets déjà présents dans OpenCode et
+Zcode (https://zcode.z.ai/en), un conseiller local de performances, puis une section
+vidéo inspirée du parcours créatif de Solial (https://solial.ai/fr), en local.
+
+- **Imports** : `importCodeLocal.ts` lit en lecture seule les tables `session`,
+  `message` et `part`. OpenCode : `$XDG_DATA_HOME/opencode/opencode.db`, sinon
+  `~/.local/share/opencode/opencode.db`, avec `OPENCODE_DB` absolu ou relatif au dossier
+  de données. Zcode : `~/.zcode/cli/db/db.sqlite`. Schéma de Zcode lu dans son dépôt
+  officiel, révision `a60ba6a7e5a06742270ca605f5d2cc2766afa7e1`, fichiers
+  `apps/zcode-cli/packages/adapters/src/storage/session-store/paths.ts` et
+  `schema.baseline.sql`. Aucun agent externe lancé, aucune clé ou configuration MCP
+  reprise. Node privé déjà installé (SQLite intégré) ou `sqlite3` du système ; rien
+  téléchargé pour lire. Les sous-agents et les sessions Zcode effacées sont exclus.
+  Liste bornée à 5 000 sessions, pages de 50 ; contenu des seules conversations choisies,
+  texte seulement, sans résultats d'outils ni messages synthétiques. Les limites de
+  texte de l'import existant s'appliquent. Une lecture de base en échec remonte comme
+  erreur, jamais comme historique vide réussi. Les barrières d'import existantes
+  (titulaire, séance, en-têtes, boucle locale, instance non partagée) restent en place.
+  Le projet garde son dossier (`dossierCode`), un bouton « Continuer dans Code » l'ouvre
+  sans copier les fichiers. Les conversations restent des Chats importés : il ne
+  s'agit pas d'une reprise native des sessions de l'autre moteur dans OpenCode.
+  Un second import de la même clé de projet et de la même source réutilise le projet.
+- **Conseiller** : `/helix/optimisation-locale`, réglage réservé à l'administrateur,
+  stocké dans `reglages` et journalisé. Automatique par défaut : une seule génération
+  parallèle dans les chargements LM Studio de Helix, en gardant la taille de contexte
+  et le choix GPU existants. Retour au chargement standard possible. Aucun modèle déjà
+  chargé n'est rechargé ou déchargé pour ce choix. Diagnostic RAM totale/disponible,
+  processeur, puce Apple, VRAM NVIDIA. Le conseiller utilise une instance de texte déjà
+  chargée, reconnue par l'API native de LM Studio (`loaded_instances`) ou le statut
+  `loaded` de llama.cpp : pas de petit modèle supplémentaire à télécharger. Il reçoit
+  le diagnostic et la configuration de chargement, n'a aucun outil, ne règle rien
+  lui-même. Boucle locale littérale seulement, redirections interdites, délai 120 s,
+  une consultation à la fois. Le débit affiché est global (jetons de sortie divisés
+  par la durée de la requête, lecture initiale comprise), jamais présenté comme une
+  mesure de la seule génération ni comme un gain avant/après. Aucun passage de 3 à
+  16 jetons/s mesuré ou garanti. Les moteurs ne donnant pas leur état chargé ne sont
+  pas interrogés par ce conseiller ; le diagnostic reste disponible.
+- **Studio vidéo** : `/videos`, entrée latérale et aide. Projets existants étendus par
+  `studioVideo` : brief, format, jusqu'à 12 scènes ; chiffrement, synchronisation,
+  export RGPD et effacement suivent ceux des projets. Deux canevas (produit, histoire)
+  et projet libre. Trois plans proposés par un modèle de texte local, sortie JSON
+  bornée ; cette route ne génère pas de clip. Les scènes se modifient, se déplacent et
+  se dupliquent. Génération par Wan existant (modèles épinglés, installation au clic),
+  suivi par scène, téléchargement du clip, assemblage WebM sur canevas avec
+  MediaRecorder, sur le poste, sans nouvelle bibliothèque. Les clips sont sans son ;
+  l'export réencode en 832×480 ou 480×832 à 24 images/s en temps réel. La préparation
+  du prompt vidéo ne passe plus par un modèle distant de repli (`localSeulement` dans
+  `completion.ts`, boucle locale et absence de redirection imposées). Un export
+  annulé ou un clip illisible ne produit pas un montage partiel annoncé comme réussi.
+  Le suivi du clip en cours survit au changement de page ; l'enchaînement des scènes
+  suivantes et l'export demandent de garder le studio ouvert. Un arrêt de l'instance
+  perd son registre de travaux en mémoire ; le studio dit que le suivi est perdu et
+  permet une relance. Les fichiers déjà générés restent dans l'index existant.
+
+**Vérifié le 02/11** : typecheck des deux projets ; catalogues à 100 % en six langues ;
+`essai-import-code.mjs` sur bases jetables (53 sessions par source, pagination,
+regroupement, messages synthétiques/outils exclus, identifiants forgés ignorés,
+empreintes des bases intactes) ; `essai-optimisation.mjs` (profil conservant contexte
+et GPU, refus des adresses distantes, pas d'outil, conseil factice local) ;
+`essai-scenario-video.mjs` (trois textes, bornes et erreurs) ;
+`essai-ajouts-http.mjs` (routes sous séance, choix validé et persisté, absence de moteur
+local respectée). Ce dernier a trouvé une route de scénario masquée par la route
+vidéo générique : corrigé et essai repassé. Dans le navigateur, instance jetable sans
+moteur réel : canevas produit, nom/brief/scènes conservés au rechargement, duplication,
+thèmes clair et sombre. Export réellement exécuté sur deux clips artificiels : WebM
+lisible, les deux couleurs présentes dans le résultat, ordre des scènes, dimensions,
+annulation et clip absent. Banc reproductible : `npm run essai:studio-video`.
+
+**Bilan final de la passe** : `npm run securite`, 2 720 contrôles réussis, zéro
+échec (dont les trois nouveaux scripts de la section 55) ; essai HTTP ciblé passé
+séparément après correction du routage ; typecheck ; interface 4 262 phrases et
+passerelle 1 630 messages, six langues à 100 %. La section 55 inclut désormais aussi
+l'essai HTTP pour les prochaines exécutions (2 721 contrôles attendus si le socle ne
+change pas, ce nombre n'a pas été revendiqué comme exécuté ici). Le parcours
+Réglages > Importer a aussi été exécuté sur les deux bases factices dans le
+navigateur : détection des deux logiciels, import OpenCode terminé (un projet, un
+Chat), bouton « Continuer dans Code » présent dans Projets. Les serveurs et fenêtres
+de test ont été arrêtés. Aucun modèle réel téléchargé, aucun paquet publié.
+
+**Pas essayé** : import d'une vraie installation Zcode (absente du poste), import
+complet d'un historique réel dans l'application empaquetée, Windows/Linux natifs pour
+ces imports ; qualité du conseiller et des scénarios avec un vrai modèle ; gain de
+vitesse avant/après ; génération réelle Wan dans ce studio (aucun poids téléchargé),
+export sur un long projet et dans Electron empaqueté, petit écran (la capacité du
+navigateur de test n'a pas changé sa largeur). Pas de voix, musique, image-vers-vidéo,
+retouche, avatars synchronisés, veille marketing ou publication sociale dans ce
+studio : ces capacités de Solial ne sont pas des fonctions locales de Wan.
+
+---
+
 ## 6. Ce qu'il ne faut pas refaire
 
 Les erreurs qui ont coûté du temps, pour qu'elles ne se répètent pas.

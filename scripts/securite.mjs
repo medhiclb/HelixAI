@@ -10556,6 +10556,14 @@ console.log("\n54. Mot de passe oublié : administrateur, machine de l'instance,
   );
 }
 
+console.log("\n55. Imports de code et conseiller local (02/11/2026)");
+for (const script of ["essai-import-code.mjs", "essai-optimisation.mjs", "essai-scenario-video.mjs", "essai-ajouts-http.mjs"]) {
+  try {
+    execFileSync(process.execPath, [join(RACINE, "scripts", script)], { cwd: RACINE, timeout: 120_000, stdio: "pipe" });
+    verifier(script, true, "");
+  } catch (e) { verifier(script, false, String(e.stderr ?? e.message).slice(-2000)); }
+}
+
 console.log(`\n${reussis} vérification(s) réussie(s), ${echecs.length} échec(s).`);
 if (echecs.length) {
   console.log("Échecs :");

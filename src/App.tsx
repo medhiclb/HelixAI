@@ -1,3 +1,4 @@
+import { VideosPage } from "@/pages/VideosPage";
 import { FenetreMiseAJour } from "@/components/layout/FenetreMiseAJour";
 import {
   createBrowserRouter,
@@ -96,6 +97,7 @@ const router = creerRouteur([
       ...when(features.taches, { path: "/taches", element: <TachesPage /> }),
       // Tout le catalogue des modèles libres, ouvert depuis le sélecteur du Chat (28/09/2026).
       { path: "/modeles", element: <ModelesPage /> },
+      { path: "/videos", element: <VideosPage /> },
       {
         path: "/parametres",
         element: <SettingsLayout />,

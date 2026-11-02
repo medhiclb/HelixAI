@@ -667,7 +667,7 @@ async function preparerDescription(texte: string, qui: string, video = false): P
       { role: "user", content: texte },
     ],
     // Le modèle peut être occupé par un autre programme (LM Studio est partagé) : on lui laisse le temps.
-    { qui, maxTokens: 220, delaiMs: 120_000 },
+    { qui, maxTokens: 220, delaiMs: 120_000, localSeulement: video },
   );
   if (!r.ok) return texte;
   const propre = r.texte.replace(/^["'«\s]+|["'»\s]+$/g, "").trim();

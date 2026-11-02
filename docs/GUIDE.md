@@ -1369,3 +1369,39 @@ L'inventaire complet, écran par écran, est dans [`SCREENS.md`](../SCREENS.md).
 Contraste suffisant, navigation clavier, focus visible, `aria-label` sur les boutons à
 icône seule, `role` appropriés sur menus/dialogues. L'animation du logo respecte
 `prefers-reduced-motion`.
+
+
+## Studio vidéo local
+
+Ouvrez **Studio vidéo** dans la barre latérale. Créez un projet libre, une vidéo
+produit ou une histoire courte. Décrivez votre idée ; **Préparer les scènes** propose
+trois plans à l'aide d'un modèle de texte local. Vous pouvez aussi écrire les plans,
+les déplacer ou les dupliquer vous-même. Les réglages de la vidéo proposent les
+modèles compatibles avec la machine et le volume de leur téléchargement.
+
+Wan crée de courts clips sans son. Générez chaque scène, ou les scènes manquantes
+dans l'ordre. Chaque clip se regarde et se télécharge séparément. Quand toutes les
+scènes ont un clip, **Exporter la vidéo** les assemble dans leur ordre en WebM.
+Gardez le studio ouvert pendant l'enchaînement et l'export, réalisé en temps réel sur
+le poste. Les projets et leur brief restent enregistrés dans votre instance.
+
+## Reprendre OpenCode et Zcode
+
+Sur le poste autonome où ces outils sont installés, ouvrez **Réglages, Importer**.
+Ils apparaissent parmi les logiciels détectés lorsque leur historique est présent.
+Choisissez les projets et les Chats à reprendre. Les fichiers sources restent dans
+leur dossier d'origine ; **Continuer dans Code**, sur la carte du projet, permet de
+travailler sur ce dossier. Les échanges repris sont rangés comme Chats dans le projet.
+Un nouvel import de la même source conserve le projet déjà créé. Aucun abonnement,
+jeton de fournisseur ou réglage de permissions de l'autre outil n'est transféré.
+
+## Conseil de performances locales
+
+Dans **Réglages, Modèles locaux**, le diagnostic affiche mémoire et processeurs et
+propose des conseils. Le profil de chargement optimisé limite les générations
+simultanées ; il est réversible et s'applique au prochain chargement par l'instance.
+Le contexte et le choix d'accélération restent ceux prévus pour la machine.
+**Demander conseil au modèle local** consulte un modèle de texte déjà chargé, avec
+son diagnostic et sa configuration, sans outil ni service cloud. Le débit affiché
+inclut le traitement initial de cette demande. Comparez des mesures sur le même
+modèle et la même demande pour évaluer un changement de réglage.

@@ -5,6 +5,7 @@ import { homedir, platform } from "node:os";
 import { basename, join } from "node:path";
 import { promisify } from "node:util";
 import { t } from "./langue.ts";
+import { baseCode, messagesCodeLocaux, sessionsCodeLocales, type SourceCode } from "./importCodeLocal.ts";
 
 const exec = promisify(execFile);
 
@@ -72,13 +73,14 @@ export interface ChatLu {
   nbMessages: number;
 }
 export interface ProjetLu {
+  dossierCode?: string;
   cle: string;
   nom: string;
   description: string;
   instructions: string;
   documents: { nom: string; contenu: string }[];
 }
-type Source = "claude-code" | "codex" | "cursor";
+type Source = "claude-code" | "codex" | "cursor" | SourceCode;
 
 /** Une page de la liste : des résumés (`messages` vide), et où reprendre. */
 export interface PageImport {
@@ -99,7 +101,7 @@ export interface ContenuImport {
 }
 
 export interface Logiciel {
-  id: "claude-code" | "codex" | "cursor" | "chatgpt" | "claude";
+  id: "claude-code" | "codex" | "cursor" | "chatgpt" | "claude" | SourceCode;
   nom: string;
   present: boolean;
   /** Ce que Helix peut en reprendre. */
@@ -251,7 +253,7 @@ function projetDe(dossier: string | undefined, projets: Map<string, ProjetLu> | 
   if (!dossier) return undefined;
   if (projets && !projets.has(dossier)) {
     const instructions = ["CLAUDE.md", "AGENTS.md"].map((f) => lireTexte(join(dossier, f), 20_000)).filter(Boolean).join("\n\n");
-    projets.set(dossier, { cle: dossier, nom: basename(dossier) || dossier, description: dossier, instructions, documents: [] });
+    projets.set(dossier, { cle: dossier, nom: basename(dossier) || dossier, description: dossier, instructions, documents: [], dossierCode: dossier });
   }
   return dossier;
 }
@@ -451,13 +453,13 @@ async function lireCursor(id: string, c: Collecte): Promise<Entete | null> {
 /* Liste et contenu                                                    */
 /* ------------------------------------------------------------------ */
 
-const DOSSIERS: Record<Exclude<Source, "cursor">, { dossiers: string[]; profondeur: number }> = {
+const DOSSIERS: Record<Exclude<Source, "cursor" | SourceCode>, { dossiers: string[]; profondeur: number }> = {
   "claude-code": { dossiers: [join(MAISON, ".claude", "projects")], profondeur: 1 },
   codex: { dossiers: [join(MAISON, ".codex", "sessions"), join(MAISON, ".codex", "archived_sessions")], profondeur: 4 },
 };
 
 /** Les fichiers de conversation d'une source, les plus récents d'abord (date de modification). */
-async function entreesFichiers(source: Exclude<Source, "cursor">): Promise<Entree[]> {
+async function entreesFichiers(source: Exclude<Source, "cursor" | SourceCode>): Promise<Entree[]> {
   const { dossiers, profondeur } = DOSSIERS[source];
   const chemins = dossiers.flatMap((d) => fichiers(d, ".jsonl", profondeur));
   const entrees: Entree[] = [];
@@ -484,23 +486,56 @@ async function entreesFichiers(source: Exclude<Source, "cursor">): Promise<Entre
  * qui s'allonge pendant l'import changerait de rang, et une page en sauterait
  * une autre.
  */
+const sessionsLocales = new Map<SourceCode, Map<string, Record<string, unknown>>>();
 const releves = new Map<Source, { quand: number; entrees: Entree[] }>();
 const RELEVE_MS = 30 * 60_000;
 
 async function entreesDe(source: Source, neuf: boolean): Promise<Entree[]> {
   const deja = releves.get(source);
   if (!neuf && deja && Date.now() - deja.quand < RELEVE_MS) return deja.entrees;
-  const entrees = source === "cursor" ? await entreesCursor() : await entreesFichiers(source);
+  let entrees: Entree[];
+  if (source === "opencode" || source === "zcode") {
+    const sessions = await sessionsCodeLocales(source);
+    const metadonnees = new Map<string, Record<string, unknown>>();
+    entrees = sessions.filter(s => typeof s.id === "string" && /^[\w-]{1,160}$/.test(s.id)).map(s => {
+      const id = String(s.id);
+      metadonnees.set(id, s);
+      return { cle: `${source}:${id}`, ou: id, octets: 1, date: Number(s.time_updated) || 0 };
+    });
+    sessionsLocales.set(source, metadonnees);
+  } else entrees = source === "cursor" ? await entreesCursor() : await entreesFichiers(source);
   releves.set(source, { quand: Date.now(), entrees });
   return entrees;
 }
 
 async function lire(source: Source, e: Entree, c: Collecte): Promise<Entete | null> {
   try {
+    if (source === "opencode" || source === "zcode") {
+      const s = sessionsLocales.get(source)?.get(e.ou);
+      if (!s) return null;
+      if (c.messages === null) {
+        c.n = Number(s.messages) || 0;
+        c.taille = Number(s.taille) || 200;
+        return { titre: String(s.title ?? ""), dossier: typeof s.directory === "string" ? s.directory : undefined,
+          creeLe: dateCursor(s.time_created), modifieLe: dateCursor(s.time_updated) };
+      }
+      const parMessage = new Map<string, { role: "user" | "assistant"; content: string; createdAt: string }>();
+      for (const m of await messagesCodeLocaux(source, e.ou)) {
+        if ((m.role !== "user" && m.role !== "assistant") || typeof m.text !== "string" || !m.text.trim()) continue;
+        const id = String(m.id);
+        const deja = parMessage.get(id);
+        if (deja) deja.content = couper(`${deja.content}\n${m.text}`);
+        else parMessage.set(id, { role: m.role, content: couper(m.text), createdAt: dateCursor(m.time_created) });
+      }
+      for (const message of parMessage.values()) c.ajouter(message);
+      return { titre: String(s.title ?? ""), dossier: typeof s.directory === "string" ? s.directory : undefined,
+        creeLe: dateCursor(s.time_created), modifieLe: dateCursor(s.time_updated) };
+    }
     if (source === "claude-code") return await lireClaudeCode(e.ou, c);
     if (source === "codex") return await lireCodex(e.ou, c);
     return await lireCursor(e.ou, c);
   } catch {
+    if (source === "opencode" || source === "zcode") throw new Error(t("L'historique local n'a pas pu être lu. Fermez le logiciel d'origine, puis réessayez."));
     // Fichier disparu ou illisible entre le relevé et la lecture : on passe au suivant.
     return null;
   }
@@ -521,11 +556,12 @@ function chatDe(e: Entree, entete: Entete, c: Collecte, projets: Map<string, Pro
   };
 }
 
-const estSource = (id: string): id is Source => id === "claude-code" || id === "codex" || id === "cursor";
+const estSource = (id: string): id is Source => id === "claude-code" || id === "codex" || id === "cursor" || id === "opencode" || id === "zcode";
 
 function instructionsDe(source: Source): string {
   if (source === "claude-code") return lireTexte(join(MAISON, ".claude", "CLAUDE.md"));
   if (source === "codex") return lireTexte(join(MAISON, ".codex", "AGENTS.md"));
+  if (source === "opencode" || source === "zcode") return "";
   return lireTexte(join(MAISON, ".cursorrules"));
 }
 
@@ -612,7 +648,15 @@ export async function logicielsTrouves(): Promise<Logiciel[]> {
   const cursorLisible = cursor && existsSync(baseCursor()) && (await sqliteDisponible());
   const chatgpt = existsSync(appSupport("com.openai.chat")) || existsSync(appSupport("ChatGPT"));
   const claude = existsSync(appSupport("Claude"));
+  const code = await Promise.all((["opencode", "zcode"] as const).filter(source => existsSync(baseCode(source))).map(async source => {
+    let lisible = true;
+    let conversations = 0;
+    try { conversations = (await sessionsCodeLocales(source)).length; } catch { lisible = false; }
+    return { id: source, nom: source === "opencode" ? "OpenCode" : "Zcode", present: true, lisible, conversations, instructions: false,
+      note: lisible ? t("Conversations, dossiers de projet et instructions.") : t("L'historique local n'a pas pu être lu. Fermez le logiciel d'origine, puis réessayez.") };
+  }));
   return [
+    ...code,
     {
       id: "claude-code",
       nom: "Claude Code",

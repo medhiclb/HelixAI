@@ -9,6 +9,7 @@ import {
   Calendar,
   Users,
   SquareCheckBig,
+  Film,
 } from "lucide-react";
 import { features, type Features } from "@/config/branding";
 import { t } from "@/lib/i18n";
@@ -29,6 +30,7 @@ const PRIMARY: NavItem[] = [
 ];
 
 const SECONDARY: NavItem[] = [
+  { label: t("Studio vidéo"), path: "/videos", icon: Film },
   { label: t("Projets"), path: "/projets", icon: FolderKanban, feature: "projets" },
   { label: t("Agents"), path: "/agents", icon: Bot, feature: "agents" },
   /*

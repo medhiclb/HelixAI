@@ -18,6 +18,7 @@ import { AvisCodex, MoteurCode } from "@/components/code/MoteurCode";
 import { EconomiesRtk, ReglageRtkCode } from "@/components/code/ReglageRtk";
 import { moteurRetenu, retenirMoteur, type MoteurCode as Moteur } from "@/lib/codex";
 import { useProfile } from "@/hooks/useProfile";
+import { getProject } from "@/lib/store/projects";
 import { currentUser, prenom } from "@/lib/store/identity";
 import type { NiveauRaisonnement } from "@/lib/store/profile";
 import { t } from "@/lib/i18n";
@@ -38,7 +39,11 @@ export function CodePage() {
    * session côté moteur : en changer relance donc une session propre, comme
    * quand on ouvre un autre projet.
    */
-  const [dossier, setDossier] = useState<string | undefined>();
+  const [dossier, setDossier] = useState<string | undefined>(() => {
+    const id = new URLSearchParams(window.location.hash.includes("?") ? window.location.hash.split("?")[1] : window.location.search).get("projet");
+    const projet = id ? getProject(id) : undefined;
+    return projet?.ownerId === currentUser().id ? projet.dossierCode : undefined;
+  });
   /*
    * Le modèle et le niveau affichés dans la saisie partent avec chaque
    * demande : ils n'étaient transmis nulle part, et l'agent de code tournait

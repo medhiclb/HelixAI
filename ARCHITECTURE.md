@@ -2095,6 +2095,36 @@ Pour Code, la passerelle sert elle-même ses connecteurs à OpenCode, par MCP, s
 
 **Conséquences.** Rien ne change dans les six langues de gauche à droite (mesuré : positions et tailles identiques sur 27 écrans, à 1280 et 375 px), sauf un texte arabe écrit dans une interface non arabe, qui s'aligne désormais à droite. Une classe physique remise dans un composant partagé ferait échouer `npm run securite`. Ajouter une langue : CONTRIBUTING.md, « Adding a language ».
 
+### ADR-077 : Reprendre les projets OpenCode et Zcode
+
+`importCodeLocal.ts` lit leurs bases SQLite sans démarrer ces logiciels. La liste
+par pages et le contenu sélectionné passent par les mêmes gardes que les imports
+locaux existants. Les projets gardent le chemin du dossier, sans copie des sources ;
+« Continuer dans Code » propose ce dossier au moteur de Helix. Les conversations sont
+reprises comme Chats, sans importer de clés, d'outils, de scripts ni de permissions.
+L'origine du projet sert à éviter sa recréation lors d'un second import.
+
+### ADR-078 : Chargement adapté et conseil local sans pouvoir d'exécution
+
+`optimisationLocale.ts` retient le profil de chargement dans `reglages`. Le mode
+automatique limite LM Studio à une génération à la fois et conserve le contexte et
+le GPU choisis par les règles existantes ; le mode standard reste accessible.
+Le modèle de conseil est une instance locale déjà chargée, sans outil. Il reçoit le
+diagnostic et la configuration, rend du texte et un débit global observé, et ne
+modifie aucun réglage. L'API native distingue les instances chargées des modèles
+seulement disponibles, afin de ne pas provoquer de chargement JIT supplémentaire.
+
+### ADR-079 : Un studio de clips locaux et un montage sur le poste
+
+`VideosPage.tsx` étend les projets par un storyboard (`studioVideo`) : brief, format,
+scènes et références de clips. Les mécanismes existants de chiffrement, de partage,
+de synchronisation et de cycle de vie des projets s'appliquent. Le moteur Wan existant
+crée les clips ; `videosScenario.ts` prépare trois plans avec un modèle local de texte.
+`studioVideo.ts` suit le clip en dehors de la page, et réencode les clips dans leur
+ordre par canvas et MediaRecorder pour un export WebM sur le poste. Le moteur des
+images conserve les fichiers et en vérifie les droits. La préparation du prompt de
+vidéo interdit désormais le repli vers un modèle distant.
+
 ## 7. Roadmap
 
 | Phase | Contenu | État |

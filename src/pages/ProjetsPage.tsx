@@ -43,6 +43,7 @@ const tabs = [
 
 /** Page Projets : création, membres, invitation par email (captures 10 et 11). */
 export function ProjetsPage() {
+  const ouvrirCode = useNavigate();
   const { projects, create, remove, invite, revoke } = useProjects();
   /*
    * Chats rangés dans chaque projet. On part des conversations que la personne
@@ -160,6 +161,9 @@ export function ProjetsPage() {
                   </p>
                 )}
 
+                {project.dossierCode && project.ownerId === me.id && features.code && (
+                  <Button onClick={() => ouvrirCode(`/code?projet=${encodeURIComponent(project.id)}`)}>{t("Continuer dans Code")}</Button>
+                )}
                 <div className="mt-auto flex flex-wrap items-center gap-1.5">
                   <button
                     type="button"
