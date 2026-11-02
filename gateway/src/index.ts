@@ -1,3 +1,4 @@
+import * as entretiens from "./entretiens.ts";
 import * as vps from "./vps.ts";
 import { preparerScenario } from "./videosScenario.ts";
 // En premier : sous Windows, rien de ce que lance la passerelle n'ouvre de console (processus.ts).
@@ -1926,6 +1927,7 @@ async function profilDe(accountId: string): Promise<Demandeur | null> {
  */
 const EXECUTION: { methode: string; chemin: string }[] = [
   { methode: "POST", chemin: "/helix/models/load" },
+  { methode: "POST", chemin: "/helix/services/entretiens" },
   { methode: "POST", chemin: "/helix/code/vps" },
   { methode: "POST", chemin: "/helix/studio/medias" },
   { methode: "POST", chemin: "/helix/studio/medias/*" },
@@ -3079,6 +3081,16 @@ async function handleDossiers(
     ...listerDossiers(url.searchParams.get("chemin") ?? courant),
     courant,
   });
+}
+
+async function handleEntretiens(req:http.IncomingMessage,res:http.ServerResponse,url:URL):Promise<void>{
+ const qui=await demandeur(req,url);if(!qui)return send(res,401,sansSeance());
+ try{if(req.method==='GET')return send(res,200,{entretiens:await entretiens.listerEntretiens(qui.userId)});
+ const b=await readJson(req,512*1024) as Record<string,unknown>;
+ if(b.action==='creer')return send(res,201,await entretiens.creerEntretien(qui.userId,b));
+ if(typeof b.id!=='string'||!/^[a-f0-9]{32}$/.test(b.id))return send(res,400,{error:{message:t("Entraînement introuvable.")}});
+ return send(res,200,await entretiens.agirEntretien(qui.userId,b.id,b));
+ }catch(e){return send(res,409,{error:{message:e instanceof Error?e.message:t("Demande refusée.")}})}
 }
 
 async function handleVps(req:http.IncomingMessage,res:http.ServerResponse,url:URL):Promise<void>{
@@ -6269,6 +6281,7 @@ const traiter = (
       catch (e) { return send(res, 409, { error: { message: e instanceof Error ? e.message : t("Demande refusée.") } }); }
     }
     if (path === "/helix/videos" || path.startsWith("/helix/videos/")) return handleVideos(req, res, url, path.slice("/helix/videos".length).replace(/^\//, ""));
+    if (["GET", "POST"].includes(req.method ?? "") && path === "/helix/services/entretiens") return handleEntretiens(req,res,url);
     if (["GET", "POST"].includes(req.method ?? "") && path === "/helix/code/vps") return handleVps(req,res,url);
     if (["GET", "POST"].includes(req.method ?? "") && path === "/helix/studio/medias") return handleMediasStudio(req, res, url);
     if (req.method === "POST" && path.startsWith("/helix/studio/medias/")) return handleMediasStudio(req, res, url, path.slice("/helix/studio/medias/".length));

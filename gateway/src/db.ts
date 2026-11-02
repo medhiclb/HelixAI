@@ -149,6 +149,7 @@ export const COLLECTIONS_INTERNES = [
    */
   "sessionsCode",
   "projetsVps",
+  "entretiens",
   /*
    * Clés d'API personnelles (clesApi.ts) : empreintes salées, noms, dates.
    * Interne parce qu'une empreinte n'a rien à faire sur un poste, et que la

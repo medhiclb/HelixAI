@@ -1,3 +1,5 @@
+import { ServicesPage } from "@/pages/ServicesPage";
+import { EntretiensPage } from "@/pages/EntretiensPage";
 import { VideosPage } from "@/pages/VideosPage";
 import { FenetreMiseAJour } from "@/components/layout/FenetreMiseAJour";
 import {
@@ -97,6 +99,9 @@ const router = creerRouteur([
       ...when(features.taches, { path: "/taches", element: <TachesPage /> }),
       // Tout le catalogue des modèles libres, ouvert depuis le sélecteur du Chat (28/09/2026).
       { path: "/modeles", element: <ModelesPage /> },
+      { path: "/services", element: <ServicesPage /> },
+      { path: "/services/entretiens", element: <EntretiensPage key="entretien" /> },
+      { path: "/services/cours", element: <EntretiensPage key="cours" mode="cours" /> },
       { path: "/videos", element: <VideosPage /> },
       {
         path: "/parametres",

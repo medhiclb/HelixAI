@@ -454,6 +454,8 @@ function PastilleEnregistrement() {
 }
 
 function SecondaryItem({ item }: { item: NavItem }) {
+  const cheminService=useLocation().pathname;
+  const dansServices=item.path === "/services" && cheminService === "/videos";
   const Icon = item.icon;
   const enregistre = useEnregistrementEnCours() && item.path === "/reunions";
   return (
@@ -462,7 +464,7 @@ function SecondaryItem({ item }: { item: NavItem }) {
       className={({ isActive }) =>
         cn(
           "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors",
-          isActive
+          (isActive || dansServices)
             ? "bg-muted font-medium text-foreground"
             : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
         )
@@ -609,6 +611,8 @@ function ExpandedSidebar({ onToggle }: { onToggle: () => void }) {
  * comme dans les captures de référence.
  */
 function RailItem({ item, primaire }: { item: NavItem; primaire?: boolean }) {
+  const cheminService=useLocation().pathname;
+  const dansServices=item.path === "/services" && cheminService === "/videos";
   const Icon = item.icon;
   const enregistre = useEnregistrementEnCours() && item.path === "/reunions";
   return (
@@ -620,7 +624,7 @@ function RailItem({ item, primaire }: { item: NavItem; primaire?: boolean }) {
       className={({ isActive }) =>
         cn(
           "relative inline-flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground transition-colors",
-          isActive
+          (isActive || dansServices)
             ? primaire
               ? "border border-sidebar-border bg-sidebar-active text-foreground shadow-sm"
               : "bg-muted text-foreground"

@@ -7105,3 +7105,32 @@ locaux automatiques ne s'appliquent pas aux sessions VPS. L'agent doit exécuter
 tests sur le serveur. Export/effacement du compte incluent les profils VPS.
 Essais sur doublures et HTTP jetable ; connexion réelle et comportement du client
 OpenSSH Windows à essayer sur les machines, sans accès à un VPS fourni ici.
+
+### 02/11/2026 : entraînements aux entretiens
+
+Collection interne `entretiens`, chiffrée par le magasin de l'instance, hors route
+générique de synchronisation. L'identité vient de la séance, y compris pour les
+administrateurs : chacun ne liste et ne modifie que ses sessions. Réponses
+persistées avant la question suivante ; rejeu de la même réponse idempotent. Un
+verrou par personne et session empêche la double génération et la suppression
+durant une réponse du modèle. Registre illisible : aucune réécriture. Corbeille
+avant purge. Export et effacement du compte comprennent CV, échanges et bilans.
+
+Le modèle est limité au moteur de texte local de l'instance, sans outils. CV,
+offre et réponses sont des données non fiables dans le prompt. Sortie JSON bornée
+et validée ; seuls les champs attendus sont conservés. Les évaluations portent sur
+le contenu des réponses pour l'auto-entraînement, pas sur l'employabilité ou les
+traits sensibles. Aucun calcul sur les caractéristiques de la voix. La lecture
+choisit une voix système `localService` de la langue demandée, sans voix distante
+de secours. Le micro reste celui de la dictée locale existante, activé par la
+personne. Les vrais matériels et voix disponibles ne sont pas couverts par les
+doublures des essais automatisés.
+
+
+Prof particulier (02/11/2026) : même registre privé, export et effacement que les
+entretiens. Le mode et les styles sont bornés ; les préférences déclarées restent
+avec la séance. Parent de cours contrôlé par propriétaire, mode et corbeille avant
+copie du bilan. Import de 100 000 caractères au plus, requête bornée à 512 Kio,
+contexte réduit par extraits, réponses du modèle validées avant écriture. Aucun
+outil ni fournisseur distant dans ce parcours. Aucun diagnostic psychologique ni
+notation scolaire officielle. Qualité des vrais modèles non essayée ici.

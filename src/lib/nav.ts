@@ -9,7 +9,7 @@ import {
   Calendar,
   Users,
   SquareCheckBig,
-  Film,
+  Grid2X2,
 } from "lucide-react";
 import { features, type Features } from "@/config/branding";
 import { t } from "@/lib/i18n";
@@ -39,7 +39,7 @@ const SECONDARY: NavItem[] = [
      favori, et la renommer casserait ce qui marche pour rien.
   */
   { label: t("Fichiers"), path: "/bibliotheque", icon: FolderOpen, feature: "bibliotheque" },
-  { label: t("Studio vidéo"), path: "/videos", icon: Film },
+  { label: t("Services"), path: "/services", icon: Grid2X2 },
   { label: t("Réunions"), path: "/reunions", icon: Calendar, feature: "reunions" },
   { label: t("Groupes"), path: "/groupes", icon: Users, feature: "groupes" },
   { label: t("Tâches"), path: "/taches", icon: SquareCheckBig, feature: "taches" },

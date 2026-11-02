@@ -74,6 +74,8 @@ interface ComposerProps {
   accessoire?: ReactNode;
   /** Le moteur choisit lui-même son modèle (Codex, écran Code) : ni modèle ni niveau à proposer. */
   sansModele?: boolean;
+  /** Les services à réponse textuelle peuvent masquer les pièces jointes. */
+  sansPiecesJointes?: boolean;
 }
 
 /**
@@ -102,6 +104,7 @@ export function Composer({
   rechercheWeb,
   accessoire,
   sansModele = false,
+  sansPiecesJointes = false,
   onMettreEnFile,
   enTete,
 }: ComposerProps) {
@@ -386,7 +389,7 @@ export function Composer({
               * ce que fera l'envoi (créer une image). Sans autre entrée que
               * « joindre », il joint directement.
               */}
-            {onCreerImage ? (
+            {!sansPiecesJointes && (onCreerImage ? (
               <Popover
                 open={menuPlus}
                 onOpenChange={setMenuPlus}
@@ -442,7 +445,7 @@ export function Composer({
                 label={t("Joindre un document ou une image")}
                 onClick={() => fichierRef.current?.click()}
               />
-            )}
+            ))}
             {accessoire && <div className="flex min-w-0 cq-md:shrink-0">{accessoire}</div>}
             <div className="ms-auto flex min-w-0 items-center gap-0.5">
               {!sansModele && <ModelBehaviorPicker value={modelUid} onChange={onModelChange} />}

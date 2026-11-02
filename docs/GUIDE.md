@@ -1373,7 +1373,7 @@ icône seule, `role` appropriés sur menus/dialogues. L'animation du logo respec
 
 ## Studio vidéo local
 
-Ouvrez **Studio vidéo**, après **Fichiers** dans la barre latérale. Partez d'un
+Ouvrez **Services** dans la barre latérale, puis **Studio vidéo**. Partez d'un
 projet libre, d'une vidéo produit ou d'une histoire courte. Dans **Atelier**, décrivez
 votre idée ; **Préparer les scènes** propose des plans avec un modèle de texte local.
 Ajoutez des blocs de texte et cochez ceux à relier à chaque scène. Les liaisons
@@ -1437,3 +1437,29 @@ Le contexte et le choix d'accélération restent ceux prévus pour la machine.
 son diagnostic et sa configuration, sans outil ni service cloud. Le débit affiché
 inclut le traitement initial de cette demande. Comparez des mesures sur le même
 modèle et la même demande pour évaluer un changement de réglage.
+
+
+## Prof particulier
+
+Dans **Services, Prof particulier**, créez une séance, indiquez la matière et
+importez votre cours ou collez vos notes. Choisissez un prof patient, socratique,
+pratique ou personnalisé. Le questionnaire précise votre niveau, votre objectif,
+vos difficultés et vos préférences. Vous pouvez adapter ces réponses lorsque vous
+poursuivez un cours.
+
+Chaque étape propose une explication et une question. Répondez au clavier ou avec
+la dictée locale ; demandez une reformulation dans votre réponse si nécessaire.
+Le prof corrige votre réponse avant de poursuivre. Le bilan présente les points
+forts, les notions à travailler et un exercice. **Poursuivre ce cours** reprend le
+support, votre profil et le dernier bilan pour préparer la séance suivante.
+Retrouvez les séances dans votre historique, téléchargez-les ou utilisez leur
+corbeille. Le moteur de texte utilisé pour ce service est local.
+
+## Simulations d'entretien
+
+Dans **Services, Simulations d'entretien**, renseignez le poste et votre parcours,
+ou importez un CV. Choisissez la langue, la difficulté et le nombre de questions.
+Répondez par écrit ou avec la dictée locale. La lecture des questions utilise une
+voix locale disponible sur votre ordinateur. À la fin, retrouvez un bilan sur le
+contenu de vos réponses et un exercice pour progresser. Les séances se reprennent,
+s'exportent et se placent dans la corbeille depuis votre historique.

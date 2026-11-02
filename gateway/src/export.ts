@@ -1,3 +1,4 @@
+import { listerEntretiens } from "./entretiens.ts";
 import { projetsVps } from "./vps.ts";
 import { db } from "./db.ts";
 import type { Demandeur } from "./authz.ts";
@@ -83,6 +84,7 @@ export interface ExportDonnees {
   /** Les images qu'elle a créées, avec leur demande (le fichier se télécharge depuis le Chat). */
   imagesCreees: unknown[];
   projetsVps: unknown[];
+  entretiens: unknown[];
   /** Ses projets d'entraînement : les exemples, et le modèle installé s'il l'a été. */
   modelesEntraines: unknown[];
   consommation: unknown;
@@ -149,6 +151,7 @@ export async function exporterDonnees(qui: Demandeur): Promise<ExportDonnees> {
   const memoires = memoiresPourExport(qui.userId);
 
   const resultat: ExportDonnees = {
+    entretiens: await listerEntretiens(qui.userId),
     projetsVps: await projetsVps(qui.userId),
     format: FORMAT,
     version: VERSION,

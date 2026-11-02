@@ -50,7 +50,8 @@
     "essai:demarrage-moteur": "node scripts/essai-demarrage-moteur.mjs",
     "essai:modeles-code": "node scripts/essai-modeles-code.mjs",
     "essai:vps": "node scripts/essai-vps.mjs && node scripts/essai-permissions-vps.mjs && node scripts/essai-outils-vps.mjs",
-    "essai:studio-interface": "node scripts/essai-studio-interface.mjs"
+    "essai:studio-interface": "node scripts/essai-studio-interface.mjs",
+    "essai:entretiens": "node scripts/essai-entretiens.mjs && node scripts/essai-voix-entretien.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",

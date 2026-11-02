@@ -7753,3 +7753,49 @@ commençant par une image pouvait être vide. Le réglage de viewport du navigat
 n'a pas changé sa taille effective (restée à 1 280 × 720) : essai visuel à 375 px
 non confirmé dans cette session. Pas de nouvelle génération Wan réelle ni de vrai
 serveur VPS disponible pour les essais de cette session.
+
+### 02/11/2026 : un catalogue Services et un atelier d'entretiens
+
+Medhi demande de structurer le logiciel en services complets, avec Studio vidéo et
+un outil inspiré de persuasiv.ai. Lecture du site public : il s'agit d'entraînement
+aux entretiens d'embauche, pas de publicité. Le menu Services remplace l'entrée
+Studio vidéo ; l'adresse `/videos` reste valable et ouvre le même atelier. Le
+catalogue ouvre les ateliers vidéo, entretiens, et les modules Réunions/Fichiers
+activés dans l'édition. Il s'agit de services applicatifs qui partagent la passerelle
+et les moteurs, pas de nouveaux démons réseau.
+
+Entretiens : préparation du poste et du CV (import texte/PDF/Word avec l'extracteur
+existant), langue et difficulté, questions successives, réponse au clavier ou par
+la dictée locale existante, bilan du coach et exercice suivant, historique privé,
+export et corbeille. Questions et bilan utilisent `completer` en localSeulement.
+Les notes de clarté, exemples et pertinence sont un retour d'entraînement sur le
+texte, jamais une décision de recrutement ni une analyse acoustique. Pour borner
+le contexte des petits modèles, le coach reçoit des extraits des documents et des
+réponses ; les réponses complètes restent dans la session. Le service ne mesure
+pas les hésitations, accents ou qualités vocales.
+
+La lecture des questions utilise uniquement les voix annoncées locales par le
+système (`localService`), dans la langue choisie, sur clic. Aucune reconnaissance
+vocale Web du navigateur : elle peut partir chez un fournisseur. La dictée passe
+par le moteur local déjà présent. Voix système et moteur de dictée dépendent du
+poste ; leur usage réel reste à essayer sur Windows/Linux et les vrais micros.
+
+
+### 02/11/2026 : prof particulier et non-régression des clients
+
+Le service Prof particulier partage le stockage privé et les actions atomiques du
+coach d'entretiens, avec un mode cours explicite, filtré dans son interface. Quatre
+styles : patient, socratique, pratique, personnalisé. Le questionnaire porte sur les
+préférences déclarées, niveau, objectif et difficultés, sans inférence psychologique.
+Les explications et corrections sont contrôlées avant stockage. Le support complet
+est conservé (100 000 caractères maximum) ; quatre extraits de 800 caractères sont
+sélectionnés par mots pertinents et envoyés au modèle, avec l'historique borné.
+Le bouton de poursuite copie le dernier bilan uniquement depuis une séance de cours
+appartenant au même compte, hors corbeille. Aucun bilan scolaire officiel promis.
+Essais sur doubles : isolement, sortie incomplète refusée, profil transmis,
+extraction pertinente et reprise de bilan. Parcours navigateur avec moteur simulé :
+questionnaire personnalisé, trois réponses, corrections, bilan, reprise des champs.
+Qualité pédagogique avec un vrai modèle local et vrai support à essayer sur poste.
+Les clients existants passent : CLI 33 contrôles, extension VS Code 16 contrôles,
+contre des passerelles jetables. L'extension utilise un faux hôte vscode et un
+modèle simulé : son affichage dans un vrai VS Code reste à essayer.
