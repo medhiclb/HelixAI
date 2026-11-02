@@ -32,6 +32,12 @@
   --info: 221 83% 53%; /* #2563EB bleu : encarts d'information */
   --info-foreground: 40 22% 97%;
 
+  /* Portraits locaux des services, stables dans les deux thèmes. */
+  --avatar-encre: 240 12% 18%;
+  --avatar-peau: 28 68% 77%;
+  --avatar-peau-medium: 25 46% 62%;
+  --avatar-peau-foncee: 22 43% 46%;
+
   /* --- Etats -------------------------------------------------------------- */
   --destructive: 0 84% 60%; /* rouge : deconnexion, zone de danger */
   --destructive-foreground: 0 0% 100%;

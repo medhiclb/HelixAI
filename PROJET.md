@@ -7816,3 +7816,22 @@ Essai navigateur isolé : déplacement à 32 %, liaison mise à jour, passage au
 puis retour avec position conservée, déplacement clavier et réorganisation.
 Le geste de pincement du trackpad n'a pas été reproduit par l'outil de navigateur ;
 il passe par les événements molette avec Ctrl des navigateurs Chromium.
+
+
+### 02/11/2026 : prof et entretien illustrés, retour corrigé
+
+Medhi trouve les premiers écrans fades et demande des avatars. Les portraits SVG
+sont dessinés dans le dépôt, sans photo, identité réelle ni service externe. Les
+styles de prof se choisissent dans des cartes, sont repris dans la séance et dans
+l'historique. Accueil guidé, explications/question/réponse distinguées, progression
+fondée sur les réponses enregistrées et compteur de séances réellement terminées.
+Le coach d'entretien a un portrait de présentation distinct. Les couleurs des
+portraits sont des tokens stables, indépendants des neutres inversés en sombre.
+La flèche initiale ne faisait que vider la sélection : sans sélection elle était
+inerte. Elle ouvre désormais Services depuis l'accueil, et la liste depuis un
+formulaire, une séance ou la corbeille. La lecture vocale s'arrête au retour.
+Essais de parcours sur données fictives : retour vers Services, choix socratique,
+création, réponse, progression de 0 à 1, retour avec historique conservé ; inspection
+visuelle claire et sombre. Pas de nouvel essai avec un vrai modèle dans cette refonte.
+La première batterie pendant les modifications a trouvé le catalogue en cours de
+traduction (2721/2722) ; les six catalogues sont remplis puis la batterie relancée.
