@@ -1,3 +1,4 @@
+import { ProjetVpsChip, type ProjetVps } from "@/components/code/ProjetVpsChip";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { PanelRight, TriangleAlert } from "lucide-react";
@@ -26,6 +27,7 @@ import { t } from "@/lib/i18n";
 /** Ecran Code (capture 9), adossé au moteur OpenCode via la passerelle. */
 export function CodePage() {
   const [draft, setDraft] = useState("");
+  const [vps, setVps] = useState<ProjetVps | null>(null);
   /*
    * Panneau de suivi ouvert d'office sur un écran large ; sur un écran étroit,
    * il couvrirait la conversation : on l'ouvre à la demande.
@@ -50,6 +52,7 @@ export function CodePage() {
    * toujours sur le modèle par défaut, quel que soit le choix affiché.
    */
   const code = useCode(dossier, {
+    vps: vps?.id,
     model: profile.preferredModelUid,
     effort: profile.preferredEffort ?? "moyen",
     // RTK (gateway/src/rtk.ts) : d'office avec un modèle cloud, au choix avec les autres.
@@ -77,6 +80,15 @@ export function CodePage() {
   const [params, setParams] = useSearchParams();
   const demandee = params.get("s");
   const { sessions } = useSessionsCode();
+  const sessionVps = sessions.find(s => s.id === demandee)?.vps;
+  useEffect(() => {
+    const cible = sessionVps;
+    if (!demandee) return;
+    if (!cible) { setVps(null); return; }
+    let actif=true;
+    void import("@/lib/endpoint").then(async ({apiFetch}) => { const r=await apiFetch("/helix/code/vps");if(!r.ok)return;const d=await r.json();if(actif)setVps(d.projets?.find((p:ProjetVps)=>p.id===cible)??null); });
+    return()=>{actif=false};
+  }, [demandee, sessionVps]);
   const { ouvrir, nouvelle, sessionId } = code;
   /*
    * Premier passage de cet écran (retour depuis le Chat ou une autre page) :
@@ -164,7 +176,8 @@ export function CodePage() {
        */
       contextBar={
         <>
-          <DossierTravailChip
+          {moteur === "opencode" && <ProjetVpsChip valeur={vps} disabled={vue.busy} onChange={p=>{setVps(p);code.nouvelle();if(sessionId || demandee)navigate("/code")}}/>}
+          {(!vps || moteur !== "opencode") && <DossierTravailChip
             dossier={dossierAffiche}
             onChange={(chemin) => {
               setDossier(chemin);
@@ -174,7 +187,7 @@ export function CodePage() {
                */
               if (sessionId || demandee) navigate("/code");
             }}
-          />
+          />}
           <MoteurCode
             moteur={moteur}
             onChange={(m) => {

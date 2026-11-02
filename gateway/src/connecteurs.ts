@@ -1460,7 +1460,7 @@ const ID_VALIDE = /^[a-z0-9][a-z0-9_-]{0,31}$/;
  * nommé « linkedin » aurait apporté des `linkedin__profil` que la barrière
  * range parmi les lectures. Et ceux du commerce (natifs/commerce.ts, § 47).
  */
-const IDS_RESERVES = new Set(["courrier", "agenda", "drive", "slack", "bureau", "ecran", "bibliotheque", "reunions", "controle", "code", "connaissances", "taches", "machine", "helix", "web", "sheets", "slides", "youtube", "linkedin", "facebook", "instagram", "tiktok", "x", "docs", "forms", "dropbox", "telegram", "discord", "whatsapp", "stripe", "shopify", "woocommerce", "salesforce", "pipedrive", "zendesk", "brevo", "mailchimp", "microsoft", "outlook", "onedrive", "sharepoint", "excel", "word", "teams"]);
+const IDS_RESERVES = new Set(["vps","courrier", "agenda", "drive", "slack", "bureau", "ecran", "bibliotheque", "reunions", "controle", "code", "connaissances", "taches", "machine", "helix", "web", "sheets", "slides", "youtube", "linkedin", "facebook", "instagram", "tiktok", "x", "docs", "forms", "dropbox", "telegram", "discord", "whatsapp", "stripe", "shopify", "woocommerce", "salesforce", "pipedrive", "zendesk", "brevo", "mailchimp", "microsoft", "outlook", "onedrive", "sharepoint", "excel", "word", "teams"]);
 
 /**
  * Ce que la requête a le droit d'apporter, selon le régime de l'instance.

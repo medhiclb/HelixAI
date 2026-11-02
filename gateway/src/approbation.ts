@@ -499,6 +499,7 @@ const texteOu = (valeur: unknown, defaut: string) =>
  * utilisateur qui ne comprend pas finit par tout approuver par lassitude.
  */
 export function resumerOutil(outil: string, args: Record<string, unknown>): string {
+  if (outil === "vps__executer") return `exécuter sur le VPS ${String(args.serveur_nom ?? args.serveur ?? "?").slice(0,80)} : ${String(args.commande ?? "").slice(0,500)}`;
   const cible = chemin(args, outil);
   const ou = cible ? abreger(cible) : "un emplacement non précisé";
 

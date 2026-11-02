@@ -148,6 +148,7 @@ export const COLLECTIONS_INTERNES = [
    * dates. Leur contenu reste chez OpenCode ; chacun ne liste que les siennes.
    */
   "sessionsCode",
+  "projetsVps",
   /*
    * Clés d'API personnelles (clesApi.ts) : empreintes salées, noms, dates.
    * Interne parce qu'une empreinte n'a rien à faire sur un poste, et que la

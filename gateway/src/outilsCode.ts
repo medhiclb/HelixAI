@@ -1,3 +1,4 @@
+import { outilsVps, executerVps, projetsVps } from "./vps.ts";
 import type http from "node:http";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
@@ -95,7 +96,7 @@ export function noterDemande(sessionID: string, userId: string, dossier: string)
  * La personne pour qui l'agent de code travaille en ce moment, ou `null` si on
  * ne peut pas le dire sans ambiguïté.
  */
-async function titulaire(): Promise<string | null> {
+async function titulaire(): Promise<{userId:string;vps?:string} | null> {
   const dossiers = new Set([...demandes.values()].map((d) => d.dossier));
   const auTravail = new Set<string>();
   /*
@@ -128,6 +129,7 @@ async function titulaire(): Promise<string | null> {
     }
   }
   const personnes = new Set<string>();
+  const cibles = new Set<string>();
   for (const id of auTravail) {
     /*
      * La session elle-même, sinon celle qui a lancé ce sous-agent, sinon le
@@ -141,10 +143,12 @@ async function titulaire(): Promise<string | null> {
     if (!qui) qui = (await sessionCode(id).catch(() => undefined))?.userId;
     // Une session au travail que Helix n'a pas lancée (ouverte hors de la passerelle) : inconnue, donc ambiguë.
     personnes.add(qui ?? "?");
+    const s = await sessionCode(id).catch(()=>undefined) ?? (racine ? await sessionCode(racine).catch(()=>undefined) : undefined);
+    cibles.add(s?.vps ?? "");
   }
   if (personnes.size !== 1) return null;
   const [seule] = [...personnes];
-  return seule === "?" ? null : seule;
+  return seule === "?" || !seule ? null : {userId:seule,vps:cibles.size===1 ? [...cibles][0] || undefined : undefined};
 }
 
 /**
@@ -161,6 +165,7 @@ const contenus = { bibliotheque: false, reunions: false };
 /** Outils offerts à l'agent de code : les connecteurs, sans ce qui agit hors du projet. */
 export function outilsPourCode(): DefinitionOutil[] {
   return [
+    ...outilsVps(),
     // Ni les écritures de Trello, Monday, ClickUp, Todoist, Calendly et Zoom : réservées au Chat de l'administrateur (SECURITE.md § 48).
     // Ni celles de Palmier Pro (29/09/2026) : modifier un montage ou générer n'a rien à faire dans un projet de code.
     // Celles de Roblox Studio et de Blender restent (12/10/2026, demande de Medhi) : un script Luau ou Python est du code ; carte à chaque appel, administrateur seul (outils.ts).
@@ -260,14 +265,15 @@ export async function servirOutilsCode(
    * ferme. Une approbation accordée **après** ne doit pas faire partir une
    * action que l'agent tient déjà pour échouée.
    */
+  const controle = new AbortController();
   let ferme = false;
   res.on("close", () => {
-    ferme = true;
+    ferme = true;controle.abort();
   });
 
   serveur.setRequestHandler(CallToolRequestSchema, async (demande) => {
     const nom = demande.params.name;
-    const args = (demande.params.arguments ?? {}) as Record<string, unknown>;
+    let args = (demande.params.arguments ?? {}) as Record<string, unknown>;
     const texte = (t: string, erreur = false) => ({ content: [{ type: "text" as const, text: t }], isError: erreur });
 
     // Relu à chaque appel : un connecteur débranché entre-temps ne part plus.
@@ -275,7 +281,8 @@ export async function servirOutilsCode(
       return texte(`L'outil ${nom} n'est pas disponible pour l'agent de code.`, true);
     }
 
-    const qui = await titulaire();
+    const cibleCode = await titulaire();
+    const qui = cibleCode?.userId;
     if (!qui) {
       journaliser("outil.refuse", "systeme", { outil: nom, surface: "code", cause: "titulaire-inconnu" });
       return texte(
@@ -285,6 +292,8 @@ export async function servirOutilsCode(
       );
     }
 
+    if (nom === "vps__executer" && (!cibleCode?.vps || args.serveur !== cibleCode.vps)) return texte("Ce serveur ne correspond pas à la session distante active.",true);
+    if (nom === "vps__executer") { const projet=(await projetsVps(qui)).find(p=>p.id===args.serveur);if(!projet)return texte("Serveur introuvable.",true);args={...args,serveur_nom:projet.nom,hote:projet.hote,dossier:projet.dossier}; }
     // Roblox Studio, Blender : le droit d'agir avant la carte (12/10/2026), refait par executerOutil.
     const refusAppli = await refusApplication(nom, args, { userId: qui });
     if (refusAppli) return texte(refusAppli, true);
@@ -296,7 +305,7 @@ export async function servirOutilsCode(
     }
 
     const pour = { userId: qui, groupes: await groupesDe(qui) };
-    const r = nom.startsWith("reunions__") ? await reunions.callTool(nom, args, pour) : await executerOutil(nom, args, pour);
+    const r = nom === "vps__executer" ? await executerVps(qui,args,controle.signal) : nom.startsWith("reunions__") ? await reunions.callTool(nom, args, pour) : await executerOutil(nom, args, pour);
     journaliser("outil.appele", qui, { outil: nom, cible: cibleDe(args), ok: r.ok, surface: "code" });
     return texte(r.content, !r.ok);
   });

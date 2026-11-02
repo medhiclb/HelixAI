@@ -1373,17 +1373,49 @@ icône seule, `role` appropriés sur menus/dialogues. L'animation du logo respec
 
 ## Studio vidéo local
 
-Ouvrez **Studio vidéo** dans la barre latérale. Créez un projet libre, une vidéo
-produit ou une histoire courte. Décrivez votre idée ; **Préparer les scènes** propose
-trois plans à l'aide d'un modèle de texte local. Vous pouvez aussi écrire les plans,
-les déplacer ou les dupliquer vous-même. Les réglages de la vidéo proposent les
-modèles compatibles avec la machine et le volume de leur téléchargement.
+Ouvrez **Studio vidéo**, après **Fichiers** dans la barre latérale. Partez d'un
+projet libre, d'une vidéo produit ou d'une histoire courte. Dans **Atelier**, décrivez
+votre idée ; **Préparer les scènes** propose des plans avec un modèle de texte local.
+Ajoutez des blocs de texte et cochez ceux à relier à chaque scène. Les liaisons
+alimentent la description envoyée au générateur. **Modèles et réglages** donne accès
+aux moteurs locaux d'image et de vidéo et aux téléchargements compatibles.
 
-Wan crée de courts clips sans son. Générez chaque scène, ou les scènes manquantes
-dans l'ordre. Chaque clip se regarde et se télécharge séparément. Quand toutes les
-scènes ont un clip, **Exporter la vidéo** les assemble dans leur ordre en WebM.
-Gardez le studio ouvert pendant l'enchaînement et l'export, réalisé en temps réel sur
-le poste. Les projets et leur brief restent enregistrés dans votre instance.
+Générez une image ou un clip par scène, ou lancez les clips manquants dans l'ordre.
+Wan crée des clips courts sans son. **Médiathèque** permet d'importer et réutiliser
+images, vidéos et audio, jusqu'à 40 Mo par fichier. Les créations se téléchargent
+avec le bouton sur leur aperçu. Dans **Montage**, réordonnez les scènes, découpez
+les clips, choisissez la durée des images fixes, ajoutez les titres et une bande
+sonore. Choisissez un format paysage, portrait ou carré, puis **Exporter la vidéo**.
+Regardez le résultat et téléchargez le fichier WebM. Gardez la fenêtre ouverte
+pendant l'export, effectué en temps réel sur le poste.
+
+Les projets se dupliquent depuis leur carte. La corbeille permet de les retirer,
+de les restaurer ou de les supprimer définitivement. Les médias ont leur propre
+corbeille : supprimer un projet conserve ses médias. La suppression définitive
+d'un média le rend indisponible dans les projets et les Chats qui l'utilisent.
+
+## Coller une photo dans le Chat
+
+Copiez une image ou une capture, placez le curseur dans le champ de Chat et utilisez
+**Ctrl+V** ou **⌘V**. La photo apparaît dans les pièces jointes ; retirez-la avant
+l'envoi si nécessaire. La lecture de son contenu dépend du modèle de vision choisi.
+
+## Coder sur un VPS
+
+Dans **Code**, choisissez le moteur **OpenCode**, puis **Local ou VPS** sur la ligne
+du dossier. Ajoutez le nom du projet, l'hôte SSH (ou son alias), son port et le chemin
+absolu d'un dossier existant sur votre VPS Linux. Utilisez une connexion SSH par clé
+déjà configurée sur l'ordinateur qui exécute la passerelle. Une première connexion
+depuis le terminal permet de reconnaître le serveur. Helix ne demande ici ni mot
+de passe ni clé privée. Ce parcours est réservé à l'administrateur de l'instance.
+
+**Tester la connexion** ouvre le dossier distant et affiche son chemin et son état
+Git s'il s'agit d'un dépôt. **Utiliser ce projet** ouvre une nouvelle session de Code
+sur cette cible. Demandez ensuite à l'agent de lire le projet, modifier les fichiers
+et lancer les tests : ses commandes passent par SSH et par les validations d'actions
+habituelles. Le modèle reste celui choisi dans Code, y compris un modèle local.
+Le dossier est le point de départ des commandes ; le compte SSH conserve ses droits
+sur le serveur. **Travailler sur cet ordinateur** revient à une session locale.
 
 ## Reprendre OpenCode et Zcode
 

@@ -38,6 +38,9 @@ export interface ImageCreee {
   description: string;
   /** Une vidéo (WebM), créée par le même moteur (27/09/2026). */
   video?: boolean;
+  audio?: boolean;
+  mime?: string;
+  secondes?: number;
 }
 
 export interface Travail {

@@ -1,3 +1,4 @@
+import { oublierVps } from "./vps.ts";
 import { db } from "./db.ts";
 import { publicAccounts, retirerCompte } from "./accounts.ts";
 import { revokeAll } from "./usersession.ts";
@@ -242,6 +243,7 @@ export async function effacerCompte(
    * effacée chez OpenCode si son serveur tourne (sinon elle y reste, et le
    * journal le dit par le nombre).
    */
+  await oublierVps(userId);
   const sessionsCode = await oublierSessionsCode(userId).catch(() => []);
   let sessionsCodeEffacees = 0;
   if (enMarche()) {

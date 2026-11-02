@@ -362,6 +362,7 @@ export function ModelBehaviorPicker({
         onOpenChange={(o) => {
           setOpen(o);
           if (o) {
+            refresh();
             setRecherche("");
             setVue("liste");
           }

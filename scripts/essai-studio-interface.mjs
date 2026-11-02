@@ -1,0 +1,26 @@
+/** Interface isolée : aucun compte, projet ou moteur du poste n'est utilisé. */
+import {build} from 'esbuild';
+import {mkdtempSync,writeFileSync,readFileSync,rmSync} from 'node:fs';
+import {join,resolve} from 'node:path';
+import {tmpdir} from 'node:os';
+import {createServer} from 'node:http';
+import {execFileSync} from 'node:child_process';
+const d=mkdtempSync(join(tmpdir(),'helix-studio-interface-'));
+const mocks={
+ 'useProjects':`import {useState,useEffect} from 'react';export function useProjects(){const [projects,set]=useState(window.__projets??=[]);const refresh=()=>set([...window.__projets]);useEffect(()=>{window.addEventListener('helix:projects-changed',refresh);return()=>window.removeEventListener('helix:projects-changed',refresh)},[]);return {projects,refresh,create:(name)=>{const p={id:crypto.randomUUID(),name,ownerId:'essai'};window.__projets.push(p);refresh();return p},rename:(id,changes)=>{Object.assign(window.__projets.find(p=>p.id===id),changes);refresh()}}}`,
+ 'identity':`export const currentUser=()=>({id:'essai'});`,
+ 'projects':`export const getProject=id=>window.__projets.find(p=>p.id===id);export const updateProject=(id,changes)=>Object.assign(getProject(id),changes);export const deleteProject=id=>{window.__projets=window.__projets.filter(p=>p.id!==id)};`,
+ 'images':`export const etatVideos=async()=>({pret:false,raison:'Moteur isolé pour cet essai'});export const urlImage=async()=>null;export const creerImage=async()=>{throw Error('Génération désactivée pour cet essai')};`,
+ 'ImageChip':`export const ImageChip=()=>null;`,
+ 'ModelPicker':`export const ModelBehaviorPicker=()=>null;export const ReasoningPicker=()=>null;`,
+ 'dictee':`export class Enregistreur{};export const DICTEE_MAX_SECONDES=300;export const captureDisponible=()=>false;export const etat=async()=>null;export const installer=()=>{};export const transcrire=()=>{};export const messageErreurMicro=()=>'';`,
+ 'attachments':`export const ACCEPT='image/*';`,
+ 'endpoint':`export const apiFetch=async(url,options)=>{if(url.includes('/code/vps')){window.__serveurs??=[];const b=options?.body?JSON.parse(options.body):null;if(b?.action==='tester')return new Response(JSON.stringify({ok:true,content:'/srv/projet'}));if(b?.action==='retirer')window.__serveurs=window.__serveurs.filter(p=>p.id!==b.id);else if(b)window.__serveurs.push({...b,id:crypto.randomUUID()});return new Response(JSON.stringify({projets:window.__serveurs}))}return new Response(JSON.stringify({medias:[]}))};`,
+ 'i18n':`export const sens=()=>"ltr";export const lister=x=>x.join(", ");export const t=x=>x;export const tf=(x,...v)=>x.replace(/\\{(\\d+)\\}/g,(_,n)=>v[n]);`,
+ 'storage':`export const aleatoire=()=>crypto.randomUUID();`
+};
+await build({stdin:{contents:`import React,{useState} from 'react';import{createRoot}from'react-dom/client';import{VideosPage}from'./src/pages/VideosPage';import{Composer}from'./src/components/chat/Composer';import{ProjetVpsChip}from'./src/components/code/ProjetVpsChip';function Vps(){const[p,set]=useState(null);return <div style={{padding:24}}><h1>Essai des projets VPS</h1><ProjetVpsChip valeur={p} onChange={set}/></div>}function Chat(){const[texte,setTexte]=useState('');const[pieces,setPieces]=useState([]);return <div style={{width:'100%',padding:24}}><h1>Essai du collage de photos</h1><Composer placeholder="Message" value={texte} onChange={setTexte} pieces={pieces} onAjouterFichiers={fichiers=>{for(const f of fichiers){const l=new FileReader();l.onload=()=>setPieces(p=>[...p,{type:'image',nom:f.name,dataUrl:l.result,taille:f.size}]);l.readAsDataURL(f)}}} onRetirerPiece={i=>setPieces(p=>p.filter((_,j)=>i!==j))}/><p>Pièces jointes : {pieces.length}</p></div>}createRoot(document.getElementById('root')).render(location.pathname==='/chat'?<Chat/>:location.pathname==='/vps'?<Vps/>:<VideosPage/>);`,resolveDir:resolve('.'),loader:'tsx'},outfile:join(d,'app.js'),bundle:true,loader:{'.png':'dataurl'},define:{__HELIX_VERSION__:'"essai"','import.meta.env':'{}'},format:'esm',jsx:'automatic',plugins:[{name:'doubles',setup(b){b.onResolve({filter:/.*/},a=>{const cle=a.path.split('/').pop()?.replace(/\.tsx?$/,'');if(mocks[cle])return{path:cle,namespace:'double'}});b.onLoad({filter:/.*/,namespace:'double'},a=>({contents:mocks[a.path],resolveDir:resolve('.')}))}}]});
+execFileSync(resolve('node_modules/.bin/tailwindcss'),['-i',resolve('src/styles/index.css'),'-o',join(d,'style.css')],{stdio:'ignore'});
+const serveur=createServer((req,res)=>{if(req.url==='/app.js'){res.setHeader('Content-Type','text/javascript');res.end(readFileSync(join(d,'app.js')))}else if(req.url==='/style.css'){res.setHeader('Content-Type','text/css');res.end(readFileSync(join(d,'style.css')))}else{res.setHeader('Content-Type','text/html;charset=utf-8');res.end('<html data-theme="'+(req.url.includes('sombre')?'sombre':'clair')+'" lang="fr"><meta charset="utf-8"><title>Studio isolé</title><link rel="stylesheet" href="/style.css"><div id="root" style="height:100vh;display:flex"></div><script type="module" src="/app.js"></script></html>')}});
+serveur.listen(0,'127.0.0.1',()=>console.log(`http://127.0.0.1:${serveur.address().port}/`));
+const fin=()=>{serveur.close();rmSync(d,{recursive:true,force:true});process.exit()};process.on('SIGINT',fin);process.on('SIGTERM',fin);

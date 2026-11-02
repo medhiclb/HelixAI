@@ -1185,10 +1185,11 @@ export async function lancerVideo(description: string, format: "paysage" | "port
 /* Images créées                                                       */
 /* ------------------------------------------------------------------ */
 
-type Registre = Record<string, { pour: string; chat?: string; description: string; invite: string; date: string; largeur: number; hauteur: number; video?: boolean; secondes?: number }>;
+type Registre = Record<string, { pour: string; chat?: string; description: string; invite: string; date: string; largeur: number; hauteur: number; video?: boolean; secondes?: number; audio?: boolean; mime?: string; supprimeLe?: string }>;
 
 /** Le fichier d'une création : image PNG, ou vidéo WebM (27/09/2026). */
-const fichierCree = (id: string, e: { video?: boolean }) => join(dossierCreees(), `${id}.${e.video ? "webm" : "png"}`);
+const EXTENSIONS_MEDIA: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp", "image/gif": "gif", "video/webm": "webm", "video/mp4": "mp4", "audio/mpeg": "mp3", "audio/wav": "wav", "audio/ogg": "ogg" };
+const fichierCree = (id: string, e: { video?: boolean; mime?: string }) => join(dossierCreees(), `${id}.${e.mime ? EXTENSIONS_MEDIA[e.mime] ?? "bin" : e.video ? "webm" : "png"}`);
 
 /**
  * Le registre des images, `{}` s'il n'existe pas encore, `null` s'il existe
@@ -1304,7 +1305,7 @@ export async function imageVisible(id: string, qui: Demandeur): Promise<{ chemin
   if (!e) return null;
   const p = fichierCree(id, e);
   if (!existsSync(p)) return null;
-  const type = e.video ? "video/webm" : "image/png";
+  const type = e.mime ?? (e.video ? "video/webm" : "image/png");
   if (e.pour === qui.userId) return { chemin: p, auteur: true, type };
   const chats = await chatsContenant(id);
   const autorise = chats.some(
@@ -1322,14 +1323,14 @@ export async function imageVisible(id: string, qui: Demandeur): Promise<{ chemin
  * demande qui les a produites. Le fichier se télécharge depuis son Chat. Un
  * registre illisible rend une liste vide, que l'export signale.
  */
-export function imagesDe(userId: string): { lisible: boolean; images: { id: string; description: string; invite: string; date: string; largeur: number; hauteur: number; video?: boolean }[] } {
+export function imagesDe(userId: string): { lisible: boolean; images: { id: string; description: string; invite: string; date: string; largeur: number; hauteur: number; video?: boolean; audio?: boolean; mime?: string; secondes?: number }[] } {
   const registre = lireIndex();
   if (!registre) return { lisible: false, images: [] };
   return {
     lisible: true,
     images: Object.entries(registre)
       .filter(([, e]) => e.pour === userId)
-      .map(([id, e]) => ({ id, description: e.description, invite: e.invite, date: e.date, largeur: e.largeur, hauteur: e.hauteur, ...(e.video ? { video: true } : {}) })),
+      .map(([id, e]) => ({ id, description: e.description, invite: e.invite, date: e.date, largeur: e.largeur, hauteur: e.hauteur, ...(e.video ? { video: true } : {}), ...(e.audio ? { audio: true } : {}), mime: e.mime, secondes: e.secondes })),
   };
 }
 
@@ -1346,4 +1347,53 @@ export function oublierImagesDe(userId: string): number {
   }
   if (n > 0) ecrireIndex(registre);
   return n;
+}
+
+
+/** Médiathèque privée du Studio : jamais les créations d'un autre compte. */
+export function mediasStudio(userId: string) {
+  const registre = lireIndex();
+  if (!registre) throw new Error(t("Le registre des créations est illisible. Aucun fichier n'a été modifié."));
+  return Object.entries(registre).filter(([, e]) => e.pour === userId).map(([id, e]) => ({ id, description: e.description, date: e.date, largeur: e.largeur, hauteur: e.hauteur, video: e.video, audio: e.audio, mime: e.mime ?? (e.video ? "video/webm" : "image/png"), secondes: e.secondes, supprimeLe: e.supprimeLe }));
+}
+
+/** Formats binaires seulement, contrôlés par signature : ni HTML, ni SVG, ni chemin du poste. */
+export function importerMediaStudio(userId: string, corps: { contenu?: unknown; nom?: unknown; largeur?: unknown; hauteur?: unknown; secondes?: unknown }) {
+  const m = typeof corps.contenu === "string" ? /^data:([a-z0-9/+.-]+);base64,([A-Za-z0-9+/]*={0,2})$/.exec(corps.contenu) : null;
+  if (!m || !EXTENSIONS_MEDIA[m[1]!]) throw new Error(t("Ce format de média n'est pas pris en charge."));
+  const mime = m[1]!; const b = Buffer.from(m[2]!, "base64");
+  const texte = (debut: number, fin: number) => b.subarray(debut, fin).toString("ascii");
+  const valide = mime === "image/png" ? b.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10]))
+    : mime === "image/jpeg" ? b[0] === 255 && b[1] === 216 && b[2] === 255
+    : mime === "image/gif" ? ["GIF87a", "GIF89a"].includes(texte(0,6))
+    : mime === "image/webp" ? texte(0,4) === "RIFF" && texte(8,12) === "WEBP"
+    : mime === "video/webm" ? b.subarray(0,4).equals(Buffer.from([26,69,223,163]))
+    : mime === "video/mp4" ? texte(4,8) === "ftyp"
+    : mime === "audio/wav" ? texte(0,4) === "RIFF" && texte(8,12) === "WAVE"
+    : mime === "audio/ogg" ? texte(0,4) === "OggS"
+    : texte(0,3) === "ID3" || (b[0] === 255 && ((b[1] ?? 0) & 224) === 224);
+  if (!valide || b.length === 0 || b.length > 40 * 1024 * 1024) throw new Error(t("Le média est invalide ou dépasse 40 Mo."));
+  const registre = lireIndex();
+  if (!registre) throw new Error(t("Le registre des créations est illisible. Aucun fichier n'a été modifié."));
+  const borne = (n: unknown, max: number) => typeof n === "number" && Number.isFinite(n) ? Math.max(0, Math.min(max, n)) : 0;
+  const id = randomBytes(16).toString("hex");
+  const e = { pour: userId, description: typeof corps.nom === "string" ? corps.nom.slice(0,180) : "", invite: "", date: new Date().toISOString(), largeur: borne(corps.largeur, 8192), hauteur: borne(corps.hauteur, 8192), secondes: borne(corps.secondes, 600), mime, video: mime.startsWith("video/"), audio: mime.startsWith("audio/") };
+  mkdirSync(dossierCreees(), { recursive: true, mode: 0o700 });
+  const fichier = fichierCree(id, e); writeFileSync(fichier, b, { flag: "wx", mode: 0o600 });
+  try { registre[id] = e; ecrireIndex(registre); } catch (err) { rmSync(fichier, { force: true }); throw err; }
+  return { id, ...e, pour: undefined, invite: undefined };
+}
+
+/** Corbeille réversible ; purge seulement sur demande explicite de l'auteur. */
+export function modifierMediaStudio(userId: string, id: string, action: "corbeille" | "restaurer" | "supprimer") {
+  if (!/^[0-9a-f]{32}$/.test(id)) return false;
+  const registre = lireIndex();
+  if (!registre) throw new Error(t("Le registre des créations est illisible. Aucun fichier n'a été modifié."));
+  const e = registre[id]; if (!e || e.pour !== userId) return false;
+  if (action === "supprimer") {
+    if (!e.supprimeLe) return false;
+    delete registre[id]; ecrireIndex(registre);
+    try { rmSync(fichierCree(id, e), { force: true }); } catch (err) { registre[id] = e; ecrireIndex(registre); throw err; }
+  } else { registre[id] = { ...e, supprimeLe: action === "corbeille" ? new Date().toISOString() : undefined }; ecrireIndex(registre); }
+  return true;
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode, type KeyboardEvent, type ClipboardEvent } from "react";
 import { Film,
   Plus,
   Mic,
@@ -14,6 +14,7 @@ import { Film,
   Check,
   ListPlus,
 } from "lucide-react";
+import { imagesDuCollage } from "@/lib/pressePapierImages";
 import { ACCEPT, type Attachment } from "@/lib/attachments";
 import type { EtatRechercheWeb } from "@/lib/rechercheWeb";
 import { IconButton } from "@/components/ui/IconButton";
@@ -198,7 +199,7 @@ export function Composer({
     window.addEventListener("dragover", survole);
     window.addEventListener("dragleave", sortie);
     window.addEventListener("drop", depot);
-    return () => {
+  return () => {
       window.removeEventListener("dragenter", entree);
       window.removeEventListener("dragover", survole);
       window.removeEventListener("dragleave", sortie);
@@ -238,6 +239,22 @@ export function Composer({
     }
   };
 
+  const collerImages = (e: ClipboardEvent<HTMLTextAreaElement>) => {
+              if (!onAjouterFichiers) return;
+              const images = imagesDuCollage(e.clipboardData);
+              if (!images.length) return;
+              e.preventDefault();
+              onAjouterFichiers(images);
+              // Un collage mixte conserve aussi son texte, à la position du curseur.
+              const texte = e.clipboardData.getData("text/plain");
+              if (texte && !/^https?:\/\/\S+$/.test(texte.trim())) {
+                const zone = e.currentTarget;
+                const debut = zone.selectionStart; const fin = zone.selectionEnd;
+                onChange?.((value ?? "").slice(0, debut) + texte + (value ?? "").slice(fin));
+                requestAnimationFrame(() => { zone.setSelectionRange(debut + texte.length, debut + texte.length); autoGrow(zone); });
+              }
+
+  };
   return (
     <div className={cn("w-full", className)}>
       <div className="rounded-2xl bg-muted/50 p-1.5">
@@ -320,6 +337,7 @@ export function Composer({
             </ul>
           )}
           <textarea
+            className="block max-h-52 w-full resize-none bg-transparent px-4 pb-2 pt-3.5 text-[15px] leading-relaxed text-foreground placeholder:overflow-hidden placeholder:text-ellipsis placeholder:whitespace-nowrap placeholder:text-muted-foreground focus:outline-none"
             ref={areaRef}
             rows={1}
             placeholder={placeholder}
@@ -329,6 +347,7 @@ export function Composer({
               onChange?.(e.target.value);
               autoGrow(e.target);
             }}
+            onPaste={collerImages}
             onKeyDown={onKeyDown}
             /*
              * L'invite sur une ligne, en points de suspension (tournée finale du 28/09/2026) : à
@@ -336,7 +355,6 @@ export function Composer({
              * seconde restait visible sous la première (« Posez votre question... @ », puis un
              * bout de lettre coupé). Le texte tapé, lui, passe toujours à la ligne.
              */
-            className="block max-h-52 w-full resize-none bg-transparent px-4 pb-2 pt-3.5 text-[15px] leading-relaxed text-foreground placeholder:overflow-hidden placeholder:text-ellipsis placeholder:whitespace-nowrap placeholder:text-muted-foreground focus:outline-none"
             /*
              * Le texte tapé s'aligne selon sa langue (30/09/2026) : de l'arabe
              * dans une interface française part de la droite, du français dans

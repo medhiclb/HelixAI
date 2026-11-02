@@ -106,7 +106,10 @@ export async function resolve(opts: {
        * devant le modèle de conversation (vu le 25/09/2026, il devenait le
        * choix « Rapide » du sélecteur).
        */
-      const eligible = sansDefaillants(all.filter((m) => m.roles.includes(role) && m.origine !== "cle" && !m.entraine));
+      let eligible = sansDefaillants(all.filter((m) => m.roles.includes(role) && m.origine !== "cle" && !m.entraine));
+      // 02/11/2026 : un modèle de Chat local reste utilisable dans Code même si son
+      // nom ne contient pas « coder ». Le profil imposé et les clés payantes gardent leurs règles.
+      if (role === "code" && eligible.length === 0) eligible = sansDefaillants(all.filter(m => m.roles.includes("chat") && m.origine !== "cle" && !m.entraine));
       if (eligible.length === 0) {
         /*
          * Des modèles branchés par clé, mais rien d'autre : le mode Auto ne les
@@ -114,7 +117,7 @@ export async function resolve(opts: {
          * choisir, plutôt que « aucun modèle » à quelqu'un qui en voit dans son
          * sélecteur (27/09/2026, parcours d'une personne qui n'a qu'une clé).
          */
-        const parCle = all.find((m) => m.roles.includes(role) && m.origine === "cle");
+        const parCle = all.find((m) => (m.roles.includes(role) || (role === "code" && m.roles.includes("chat"))) && m.origine === "cle");
         if (parCle) {
           return {
             error: tf(

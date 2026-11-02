@@ -7076,3 +7076,32 @@ complets. Parcours Windows/Linux du moteur final réussi (`41466089212`). Le cas
 409 côté écran, ajouté ensuite, est couvert par le test du hook et le typecheck.
 Version 2026.1102.2 publiée, manifeste téléchargé depuis GitHub et signature relue
 avec la clé de l’application installée.
+
+### 02/11/2026 : médiathèque du Studio et projets VPS
+
+La médiathèque exige une séance pour lire, importer, mettre en corbeille,
+restaurer et purger. Le propriétaire vient de la séance, les identifiants sont
+aléatoires et les extensions viennent d'une liste de MIME reconnus par signature.
+SVG/HTML exclus ; 40 Mo binaires maximum. Registre illisible : aucune réécriture.
+Une purge ne concerne qu'un média déjà dans la corbeille de sa propriétaire.
+Les références de Chat restent lisibles en corbeille et deviennent indisponibles
+après purge. La signature de format ne constitue pas une analyse antivirus.
+
+Les profils VPS sont une collection interne chiffrée, non synchronisable par la
+route générique des données. Administrateur seul, propriétaire de chaque profil.
+Le client SSH du système utilise les clés/configurations existantes, vérifie le
+serveur déjà connu, n'accepte pas de mot de passe interactif, ne transfère pas
+l'agent et désactive les redirections. Les commandes passent par la barrière des
+outils de Code ; la carte porte la commande entière. L'identifiant doit correspondre
+à la cible des sessions actives, sinon refus. Sessions locales et VPS simultanées
+ambiguës : refus de l'outil distant. Les outils de fichiers/commandes locaux sont
+refusés dans une session VPS ; les sous-sessions héritent de cette cible.
+
+Le compte SSH a ses droits habituels sur le serveur : le dossier de projet est un
+répertoire de départ, pas un confinement. Sortie limitée à 2 Mo, connexion arrêtée
+après deux minutes ou fermeture de la requête. Fermer SSH ne garantit pas l'arrêt
+d'un processus distant détaché. Les préparations, cartes de projet et contrôles
+locaux automatiques ne s'appliquent pas aux sessions VPS. L'agent doit exécuter les
+tests sur le serveur. Export/effacement du compte incluent les profils VPS.
+Essais sur doublures et HTTP jetable ; connexion réelle et comportement du client
+OpenSSH Windows à essayer sur les machines, sans accès à un VPS fourni ici.

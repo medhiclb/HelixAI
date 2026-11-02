@@ -59,9 +59,10 @@ function persist(projects: Project[]): void {
 const normalise = (email: string) => email.trim().toLowerCase();
 
 /** Projets dont l'utilisateur est propriétaire ou membre actif. */
-export function visibleTo(user: User): Project[] {
+export function visibleTo(user: User, inclureCorbeille = false): Project[] {
   const email = normalise(user.email);
   return all()
+    .filter(p => inclureCorbeille || !p.studioVideo?.supprimeLe)
     .filter(
       (p) =>
         p.ownerId === user.id ||

@@ -1,159 +1,134 @@
 import { apiFetch } from "@/lib/endpoint";
+import { getProject } from "@/lib/store/projects";
 import { useEffect, useRef, useState } from "react";
-import { Film, Plus, Download, Loader2, ArrowUp, ArrowDown, Copy, Trash2, Play } from "lucide-react";
-import { PageHeader } from "@/components/layout/PageHeader";
+import { Film, Plus, Download, Loader2, ArrowUp, ArrowDown, Copy, Trash2, Play, ArrowLeft, LayoutGrid, Library, Upload, RotateCcw, SlidersHorizontal, Network, Type, ZoomIn, ZoomOut } from "lucide-react";
+import { FluxStudio } from "@/components/studio/FluxStudio";
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Textarea } from "@/components/ui/Field";
 import { ImageChip } from "@/components/chat/ImageChip";
 import { useProjects } from "@/hooks/useProjects";
 import { currentUser } from "@/lib/store/identity";
-import { getProject } from "@/lib/store/projects";
 import { aleatoire } from "@/lib/store/storage";
-import { etatVideos, urlImage, type EtatImages, type ImageCreee, type Travail } from "@/lib/images";
-import { assemblerClips, enregistrerStudio, genererScene, STUDIO_CHANGE, suivreScene, telechargerBlob, type StudioVideo } from "@/lib/studioVideo";
+import { etatVideos, urlImage, type EtatImages, type ImageCreee } from "@/lib/images";
+import { assemblerClips, enregistrerStudio, genererScene, genererImageScene, STUDIO_CHANGE, suivreScene, telechargerBlob, statutProjetStudio, lireMediasStudio, importerMedia, modifierMedia, type StudioVideo, type SceneVideo, type MediaStudio } from "@/lib/studioVideo";
 import { t, tf } from "@/lib/i18n";
 
-function Clip({ clip }: { clip: ImageCreee }) {
+function Apercu({ media }: { media: ImageCreee }) {
   const [url, setUrl] = useState<string | null>(null);
-  const [charge, setCharge] = useState(false);
-  useEffect(() => { let vivant = true; let adresse: string | null = null; setCharge(false); setUrl(null);
-    void urlImage(clip.id).then(u => { adresse = u; if (vivant) { setUrl(u); setCharge(true); } else if (u) URL.revokeObjectURL(u); });
-    return () => { vivant = false; if (adresse) URL.revokeObjectURL(adresse); };
-  }, [clip.id]);
-  return url ? <div className="space-y-2"><video src={url} controls preload="metadata" className="max-h-72 w-full rounded-xl bg-muted" aria-label={clip.description} />
-    <a href={url} download={`${clip.id}.webm`} className="inline-flex min-h-11 items-center gap-2 text-sm underline"><Download size={16} aria-hidden="true" />{t("Télécharger")}</a></div>
-    : <p className="text-sm text-muted-foreground">{charge ? t("Vidéo indisponible") : t("Chargement...")}</p>;
+  useEffect(() => { let actif = true; let adresse: string | null = null;
+    setUrl(null); void urlImage(media.id).then(u => { adresse = u; if (actif) setUrl(u); else if (u) URL.revokeObjectURL(u); });
+    return () => { actif = false; if (adresse) URL.revokeObjectURL(adresse); };
+  }, [media.id]);
+  return <div className="relative flex min-h-32 items-center justify-center overflow-hidden rounded-xl bg-muted">{!url ? <Film className="text-muted-foreground" aria-label={t("Média indisponible")} /> : media.audio ? <audio onClick={e=>e.stopPropagation()} src={url} controls className="w-full" /> : media.video ? <video onClick={e=>e.stopPropagation()} src={url} controls preload="metadata" className="max-h-64 w-full" aria-label={media.description} /> : <img src={url} alt={media.description} className="max-h-64 w-full object-contain" loading="lazy" />}{url && <a href={url} download={`${media.id}.${({"video/mp4":"mp4","audio/mpeg":"mp3","audio/wav":"wav","audio/ogg":"ogg","image/jpeg":"jpg","image/gif":"gif","image/webp":"webp"} as Record<string,string>)[media.mime??""] ?? (media.video ? "webm" : "png")}`} aria-label={t("Télécharger")} title={t("Télécharger")} onClick={e=>e.stopPropagation()} className="absolute end-2 top-2 flex h-11 w-11 items-center justify-center rounded-full border border-border bg-background text-foreground shadow-sm"><Download size={17} aria-hidden="true"/></a>}</div>;
 }
 
-/** Studio local : les projets suivent la persistance chiffrée et les droits existants.
- * Les clips restent dans l'index d'images, protégé par leur propriétaire.
- */
+/** Un atelier, une bibliothèque et un montage partagent les mêmes créations locales. */
 export function VideosPage() {
-  const { projects, create, rename, refresh } = useProjects();
-  const miens = projects.filter(p => p.ownerId === currentUser().id && p.studioVideo);
+  const { projects, create, rename, refresh } = useProjects(true);
   const [selection, setSelection] = useState<string | null>(null);
-  const projet = miens.find(p => p.id === selection) ?? miens[0];
+  const [vue, setVue] = useState<"projets" | "medias" | "corbeille">("projets");
+  const [onglet, setOnglet] = useState<"atelier" | "montage" | "reglages">("atelier");
+  const [recherche, setRecherche] = useState("");
+  const [medias, setMedias] = useState<MediaStudio[]>([]);
   const [etat, setEtat] = useState<EtatImages | null>(null);
   const [erreur, setErreur] = useState("");
   const [occupe, setOccupe] = useState(false);
   const [exporte, setExporte] = useState(false);
-  const [prepare, setPrepare] = useState(false);
-  const [rangExport, setRangExport] = useState(0);
-  const [travaux, setTravaux] = useState<Record<string, Travail>>({});
-  const controleExport = useRef<AbortController | null>(null);
-  const sequences = useRef(false);
-  useEffect(() => { const charger = () => void etatVideos().then(setEtat); charger(); const timer = setInterval(charger, 5000); return () => clearInterval(timer); }, []);
-  useEffect(() => {
-    const changer = (e: Event) => { refresh(); const tr = (e as CustomEvent<Travail>).detail; if (tr?.id) setTravaux(v => ({ ...v, [tr.id]: tr })); };
-    window.addEventListener(STUDIO_CHANGE, changer);
-    return () => { window.removeEventListener(STUDIO_CHANGE, changer); controleExport.current?.abort(); sequences.current = false; };
-  }, [refresh]);
-  useEffect(() => { for (const p of miens) for (const s of p.studioVideo?.scenes ?? []) if (s.travail) void suivreScene(p.id, s.id, s.travail); }, [projects]);
+  const [rang, setRang] = useState(0);
+  const [zoom, setZoom] = useState(1);
+  const [apercu, setApercu] = useState<string | null>(null);
+  const controle = useRef<AbortController | null>(null);
+  const file = useRef(false);
+  const importeur = useRef<HTMLInputElement>(null);
+  const miens = projects.filter(p => p.ownerId === currentUser().id && p.studioVideo);
+  const projet = miens.find(p => p.id === selection && !p.studioVideo?.supprimeLe);
   const studio = projet?.studioVideo;
-  const sauvegarder = (valeur: StudioVideo) => { if (projet) enregistrerStudio(projet.id, valeur); };
+  const enCours = occupe || exporte || Boolean(studio?.scenes.some(s => s.travail || s.travailImage));
+  const signaler = (e: unknown) => setErreur(e instanceof Error ? e.message : String(e));
+  const chargerMedias = async () => { try { setMedias(await lireMediasStudio()); } catch(e) { signaler(e); } };
+  useEffect(() => { const charger = () => void etatVideos().then(setEtat); charger(); const timer = setInterval(charger, 5000); return () => clearInterval(timer); }, []);
+  useEffect(() => { const changer = () => refresh(); window.addEventListener(STUDIO_CHANGE, changer); return () => { window.removeEventListener(STUDIO_CHANGE, changer); controle.current?.abort(); file.current=false; }; }, [refresh]);
+  useEffect(() => { for (const p of miens) for (const s of p.studioVideo?.scenes ?? []) if (s.travail) void suivreScene(p.id, s.id, s.travail); }, [projects]);
+  useEffect(() => { if (vue !== "projets") void chargerMedias(); }, [vue]);
+  useEffect(() => () => { if(apercu) URL.revokeObjectURL(apercu); }, [apercu]);
+  const sauver = (valeur: StudioVideo) => { setApercu(null); if(projet) enregistrerStudio(projet.id, valeur); };
+  const scene = (id: string, patch: Partial<SceneVideo>) => { if(studio) sauver({ ...studio, scenes: studio.scenes.map(s => s.id === id ? { ...s, ...patch } : s) }); };
   const nouveau = (modele: "libre" | "produit" | "histoire") => {
-    const p = create(t("Nouveau projet vidéo"));
-    const descriptions = modele === "produit" ? [t("Présentez le produit et son décor."), t("Montrez le produit en utilisation."), t("Terminez par un plan du produit.")]
-      : modele === "histoire" ? [t("Présentez le lieu et le personnage."), t("Décrivez une action simple."), t("Décrivez le plan final.")] : [""];
+    const p = create(modele === "produit" ? t("Vidéo produit") : modele === "histoire" ? t("Histoire courte") : t("Nouveau projet vidéo"));
+    const descriptions = modele === "produit" ? [t("Présentez le produit et son décor."), t("Montrez le produit en utilisation."), t("Terminez par un plan du produit.")] : modele === "histoire" ? [t("Présentez le lieu et le personnage."), t("Décrivez une action simple."), t("Décrivez le plan final.")] : [""];
     enregistrerStudio(p.id, { format: "paysage", scenes: descriptions.map(description => ({ id: aleatoire(12), description })) });
-    setSelection(p.id); setErreur("");
+    setSelection(p.id); setVue("projets"); setOnglet("atelier"); setErreur("");
   };
-  const lancer = async (toutes: boolean, scene?: string) => {
-    if (!projet) return;
-    setOccupe(true); setErreur(""); sequences.current = true;
-    const id = projet.id;
-    try {
-      const cibles = toutes ? studio?.scenes.filter(s => !s.clip).map(s => s.id) ?? [] : [scene!];
-      for (const cible of cibles) {
-        if (!sequences.current) break;
-        await genererScene(id, cible);
-        // Une génération à la fois, et suivi toujours actif en quittant la page.
-        while (sequences.current && getProject(id)?.studioVideo?.scenes.find(s => s.id === cible)?.travail) await new Promise(r => setTimeout(r, 1000));
-        const derniere = getProject(id)?.studioVideo?.scenes.find(s => s.id === cible);
-        if (derniere?.erreur) throw new Error(derniere.erreur);
-      }
-    } catch (e) { setErreur(e instanceof Error ? e.message : String(e)); }
-    finally { setOccupe(false); sequences.current = false; }
+  const actionProjet = (id: string, action: "corbeille" | "restaurer" | "supprimer") => {
+    if(action === "supprimer" && !window.confirm(t("Supprimer définitivement ce projet ? Les médias restent dans la médiathèque."))) return;
+    try { statutProjetStudio(id, action); if(id === selection) setSelection(null); } catch(e) { signaler(e); }
   };
+  const lancer = async (s: SceneVideo, image = false) => { if(!projet) return; setOccupe(true); setErreur(""); try { if(image) await genererImageScene(projet.id,s.id); else await genererScene(projet.id,s.id); } catch(e) { signaler(e); } finally { setOccupe(false); } };
   const preparer = async () => {
-    if (!projet || !studio?.brief?.trim()) return;
-    const id = projet.id;
-    setPrepare(true); setErreur("");
-    try {
-      const r = await apiFetch("/helix/videos/scenario", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ brief: studio.brief }) });
-      const d = await r.json() as { scenes?: string[]; error?: { message?: string } };
-      if (!r.ok || !d.scenes) throw new Error(d.error?.message ?? t("L'instance n'a pas répondu."));
-      const actuel = getProject(id)?.studioVideo;
-      if (!actuel) return;
-      const gardees = actuel.scenes.filter(s => s.description.trim() || s.clip || s.travail);
-      enregistrerStudio(id, { ...actuel, scenes: [...gardees, ...d.scenes.map(description => ({ id: aleatoire(12), description }))].slice(0, 12) });
-    } catch (e) { setErreur(e instanceof Error ? e.message : String(e)); }
-    finally { setPrepare(false); }
+    if(!projet || !studio?.brief?.trim()) return;
+    const id=projet.id;setOccupe(true);setErreur("");
+    try { const r=await apiFetch("/helix/videos/scenario",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({brief:studio.brief})});const d=await r.json();
+      if(!r.ok || !Array.isArray(d.scenes)) throw new Error(d.error?.message??t("L'instance n'a pas répondu."));
+      const actuel=getProject(id)?.studioVideo;if(!actuel || actuel.supprimeLe)return;
+      const gardees=actuel.scenes.filter(s=>s.description.trim()||s.clip||s.image||s.travail);
+      enregistrerStudio(id,{...actuel,scenes:[...gardees,...d.scenes.filter((s:unknown)=>typeof s==="string").map((description:string)=>({id:aleatoire(12),description}))].slice(0,12)});
+    }catch(e){signaler(e)}finally{setOccupe(false)}
   };
+  const genererToutes = async () => {
+    if(!projet||!studio)return;const id=projet.id;const auteur=currentUser().id;file.current=true;setOccupe(true);setErreur("");
+    try{for(const s of studio.scenes.filter(s=>!s.clip)){
+      if(!file.current||currentUser().id!==auteur)break;
+      await genererScene(id,s.id);
+      while(file.current && currentUser().id===auteur && getProject(id)?.studioVideo?.scenes.find(x=>x.id===s.id)?.travail) await new Promise(r=>setTimeout(r,1000));
+      const derniere=getProject(id)?.studioVideo?.scenes.find(x=>x.id===s.id);if(derniere?.erreur)throw new Error(derniere.erreur);
+    }}catch(e){signaler(e)}finally{file.current=false;setOccupe(false)}
+  };
+  const deplacer = (i: number, sens: number) => { if(!studio) return; const scenes=[...studio.scenes]; const cible=i+sens; if(cible<0 || cible>=scenes.length) return; [scenes[i],scenes[cible]]=[scenes[cible]!,scenes[i]!]; sauver({...studio,scenes}); };
   const exporter = async () => {
-    if (!studio) return;
-    setExporte(true); setErreur(""); controleExport.current = new AbortController();
-    try { telechargerBlob(await assemblerClips(studio.scenes.map(s => s.clip!.id), studio.format, setRangExport, controleExport.current.signal), `${projet.name}.webm`); }
-    catch (e) { if (!(e instanceof DOMException && e.name === "AbortError")) setErreur(e instanceof Error ? e.message : String(e)); }
-    finally { setExporte(false); }
+    if(!studio) return; setExporte(true); setErreur(""); controle.current=new AbortController();
+    try { const plans=studio.scenes.map(s => ({ id:(s.clip ?? s.image)!.id, video:Boolean(s.clip), debut:s.debut, fin:s.fin, duree:s.duree, titre:s.titre }));
+      const blob=await assemblerClips(plans,studio.format,setRang,controle.current.signal,{audio:studio.audio?.id,volume:studio.volume}); setApercu(URL.createObjectURL(blob));
+    } catch(e) { if(!(e instanceof DOMException && e.name === "AbortError")) signaler(e); } finally { setExporte(false); }
   };
-  const enCours = exporte || prepare || occupe || Boolean(studio?.scenes.some(s => s.travail));
-  return <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-    <div className="mx-auto w-full max-w-6xl space-y-6 p-4 pb-8 sm:p-6 sm:pb-10">
-    <PageHeader title={t("Studio vidéo")} subtitle={t("Préparez vos scènes, créez vos clips sur cette machine et assemblez votre vidéo.")} />
-    <div className="flex flex-wrap gap-2">
-      <Button icon={Plus} onClick={() => nouveau("libre")}>{t("Nouveau projet vidéo")}</Button>
-      <Button variant="secondary" onClick={() => nouveau("produit")}>{t("Vidéo produit")}</Button>
-      <Button variant="secondary" onClick={() => nouveau("histoire")}>{t("Histoire courte")}</Button>
-    </div>
-    <div className="grid gap-5 lg:grid-cols-[15rem_minmax(0,1fr)]">
-      <aside className="space-y-2" aria-label={t("Projets vidéo")}>
-        {miens.map(p => <button key={p.id} type="button" aria-pressed={projet?.id === p.id} onClick={() => setSelection(p.id)}
-          className={`flex min-h-11 w-full items-center gap-2 rounded-xl border p-3 text-start text-sm ${projet?.id === p.id ? "border-primary bg-muted" : "border-border"}`}>
-          <Film size={16} className="shrink-0" aria-hidden="true" /><span className="truncate">{p.name}</span></button>)}
-      </aside>
-      <main className="min-w-0 space-y-4">
-        {!projet || !studio ? <div className="rounded-2xl border border-border bg-card p-8 text-sm text-muted-foreground">{t("Créez un projet pour préparer votre première vidéo.")}</div> : <>
-          <section className="space-y-4 rounded-2xl border border-border bg-card p-4">
-            <Field label={t("Nom du projet")}><Input aria-label={t("Nom du projet")} value={projet.name} maxLength={120} disabled={enCours} onChange={e => rename(projet.id, { name: e.target.value })} /></Field>
-            <Field label={t("Décrivez votre vidéo")}><Textarea aria-label={t("Décrivez votre vidéo")} rows={3} maxLength={2000} disabled={enCours} value={studio.brief ?? ""} onChange={e => sauvegarder({ ...studio, brief: e.target.value })} /></Field>
-            <Button variant="secondary" icon={prepare ? Loader2 : Film} disabled={enCours || !studio.brief?.trim() || studio.scenes.filter(s => s.description.trim() || s.clip).length > 9} onClick={() => void preparer()}>{t("Préparer les scènes")}</Button>
-            <div className="flex flex-wrap items-center gap-3">
-              <ImageChip genre="video" format={studio.format} onFormat={f => { if (!enCours) sauvegarder({ ...studio, format: f === "portrait" ? "portrait" : "paysage" }); }} />
-              <label className="text-sm">{t("Format")}<select className="ms-2 rounded-lg border border-border bg-background p-2" disabled={enCours} value={studio.format} onChange={e => sauvegarder({ ...studio, format: e.target.value as StudioVideo["format"] })}>
-                <option value="paysage">{t("Paysage")}</option><option value="portrait">{t("Portrait")}</option>
-              </select></label>
-            </div>
-            <p className="text-xs leading-relaxed text-muted-foreground">{t("Wan crée des clips courts sans son. Les dimensions et la durée dépendent du modèle adapté à votre machine. L'assemblage WebM s'effectue en temps réel dans cette fenêtre.")}</p>
-            {!etat && <p role="status" className="text-sm text-muted-foreground">{t("Instance injoignable : impossible de savoir si elle crée des vidéos.")}</p>}
-            {etat && !etat.pret && <p className="text-sm text-muted-foreground">{etat.raison || t("Choisissez et installez un modèle dans les réglages de la vidéo.")}</p>}
-          </section>
-          <ol className="space-y-4">
-            {studio.scenes.map((s, i) => <li key={s.id} className="space-y-3 rounded-2xl border border-border bg-card p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-sm font-medium">{tf("Scène {0}", i + 1)}</h2>
-                <div className="flex flex-wrap gap-1">
-                  {[{ Icon: ArrowUp, nom: t("Monter"), destination: i - 1 }, { Icon: ArrowDown, nom: t("Descendre"), destination: i + 1 }].map(({ Icon, nom, destination }) => <Button key={nom} variant="ghost" aria-label={nom} className="min-h-11" disabled={enCours || destination < 0 || destination >= studio.scenes.length} icon={Icon} onClick={() => { const scenes = [...studio.scenes]; [scenes[i], scenes[destination]] = [scenes[destination]!, scenes[i]!]; sauvegarder({ ...studio, scenes }); }} />)}
-                  <Button variant="ghost" icon={Copy} aria-label={t("Dupliquer")} className="min-h-11" disabled={enCours || studio.scenes.length >= 12} onClick={() => { const scenes = [...studio.scenes]; scenes.splice(i + 1, 0, { id: aleatoire(12), description: s.description }); sauvegarder({ ...studio, scenes }); }} />
-                  <Button variant="ghost" icon={Trash2} aria-label={t("Retirer la scène")} className="min-h-11" disabled={enCours || studio.scenes.length === 1} onClick={() => sauvegarder({ ...studio, scenes: studio.scenes.filter(x => x.id !== s.id) })} />
-                </div>
-              </div>
-              <Field label={t("Description")}><Textarea aria-label={`${t("Description")} ${i + 1}`} rows={3} maxLength={2000} disabled={enCours} value={s.description} onChange={e => sauvegarder({ ...studio, scenes: studio.scenes.map(x => x.id === s.id ? { ...x, description: e.target.value } : x) })} /></Field>
-              {s.clip && <Clip clip={s.clip} />}
-              {s.travail && <p role="status" className="flex items-center gap-2 text-sm"><Loader2 size={16} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />{travaux[s.travail]?.message ?? t("Création de la vidéo...")}</p>}
-              {s.erreur && <p role="alert" className="text-sm text-destructive">{s.erreur}</p>}
-              <Button variant="secondary" icon={Play} disabled={enCours || !etat?.pret || !s.description.trim()} onClick={() => void lancer(false, s.id)}>{s.clip ? t("Régénérer") : t("Générer la scène")}</Button>
-            </li>)}
-          </ol>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" icon={Plus} disabled={enCours || studio.scenes.length >= 12} onClick={() => sauvegarder({ ...studio, scenes: [...studio.scenes, { id: aleatoire(12), description: "" }] })}>{t("Ajouter une scène")}</Button>
-            <Button icon={enCours ? Loader2 : Film} disabled={enCours || !etat?.pret || studio.scenes.some(s => !s.description.trim()) || studio.scenes.every(s => s.clip)} onClick={() => void lancer(true)}>{t("Générer les scènes manquantes")}</Button>
-            <Button icon={exporte ? Loader2 : Download} disabled={exporte || enCours || studio.scenes.some(s => !s.clip)} onClick={() => void exporter()}>{exporte ? tf("Assemblage : scène {0}", rangExport) : t("Exporter la vidéo")}</Button>
-            {exporte && <Button variant="secondary" onClick={() => controleExport.current?.abort()}>{t("Annuler")}</Button>}
-          </div>
-        </>}
-        {erreur && <p role="alert" className="text-sm text-destructive">{erreur}</p>}
-      </main>
-    </div>
-    </div>
+  const importer = async (fichiers: FileList | null) => { if(!fichiers) return; setOccupe(true); setErreur(""); try { for(const f of Array.from(fichiers)) await importerMedia(f); await chargerMedias(); } catch(e) { signaler(e); } finally { setOccupe(false); if(importeur.current) importeur.current.value=""; } };
+  const actionMedia = async (m: MediaStudio, action: "corbeille" | "restaurer" | "supprimer") => { if(action === "supprimer" && !window.confirm(t("Supprimer définitivement ce média ? Les projets et les Chats qui l'utilisent ne pourront plus le lire."))) return; try { await modifierMedia(m.id,action); await chargerMedias(); } catch(e) { signaler(e); } };
+  const ajouter = () => { if(studio) sauver({...studio,scenes:[...studio.scenes,{id:aleatoire(12),description:""}]}); };
+  const outilsScene = (s: SceneVideo,i: number) => <div className="flex items-center gap-1"><span className="me-auto text-xs font-medium text-muted-foreground">{tf("Scène {0}",i+1)}</span><Button variant="ghost" icon={ArrowUp} aria-label={t("Monter")} disabled={enCours || i===0} onClick={()=>deplacer(i,-1)} /><Button variant="ghost" icon={ArrowDown} aria-label={t("Descendre")} disabled={enCours || i===studio!.scenes.length-1} onClick={()=>deplacer(i,1)} /><Button variant="ghost" icon={Copy} aria-label={t("Dupliquer")} disabled={enCours || studio!.scenes.length>=12} onClick={()=>sauver({...studio!,scenes:[...studio!.scenes.slice(0,i+1),{...s,id:aleatoire(12),travail:undefined,travailImage:undefined},...studio!.scenes.slice(i+1)]})} /><Button variant="ghost" icon={Trash2} aria-label={t("Retirer la scène")} disabled={enCours} onClick={()=>sauver({...studio!,scenes:studio!.scenes.filter(x=>x.id!==s.id)})} /></div>;
+  return <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background">
+    <header className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-5 py-4">
+      {projet ? <Button variant="ghost" icon={ArrowLeft} aria-label={t("Projets vidéo")} onClick={()=>setSelection(null)} /> : <Film size={24} className="text-primary" />}
+      <div className="me-auto"><h1 className="text-lg font-semibold">{projet?.name ?? t("Studio vidéo")}</h1><p className="text-xs text-muted-foreground">{projet ? t("Les modifications sont enregistrées automatiquement.") : t("De votre idée à votre vidéo, sur votre machine.")}</p></div>
+      {projet && <Button icon={exporte ? Loader2 : Download} disabled={enCours || !studio?.scenes.length || studio.scenes.some(s=>!s.clip && !s.image)} onClick={()=>{setOnglet("montage");void exporter();}}>{t("Exporter la vidéo")}</Button>}
+      {!projet && <Button icon={Plus} onClick={()=>nouveau("libre")}>{t("Nouveau projet vidéo")}</Button>}
+    </header>
+    <nav className="flex shrink-0 flex-wrap gap-2 border-b border-border px-5 py-2" aria-label={t("Studio vidéo")}>
+      {projet ? <>{([{id:"atelier",nom:t("Atelier"),icon:Network},{id:"montage",nom:t("Montage"),icon:Film},{id:"reglages",nom:t("Réglages"),icon:SlidersHorizontal}] as const).map(o=><Button key={o.id} variant={onglet===o.id ? "secondary":"ghost"} icon={o.icon} onClick={()=>{setVue("projets");setOnglet(o.id)}}>{o.nom}</Button>)}<Button variant={vue==="medias"?"secondary":"ghost"} icon={Library} onClick={()=>setVue("medias")}>{t("Médiathèque")}</Button></> : <>{([{id:"projets",nom:t("Projets vidéo"),icon:LayoutGrid},{id:"medias",nom:t("Médiathèque"),icon:Library},{id:"corbeille",nom:t("Corbeille"),icon:Trash2}] as const).map(o=><Button key={o.id} variant={vue===o.id?"secondary":"ghost"} icon={o.icon} onClick={()=>setVue(o.id)}>{o.nom}</Button>)}</>}
+    </nav>
+    {erreur && <div role="alert" className="flex items-center justify-between gap-3 border-b border-destructive bg-card px-5 py-3 text-sm text-destructive">{erreur}<Button variant="ghost" onClick={()=>setErreur("")}>{t("Fermer")}</Button></div>}
+    <main className="min-h-0 flex-1 overflow-auto overscroll-contain">
+      {vue === "medias" || vue === "corbeille" ? <div className="mx-auto max-w-7xl space-y-6 p-6">
+        <div className="flex flex-wrap items-center gap-3"><h2 className="me-auto text-xl font-semibold">{vue==="corbeille"?t("Corbeille"):t("Médiathèque")}</h2><Button variant="secondary" onClick={()=>void chargerMedias()}>{t("Actualiser")}</Button>{vue==="medias" && <Button icon={Upload} disabled={occupe} onClick={()=>importeur.current?.click()}>{t("Importer des médias")}</Button>}<input ref={importeur} type="file" multiple accept="image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm,audio/mpeg,audio/wav,audio/ogg" className="hidden" onChange={e=>void importer(e.target.files)} /></div>
+        {vue==="medias" && <p className="text-sm text-muted-foreground">{t("Images, vidéos et audio. Jusqu'à 40 Mo par fichier.")}</p>}
+        {vue==="corbeille" && miens.filter(p=>p.studioVideo?.supprimeLe).map(p=><div key={p.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-4"><Film size={20}/><span className="me-auto">{p.name}</span><Button variant="secondary" icon={RotateCcw} onClick={()=>actionProjet(p.id,"restaurer")}>{t("Restaurer")}</Button><Button variant="ghost" icon={Trash2} onClick={()=>actionProjet(p.id,"supprimer")}>{t("Supprimer définitivement")}</Button></div>)}
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">{medias.filter(m=>Boolean(m.supprimeLe)===(vue==="corbeille")).map(m=><article key={m.id} className="space-y-3 rounded-2xl border border-border bg-card p-3"><Apercu media={m}/><p className="truncate text-sm" title={m.description}>{m.description}</p><div className="flex flex-wrap gap-2">{m.supprimeLe ? <><Button variant="secondary" onClick={()=>void actionMedia(m,"restaurer")}>{t("Restaurer")}</Button><Button variant="ghost" icon={Trash2} onClick={()=>void actionMedia(m,"supprimer")}>{t("Supprimer définitivement")}</Button></> : <><Button variant="ghost" icon={Trash2} aria-label={t("Mettre à la corbeille")} onClick={()=>void actionMedia(m,"corbeille")}/>{studio && <Button disabled={enCours || (!m.audio && studio.scenes.length>=12)} onClick={()=>{if(m.audio) sauver({...studio,audio:m});else sauver({...studio,scenes:[...studio.scenes,{id:aleatoire(12),description:m.description,...(m.video?{clip:m}:{image:m})}]});setVue("projets");setOnglet("montage")}}>{t("Utiliser dans le montage")}</Button>}</>}</div></article>)}</div>
+      </div> : !projet || !studio ? <div className="mx-auto max-w-7xl space-y-8 p-6 lg:p-10">
+        <section className="rounded-3xl border border-border bg-card p-8"><span className="text-xs font-semibold uppercase tracking-widest text-primary">{t("Votre atelier créatif local")}</span><h2 className="mt-3 max-w-xl text-3xl font-semibold leading-tight">{t("Une idée. Des scènes. Votre film.")}</h2><p className="mt-3 max-w-2xl text-muted-foreground">{t("Reliez vos textes à vos scènes, générez des images ou des clips, puis ajoutez votre son et vos titres dans le montage.")}</p><div className="mt-6 flex flex-wrap gap-3"><Button icon={Plus} onClick={()=>nouveau("libre")}>{t("Partir d'une idée")}</Button><Button variant="secondary" onClick={()=>nouveau("produit")}>{t("Vidéo produit")}</Button><Button variant="secondary" onClick={()=>nouveau("histoire")}>{t("Histoire courte")}</Button></div></section>
+        <div className="flex flex-wrap items-center gap-4"><h2 className="me-auto text-xl font-semibold">{t("Projets vidéo")}</h2><Input aria-label={t("Rechercher un projet")} placeholder={t("Rechercher un projet")} value={recherche} onChange={e=>setRecherche(e.target.value)} className="max-w-xs"/></div>
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">{miens.filter(p=>!p.studioVideo?.supprimeLe && p.name.toLowerCase().includes(recherche.toLowerCase())).map(p=><article key={p.id} className="overflow-hidden rounded-2xl border border-border bg-card transition-shadow hover:shadow-lg"><div className="w-full p-4 text-start" onClick={()=>{setSelection(p.id);setOnglet("atelier");setVue("projets")}}>{p.studioVideo!.scenes.find(s=>s.clip||s.image) ? <Apercu media={(p.studioVideo!.scenes.find(s=>s.clip||s.image)!.clip ?? p.studioVideo!.scenes.find(s=>s.image)!.image)!}/> : <div className="flex h-40 items-center justify-center rounded-xl bg-muted"><Film size={36} className="text-primary"/></div>}<button className="mt-4 block min-h-11 text-start font-medium underline-offset-4 hover:underline" onClick={()=>{setSelection(p.id);setOnglet("atelier");setVue("projets")}}>{p.name}</button><p className="mt-1 text-xs text-muted-foreground">{tf("{0} scènes",p.studioVideo!.scenes.length)}</p></div><div className="flex justify-end gap-2 border-t border-border p-2"><Button variant="ghost" icon={Copy} aria-label={t("Dupliquer")} onClick={()=>{const copie=create(tf("Copie de {0}",p.name));const valeur=structuredClone(p.studioVideo!);valeur.scenes=valeur.scenes.map(s=>({...s,travail:undefined,travailImage:undefined}));enregistrerStudio(copie.id,valeur);setSelection(copie.id)}}/><Button variant="ghost" icon={Trash2} aria-label={t("Mettre à la corbeille")} onClick={()=>actionProjet(p.id,"corbeille")}/></div></article>)}</div>
+      </div> : onglet === "reglages" ? <div className="mx-auto max-w-3xl space-y-6 p-6"><Field label={t("Nom du projet")}><Input aria-label={t("Nom du projet")} disabled={enCours} value={projet.name} maxLength={120} onChange={e=>rename(projet.id,{name:e.target.value})}/></Field><Field label={t("Style visuel commun")}><Textarea aria-label={t("Style visuel commun")} disabled={enCours} value={studio.style??""} maxLength={1000} onChange={e=>sauver({...studio,style:e.target.value})}/></Field><div className="flex flex-wrap gap-4"><ImageChip genre="image" format={studio.format} onFormat={f=>sauver({...studio,format:f})}/><ImageChip genre="video" format={studio.format==="carre"?"paysage":studio.format} onFormat={f=>sauver({...studio,format:f})}/></div><p className="text-sm text-muted-foreground">{etat?.pret ? t("Le moteur vidéo est prêt.") : etat?.raison || t("Choisissez et installez un modèle dans les réglages de la vidéo.")}</p><p className="text-sm text-muted-foreground">{t("Wan crée des clips courts sans son. Les dimensions et la durée dépendent du modèle adapté à votre machine. L'assemblage WebM s'effectue en temps réel dans cette fenêtre.")}</p></div> : onglet === "montage" ? <div className="mx-auto max-w-5xl space-y-6 p-6">
+        <div className="flex flex-wrap items-center gap-4"><h2 className="me-auto text-xl font-semibold">{t("Montage")}</h2><label>{t("Format")}<select className="ms-3 rounded-xl border border-border bg-card p-3" value={studio.format} disabled={enCours} onChange={e=>sauver({...studio,format:e.target.value as StudioVideo["format"]})}><option value="paysage">{t("Paysage")}</option><option value="portrait">{t("Portrait")}</option><option value="carre">{t("Carré")}</option></select></label><Button variant="secondary" icon={Library} onClick={()=>setVue("medias")}>{t("Ajouter un média")}</Button></div>
+        {apercu && <section className="space-y-3 rounded-2xl border border-border bg-card p-4"><video controls src={apercu} className="max-h-96 w-full rounded-xl bg-muted"/><Button icon={Download} onClick={()=>void fetch(apercu).then(r=>r.blob()).then(b=>telechargerBlob(b,`${projet.name}.webm`))}>{t("Télécharger")}</Button></section>}
+        {exporte && <div role="status" className="flex items-center gap-3"><Loader2 className="animate-spin"/>{tf("Assemblage : scène {0}",rang)}<Button variant="secondary" onClick={()=>controle.current?.abort()}>{t("Annuler")}</Button></div>}
+        <ol className="space-y-4">{studio.scenes.map((s,i)=><li key={s.id} className="grid gap-4 rounded-2xl border border-border bg-card p-4 md:grid-cols-[15rem_1fr]"><div>{s.clip||s.image?<Apercu media={(s.clip??s.image)!}/>:<p className="p-6 text-sm text-muted-foreground">{t("Ajoutez ou générez un média pour cette scène.")}</p>}</div><div className="space-y-3">{outilsScene(s,i)}<Field label={t("Titre à l'écran")}><Input aria-label={`${t("Titre à l'écran")} ${i+1}`} maxLength={200} value={s.titre??""} disabled={enCours} onChange={e=>scene(s.id,{titre:e.target.value})}/></Field><div className="flex flex-wrap gap-3">{s.clip ? <><Field label={t("Début en secondes")}><Input aria-label={`${t("Début en secondes")} ${i+1}`} type="number" min={0} step={0.1} value={s.debut??0} disabled={enCours} onChange={e=>scene(s.id,{debut:Number(e.target.value)})}/></Field><Field label={t("Fin en secondes")}><Input aria-label={`${t("Fin en secondes")} ${i+1}`} type="number" min={0} step={0.1} value={s.fin??""} disabled={enCours} onChange={e=>scene(s.id,{fin:e.target.value?Number(e.target.value):undefined})}/></Field></> : <Field label={t("Durée en secondes")}><Input aria-label={`${t("Durée en secondes")} ${i+1}`} type="number" min={0.5} max={30} step={0.5} value={s.duree??3} disabled={enCours} onChange={e=>scene(s.id,{duree:Number(e.target.value)})}/></Field>}</div></div></li>)}</ol>
+        <section className="space-y-3 rounded-2xl border border-border bg-card p-4"><h3 className="font-medium">{t("Bande sonore")}</h3>{studio.audio ? <><Apercu media={studio.audio}/><label className="flex items-center gap-3">{t("Volume")}<input type="range" min={0} max={1} step={0.05} value={studio.volume??0.3} disabled={enCours} onChange={e=>sauver({...studio,volume:Number(e.target.value)})}/></label><Button variant="ghost" onClick={()=>sauver({...studio,audio:undefined})}>{t("Retirer")}</Button></> : <Button variant="secondary" icon={Library} onClick={()=>setVue("medias")}>{t("Choisir un fichier audio")}</Button>}</section>
+      </div> : <div className="min-h-full bg-muted/30">
+        <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 border-b border-border bg-background/95 px-5 py-3"><Button variant="secondary" icon={Plus} disabled={enCours||studio.scenes.length>=12} onClick={ajouter}>{t("Ajouter une scène")}</Button><Button variant="secondary" icon={Type} disabled={enCours} onClick={()=>sauver({...studio,notes:[...(studio.notes??[]),{id:aleatoire(12),texte:""}]})}>{t("Ajouter un texte")}</Button><Button variant="ghost" icon={ZoomOut} aria-label={t("Réduire")} onClick={()=>setZoom(z=>Math.max(0.5,z-0.1))}/><span className="text-xs tabular-nums">{Math.round(zoom*100)}%</span><Button variant="ghost" icon={ZoomIn} aria-label={t("Agrandir")} onClick={()=>setZoom(z=>Math.min(1.5,z+0.1))}/><Button variant="ghost" onClick={()=>setZoom(1)}>{t("Réinitialiser")}</Button><Button variant="ghost" onClick={()=>setOnglet("reglages")}>{t("Modèles et réglages")}</Button><Button icon={Play} disabled={enCours||!etat?.pret||!studio.scenes.length||studio.scenes.some(s=>!s.description.trim())||studio.scenes.every(s=>s.clip)} onClick={()=>void genererToutes()}>{t("Générer les scènes manquantes")}</Button>{file.current && <Button variant="secondary" onClick={()=>{file.current=false}}>{t("Arrêter la file après cette scène")}</Button>}</div>
+        {!etat?.pret && <p role="status" className="border-b border-border bg-background px-5 py-3 text-sm text-muted-foreground">{etat?.raison || t("Choisissez et installez un modèle dans les réglages de la vidéo.")}</p>}
+        <div className="overflow-auto p-6 lg:p-10"><div style={{zoom}}><FluxStudio studio={studio}><div className="grid min-w-[700px] items-start gap-16 grid-cols-[280px_minmax(320px,1fr)]">
+          <aside className="space-y-5"><section data-noeud="brief" className="rounded-2xl border border-primary/30 bg-card p-4 shadow-sm"><h2 className="mb-3 flex items-center gap-2 text-sm font-semibold"><Type size={16} className="text-primary"/>{t("Votre idée")}</h2><Textarea rows={7} maxLength={2000} value={studio.brief??""} disabled={enCours} placeholder={t("Décrivez votre vidéo")} aria-label={t("Décrivez votre vidéo")} onChange={e=>sauver({...studio,brief:e.target.value})}/><Button variant="secondary" className="mt-3" disabled={enCours||!studio.brief?.trim()||studio.scenes.length>9} onClick={()=>void preparer()}>{t("Préparer les scènes")}</Button><p className="mt-3 text-xs text-muted-foreground">{t("Les textes reliés sont ajoutés à la description de la scène.")}</p></section>{studio.notes?.map((n,i)=><section key={n.id} data-noeud={n.id} className="rounded-2xl border border-border bg-card p-4 shadow-sm"><div className="mb-2 flex items-center justify-between"><h3 className="text-sm font-medium">{tf("Texte {0}",i+1)}</h3><Button variant="ghost" icon={Trash2} aria-label={t("Retirer")} disabled={enCours} onClick={()=>sauver({...studio,notes:studio.notes?.filter(x=>x.id!==n.id),scenes:studio.scenes.map(s=>({...s,sources:(s.sources??["brief"]).filter(id=>id!==n.id)}))})}/></div><Textarea rows={4} maxLength={2000} aria-label={tf("Texte {0}",i+1)} value={n.texte} disabled={enCours} onChange={e=>sauver({...studio,notes:studio.notes?.map(x=>x.id===n.id?{...x,texte:e.target.value}:x)})}/></section>)}</aside>
+          <ol className="grid max-w-2xl gap-6">{studio.scenes.map((s,i)=><li key={s.id} data-noeud={s.id} className="relative space-y-4 rounded-2xl border border-border bg-card p-4 shadow-sm"><span aria-hidden="true" className="absolute -start-1.5 top-10 h-3 w-3 rounded-full border-2 border-primary bg-card"/>{outilsScene(s,i)}<fieldset disabled={enCours} className="flex flex-wrap gap-2"><legend className="mb-2 text-xs text-muted-foreground">{t("Textes reliés")}</legend>{[{id:"brief",nom:t("Votre idée")},...(studio.notes??[]).map((n,j)=>({id:n.id,nom:tf("Texte {0}",j+1)}))].map(n=><label key={n.id} className="flex cursor-pointer items-center gap-2 rounded-lg border border-border px-2 py-1 text-xs"><input type="checkbox" checked={(s.sources??["brief"]).includes(n.id)} onChange={e=>scene(s.id,{sources:e.target.checked?[...(s.sources??["brief"]),n.id]:(s.sources??["brief"]).filter(id=>id!==n.id)})}/>{n.nom}</label>)}</fieldset><Textarea rows={4} maxLength={2000} disabled={enCours} aria-label={tf("Scène {0}",i+1)} placeholder={t("Décrivez cette scène avant de la générer.")} value={s.description} onChange={e=>scene(s.id,{description:e.target.value})}/>{s.clip||s.image ? <Apercu media={(s.clip??s.image)!}/> : <div className="flex h-32 items-center justify-center rounded-xl border border-dashed border-border text-muted-foreground"><Film size={28}/></div>}{(s.travail||s.travailImage) && <p role="status" className="flex items-center gap-2 text-sm"><Loader2 size={16} className="animate-spin"/>{t("Création en cours...")}</p>}{s.erreur && <p role="alert" className="text-sm text-destructive">{s.erreur}</p>}<div className="flex flex-wrap gap-2"><Button icon={Play} disabled={enCours||!etat?.pret||!s.description.trim()} onClick={()=>void lancer(s)}>{t("Générer la scène")}</Button><Button variant="secondary" disabled={enCours||!s.description.trim()} onClick={()=>void lancer(s,true)}>{t("Créer une image")}</Button></div></li>)}</ol>
+        </div></FluxStudio></div></div>
+      </div>}
+    </main>
   </div>;
 }

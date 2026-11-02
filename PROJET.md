@@ -10,7 +10,7 @@ refaite à l'envers.
 
 | | |
 |---|---|
-| Version | 2026.1102.2 (`package.json`) |
+| Version | 2026.1102.3 (`package.json`) |
 | Dernière mise à jour | 30 septembre 2026 |
 | Vérifié | `npm run securite` : 2290 contrôles, 0 échec (30/09/2026, sur le code fusionné avec les vrais catalogues) ; `npm run typecheck` ; relevés à 100 % dans les six catalogues (interface 3 893 phrases, passerelle 1 503) ; essai Windows sur GitHub Actions ; `essai:cli`, `essai:vscode`, `essai:palmier` |
 | Reste à essayer | sur les vraies machines : § 5, « Ce qui reste à essayer sur les postes de Medhi » |
@@ -7706,3 +7706,50 @@ Le suivi `/helix/provision` ne bloque plus sa réponse sur le réveil du moteur,
 **Relecture des correctifs du 02/11/2026** : le premier passage de sécurité a révélé un blocage du résumé de mémoire : la découverte attendait une minute devant un serveur déjà déclaré en marche mais injoignable. Cette attente est retirée pour un service déjà en marche ; elle reste après notre propre commande de démarrage. Le banc LM Studio attend maintenant le modèle via le suivi asynchrone, pas le premier instantané. Essais ciblés : moteur LM Studio 15 succès, mémoire 31 succès ; banc de relance et canal Windows réussi. Essai applicatif Windows/Linux du commit 4c5091a réussi (`41437832418`).
 
 **2026.1102.2 publiée le 02/11/2026** : 2722 contrôles de sécurité sans échec, typecheck et catalogues complets (4263 clés interface, 1632 passerelle). Essai natif Windows/Linux du moteur final réussi (`41466089212`, commit fafbe80). La seule correction d’écran ajoutée ensuite, le suivi d’un démarrage déjà engagé (409), est couverte par le test du hook dans `essai-demarrage-moteur.mjs` et le typecheck ; son essai applicatif GitHub complémentaire continue. Paquets Mac signés par la clé habituelle, démarrage du paquet Apple Silicon en profil jetable réussi ; 17 fichiers GitHub comparés en taille et SHA-256 aux originaux, manifeste publié téléchargé et signature relue avec la clé de l’application du poste. Release stable marquée latest, liens README actualisés. Application et données du poste conservées. La cause propre au PC photographié reste à confirmer avec son journal.
+
+### 02/11/2026 : Studio, photos collées et modèles dans Code (travail en cours)
+
+Medhi demande un atelier vidéo plus complet, inspiré des flux visuels de Solial,
+avec montage, médiathèque privée et suppression réversible. Le Studio est placé
+après Fichiers dans la navigation. Les textes sélectionnés alimentent réellement
+les demandes de génération ; aucune promesse de conditionnement image-vers-vidéo.
+Les images fixes, titres, coupes et bande sonore sont assemblés localement en WebM.
+L'import est limité à des formats binaires reconnus et 40 Mo. La purge exige une
+mise préalable en corbeille et conserve les droits du propriétaire. La corbeille
+ne coupe pas les références des Chats ; la purge les rend indisponibles.
+
+Les modèles sont relus à l'ouverture du sélecteur, au retour de fenêtre et à
+intervalle court. Auto dans Code accepte les modèles de Chat quand aucun modèle
+spécialisé Code n'est disponible, en conservant le profil imposé et l'exclusion
+des clés payantes. Ce repli ne garantit pas qu'un modèle sache appeler les outils.
+Le collage explicite de fichiers image réutilise la validation des pièces jointes.
+Pas de lecture du presse-papiers en arrière-plan ni de téléchargement d'URL collée.
+
+Demande ajoutée : travailler sur un VPS depuis Code. Parcours SSH à préciser puis
+à intégrer ; aucune prise en charge SSH annoncée dans l'interface à ce stade.
+
+Suite du 02/11/2026 : le parcours retenu pour le VPS est SSH depuis le poste,
+avec le modèle choisi dans Code (y compris local). Projet distant choisi dans la
+barre du dossier, conservé au registre des sessions et hérité par les sous-sessions.
+Les outils locaux sont refusés pour cette cible ; pas de préparation ni contrôle
+automatique du dossier local. Un outil SSH sert lecture, modification, Git et tests
+à distance, derrière la barrière des actions existante. Clés déjà configurées et
+serveur reconnu dans le terminal ; aucun mot de passe ni clé privée dans l'écran.
+Pas d'installation automatique sur le VPS et pas de service exposé sur Internet.
+Authentification SSH par mot de passe interactif non prise en charge. À essayer
+sur un vrai VPS et sur Windows ; les essais présents isolent SSH avec une doublure.
+
+Validation de cette session (02/11/2026) : compilation de production et typecheck
+réussis ; sécurité 2 722 contrôles, zéro échec ; interface 4 314 phrases et passerelle
+1 649 messages, six langues complètes. Essais ciblés Code/VPS (résolution, propriétaire,
+refus des outils locaux, attribution MCP et sessions ambiguës) et HTTP jetable
+(médias, import falsifié, corbeille/restauration/purge, registre corrompu) réussis.
+Dans le navigateur : collage réel d'une image dans le composeur, retrait et collage
+de texte ; création, duplication, corbeille et restauration des projets ; atelier
+en thèmes clair et sombre. L'export vidéo est décodé au banc, ordre des clips,
+image fixe, titre visible, durée et coupe contrôlés. Une horloge audio silencieuse
+est nécessaire sous Chromium avant la première source sonore, sinon un montage
+commençant par une image pouvait être vide. Le réglage de viewport du navigateur
+n'a pas changé sa taille effective (restée à 1 280 × 720) : essai visuel à 375 px
+non confirmé dans cette session. Pas de nouvelle génération Wan réelle ni de vrai
+serveur VPS disponible pour les essais de cette session.

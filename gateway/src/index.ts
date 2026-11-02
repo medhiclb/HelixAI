@@ -1,3 +1,4 @@
+import * as vps from "./vps.ts";
 import { preparerScenario } from "./videosScenario.ts";
 // En premier : sous Windows, rien de ce que lance la passerelle n'ouvre de console (processus.ts).
 import "./processus.ts";
@@ -1925,6 +1926,9 @@ async function profilDe(accountId: string): Promise<Demandeur | null> {
  */
 const EXECUTION: { methode: string; chemin: string }[] = [
   { methode: "POST", chemin: "/helix/models/load" },
+  { methode: "POST", chemin: "/helix/code/vps" },
+  { methode: "POST", chemin: "/helix/studio/medias" },
+  { methode: "POST", chemin: "/helix/studio/medias/*" },
   { methode: "POST", chemin: "/helix/provision/moteur" },
   { methode: "POST", chemin: "/helix/provision/moteur/relancer" },
   { methode: "POST", chemin: "/helix/provision/start" },
@@ -3077,12 +3081,24 @@ async function handleDossiers(
   });
 }
 
+async function handleVps(req:http.IncomingMessage,res:http.ServerResponse,url:URL):Promise<void>{
+ const qui=await demandeur(req,url);if(!qui)return send(res,401,sansSeance());
+ if(!await estAdministrateur(qui.userId))return send(res,403,{error:{message:t("Seul l'administrateur peut connecter un VPS.")}});
+ try{if(req.method==='GET')return send(res,200,{projets:await vps.projetsVps(qui.userId)});
+ const b=await readJson(req,4096) as Record<string,unknown>;
+ if(b.action==='tester'){const controle=new AbortController();res.on('close',()=>controle.abort());return send(res,200,await vps.testerVps(qui.userId,String(b.id),controle.signal))}
+ if(b.action==='retirer'){await vps.retirerVps(qui.userId,String(b.id));journaliser("donnees.ecrites",qui.userId,{collection:"code.vps",action:"retirer"});return send(res,200,{ok:true})}
+ const projet=await vps.enregistrerVps(qui.userId,b);journaliser("donnees.ecrites",qui.userId,{collection:"code.vps",action:"ajouter",id:projet.id});return send(res,201,projet);
+ }catch(e){return send(res,400,{error:{message:e instanceof Error?e.message:t("Connexion SSH interrompue.")}})}
+}
+
 async function handleCodeSession(
   req: http.IncomingMessage,
   res: http.ServerResponse,
 ): Promise<void> {
   const body = (await readJson(req).catch(() => ({}))) as {
     model?: string;
+    vps?: string;
     dossier?: string;
     /** Niveau de raisonnement choisi à l'écran : devient la variante OpenCode. */
     effort?: string;
@@ -3096,6 +3112,7 @@ async function handleCodeSession(
   // La séance est exigée par le tableau `EXECUTION` ; la session s'inscrit à son nom.
   const qui = await demandeur(req, new URL(req.url ?? "/", "http://localhost"));
   if (!qui) return send(res, 401, sansSeance());
+  if (body.vps && (!(await estAdministrateur(qui.userId)) || !(await vps.projetsVps(qui.userId)).some(p => p.id === body.vps))) return send(res,403,{error:{message:t("Serveur introuvable.")}});
   if (body.dossier) {
     const verdict = validerDossier(body.dossier);
     if (!verdict.ok) return send(res, 400, { error: { message: verdict.raison } });
@@ -3160,7 +3177,7 @@ async function handleCodeSession(
    * n'a pas notée ne s'ouvrirait pour personne, on le dit tout de suite.
    */
   try {
-    await noterSessionCode({ id: creation.id, userId: qui.userId, dossier, modele, variante: reglage.variante });
+    await noterSessionCode({ id: creation.id, userId: qui.userId, dossier, modele, variante: reglage.variante, vps: body.vps });
   } catch (err) {
     console.error("[code] session non notée au registre :", err instanceof Error ? err.message : err);
     return send(res, 503, { error: { message: t("Le registre des sessions de code est illisible : la session n'a pas pu être ouverte.") } });
@@ -3202,7 +3219,7 @@ async function handleCodeSessions(res: http.ServerResponse, userId: string): Pro
     const liste = await sessionsDe(userId);
     send(res, 200, {
       // `enCours` : l'agent ou Helix y travaille encore (fluxCode.ts), pour l'indicateur de la liste.
-      sessions: liste.map((s) => ({ id: s.id, titre: s.titre, dossier: s.dossier, creee: s.creee, maj: s.maj, enCours: auTravailCode(s.id) })),
+      sessions: liste.map((s) => ({ id: s.id, titre: s.titre, dossier: s.dossier, vps: s.vps, creee: s.creee, maj: s.maj, enCours: auTravailCode(s.id) })),
     });
   } catch (err) {
     send(res, 500, { error: { message: err instanceof Error ? err.message : String(err) } });
@@ -3250,7 +3267,7 @@ async function handleCodeSessionHistorique(res: http.ServerResponse, userId: str
     const enCours = occupeChezOpenCode || auTravailCode(id);
     const attente = demandesCodeEnCours.get(id);
     send(res, 200, {
-      session: { id: s.id, titre: s.titre, dossier: s.dossier, creee: s.creee, maj: s.maj },
+      session: { id: s.id, titre: s.titre, dossier: s.dossier, vps: s.vps, creee: s.creee, maj: s.maj },
       messages: historiqueCode(Array.isArray(brut) ? brut : [], {
         enCours,
         demandeEnAttente: attente && !attente.envoyee ? attente.texte : undefined,
@@ -3370,7 +3387,9 @@ const SESSION_CODE = /^[A-Za-z0-9_-]{1,64}$/;
  * même modèle, au nom de la même personne ; les clients la suivent dans le même
  * tour (`relanceHelix`, fluxCode.ts).
  */
-surFinDeTourCode((sessionID, dossier) => {
+surFinDeTourCode(async (sessionID, dossier) => {
+  const cible = await sessionCode(sessionID).catch(() => null);
+  if (!cible || cible.vps) return;
   // Le contrôle est du travail de la session : l'écran qui y revient la voit en cours (fluxCode.ts).
   const fin = travailHelixCode(sessionID);
   void apresTourCode(
@@ -3525,6 +3544,8 @@ async function traiterCodePrompt(
    * projet (design.ts), et la demande part avec la consigne de s'en servir.
    * Un petit modèle ne sait pas dessiner ; il sait suivre un guide.
    */
+  const cibleVps = notee.vps ? (await vps.projetsVps(notee.userId)).find(p=>p.id===notee.vps) : null;
+  if (notee.vps && !cibleVps) return send(res,409,{error:{message:t("Serveur introuvable.")}});
   let texteEnvoye = body.text;
   // Une demande de la personne : le contrôle automatique repart de zéro (controleCode.ts). Avant la
   // préparation d'une application : les fichiers que Helix y écrit comptent parmi ceux à essayer.
@@ -3536,7 +3557,7 @@ async function traiterCodePrompt(
    * Plusieurs minutes avec un petit modèle : l'écran suit chaque étape.
    */
   let preparee = false;
-  if (estApplication(body.text) && !applicationPreparee(reglageEnvoi.dossier) && !projetDejaCommence(reglageEnvoi.dossier)) {
+  if (!cibleVps && estApplication(body.text) && !applicationPreparee(reglageEnvoi.dossier) && !projetDejaCommence(reglageEnvoi.dossier)) {
     const statut = (message: string) => publierStatutCode(body.sessionID!, { etat: "preparation", message });
     try {
       const qui = await demandeur(req, new URL(req.url ?? "/", "http://localhost"));
@@ -3558,12 +3579,12 @@ async function traiterCodePrompt(
     }
     // Arrêtée pendant la préparation : rien n'est envoyé à l'agent.
     if (demandeArretee(body.sessionID)) return send(res, 200, { data: {} });
-  } else if (estApplication(body.text) && applicationPreparee(reglageEnvoi.dossier)) {
+  } else if (!cibleVps && estApplication(body.text) && applicationPreparee(reglageEnvoi.dossier)) {
     // La suite d'une application déjà préparée : l'agent garde la même méthode.
     texteEnvoye = body.text + consigneApplication(null, reglageEnvoi.dossier);
     preparee = true;
   }
-  if (!preparee && estDemandeDeSite(body.text)) {
+  if (!cibleVps && !preparee && estDemandeDeSite(body.text)) {
     try {
       const qui = await demandeur(req, new URL(req.url ?? "/", "http://localhost"));
       const prepare = await preparerDesign(reglageEnvoi.dossier, body.text, qui?.userId ?? "code", { application: estApplication(body.text) });
@@ -3580,7 +3601,7 @@ async function traiterCodePrompt(
    * modèle, une question ou une réplique partent tels quels (`strategie`,
    * plan.ts). Une application de gestion a déjà ses étapes (application.ts).
    */
-  if (!preparee && !estQuestionSimple(body.text) && !estReplique(body.text)) {
+  if (!cibleVps && !preparee && !estQuestionSimple(body.text) && !estReplique(body.text)) {
     // Au nom de la propriétaire de la session : un modèle de clé personnelle est le sien (revue du 28/09/2026).
     const choix = await resolve({ model: reglageEnvoi.modele, acces: notee.userId });
     const regime = "error" in choix ? null : strategie({ params: choix.model.params, sizeBytes: choix.model.sizeBytes, backendKind: choix.model.backendKind });
@@ -3598,9 +3619,12 @@ async function traiterCodePrompt(
     }
   }
   // La carte du projet (carteProjet.ts) : ce qui existe déjà, pour n'appeler que ce qui existe.
-  if (!preparee) texteEnvoye += blocCarte(reglageEnvoi.dossier, 4000);
+  if (!cibleVps && !preparee) texteEnvoye += blocCarte(reglageEnvoi.dossier, 4000);
   // La méthode qui rend un petit modèle juste du premier coup (controleCode.ts), pour toute demande.
-  texteEnvoye += METHODE_CODE + consigneLangue(body.text);
+  if (cibleVps) texteEnvoye = `Projet distant SSH choisi par la personne : ${JSON.stringify({serveur:cibleVps.id,nom:cibleVps.nom,dossier:cibleVps.dossier})}. Utilise vps__executer avec cet identifiant serveur pour lire, modifier, utiliser Git et lancer les tests sur le VPS. Les outils de fichiers et de commandes locaux ne concernent pas ce projet et sont interdits. Si SSH échoue, explique l’erreur sans travailler à la place sur le disque local.
+
+` + texteEnvoye;
+  texteEnvoye += (cibleVps ? "\n\nVérifie les changements avec les tests du projet exécutés sur le VPS via SSH. Rapporte les résultats réels et les fichiers modifiés." : METHODE_CODE) + consigneLangue(body.text);
 
   /*
    * Qui envoie cette demande : les connecteurs que l'agent de code appellera
@@ -3702,7 +3726,7 @@ async function traiterCodePrompt(
          * la même demande pour titre, et à la même propriétaire. La perdue est
          * masquée, pas oubliée : elle reste à sa propriétaire.
          */
-        const inscrite = await noterSessionCode({ id: nouvelle, userId: notee.userId, dossier, modele, variante: perdue?.variante, titre: "" }).then(
+        const inscrite = await noterSessionCode({ id: nouvelle, userId: notee.userId, dossier, modele, variante: perdue?.variante, vps: notee.vps, titre: "" }).then(
           () => true,
           () => false,
         );
@@ -4688,6 +4712,20 @@ async function handleComputerMode(
 /* ------------------------------- images -------------------------------- */
 
 /** Ce que la machine peut faire en images, et l'installation en cours. */
+/** Gestion privée des médias : la séance détermine l'auteur, jamais le corps de la demande. */
+async function handleMediasStudio(req: http.IncomingMessage, res: http.ServerResponse, url: URL, id?: string): Promise<void> {
+  const qui = await demandeur(req, url);
+  if (!qui) return send(res, 401, sansSeance());
+  try {
+    if (req.method === "GET") return send(res, 200, { medias: images.mediasStudio(qui.userId) });
+    const b = await readJson(req, id ? 4096 : 56 * 1024 * 1024) as { contenu?: unknown; nom?: unknown; largeur?: unknown; hauteur?: unknown; secondes?: unknown; action?: unknown };
+    if (!id) return send(res, 201, images.importerMediaStudio(qui.userId, b));
+    if (!["corbeille", "restaurer", "supprimer"].includes(String(b.action))) return send(res, 400, { error: { message: t("Action inconnue.") } });
+    if (!images.modifierMediaStudio(qui.userId, id, b.action as "corbeille" | "restaurer" | "supprimer")) return send(res, 404, { error: { message: t("Création introuvable.") } });
+    return send(res, 200, { ok: true });
+  } catch (err) { return send(res, 400, { error: { message: err instanceof Error ? err.message : t("Le média n'a pas pu être enregistré.") } }); }
+}
+
 async function handleImagesEtat(req: http.IncomingMessage, res: http.ServerResponse, url: URL): Promise<void> {
   const qui = await demandeur(req, url);
   if (!qui) return send(res, 401, sansSeance());
@@ -6231,6 +6269,9 @@ const traiter = (
       catch (e) { return send(res, 409, { error: { message: e instanceof Error ? e.message : t("Demande refusée.") } }); }
     }
     if (path === "/helix/videos" || path.startsWith("/helix/videos/")) return handleVideos(req, res, url, path.slice("/helix/videos".length).replace(/^\//, ""));
+    if (["GET", "POST"].includes(req.method ?? "") && path === "/helix/code/vps") return handleVps(req,res,url);
+    if (["GET", "POST"].includes(req.method ?? "") && path === "/helix/studio/medias") return handleMediasStudio(req, res, url);
+    if (req.method === "POST" && path.startsWith("/helix/studio/medias/")) return handleMediasStudio(req, res, url, path.slice("/helix/studio/medias/".length));
     if (req.method === "GET" && path === "/helix/images") return handleImagesEtat(req, res, url);
     // La recherche sur le web du Chat : permise ou non par le profil, et le moteur que la puce nomme (rechercheWeb.ts).
     if (req.method === "GET" && path === "/helix/recherche-web") return send(res, 200, etatRechercheWeb());

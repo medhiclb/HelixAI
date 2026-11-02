@@ -18,10 +18,10 @@ function notify(): void {
 }
 
 /** Projets visibles par l'utilisateur connecté, et leur collaboration. */
-export function useProjects() {
-  const [projects, setProjects] = useState<Project[]>(() => visibleTo(currentUser()));
+export function useProjects(inclureCorbeille = false) {
+  const [projects, setProjects] = useState<Project[]>(() => visibleTo(currentUser(), inclureCorbeille));
 
-  const refresh = useCallback(() => setProjects(visibleTo(currentUser())), []);
+  const refresh = useCallback(() => setProjects(visibleTo(currentUser(), inclureCorbeille)), [inclureCorbeille]);
 
   useEffect(() => {
     window.addEventListener(CHANGED, refresh);

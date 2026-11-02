@@ -30,7 +30,6 @@ const PRIMARY: NavItem[] = [
 ];
 
 const SECONDARY: NavItem[] = [
-  { label: t("Studio vidéo"), path: "/videos", icon: Film },
   { label: t("Projets"), path: "/projets", icon: FolderKanban, feature: "projets" },
   { label: t("Agents"), path: "/agents", icon: Bot, feature: "agents" },
   /*
@@ -40,6 +39,7 @@ const SECONDARY: NavItem[] = [
      favori, et la renommer casserait ce qui marche pour rien.
   */
   { label: t("Fichiers"), path: "/bibliotheque", icon: FolderOpen, feature: "bibliotheque" },
+  { label: t("Studio vidéo"), path: "/videos", icon: Film },
   { label: t("Réunions"), path: "/reunions", icon: Calendar, feature: "reunions" },
   { label: t("Groupes"), path: "/groupes", icon: Users, feature: "groupes" },
   { label: t("Tâches"), path: "/taches", icon: SquareCheckBig, feature: "taches" },

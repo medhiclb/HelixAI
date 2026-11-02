@@ -49,6 +49,7 @@ export async function fetchCodeStatus(): Promise<CodeStatus> {
 
 /** Réglages choisis à l'écran : modèle (identifiant d'interface) et niveau de raisonnement. */
 export interface ReglagesCode {
+  vps?: string;
   model?: string;
   effort?: string;
   /** RTK : « cloud », « toujours » ou « jamais » (gateway/src/rtk.ts). */
@@ -81,7 +82,7 @@ export async function createCodeSession(
   const res = await apiFetch(`/helix/code/session`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ model: reglages.model, effort: reglages.effort, dossier }),
+    body: JSON.stringify({ model: reglages.model, effort: reglages.effort, vps: reglages.vps, dossier }),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -121,6 +122,7 @@ export async function sendCodePrompt(
 
 /** Une session de Code dans la liste de la personne (gateway/src/sessionsCode.ts). */
 export interface SessionCodeResume {
+  vps?: string;
   id: string;
   titre: string;
   dossier: string;

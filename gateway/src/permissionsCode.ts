@@ -198,7 +198,9 @@ export async function traiterPermissionCode(
 
   let proprietaire: string | undefined;
   try {
-    proprietaire = (await sessionCode(d.sessionID))?.userId ?? (await sessionCode(racine))?.userId;
+    const cible = await sessionCode(d.sessionID) ?? await sessionCode(racine);
+    proprietaire = cible?.userId;
+    if (cible?.vps && ["bash","read","edit","write","apply_patch","glob","grep","list","external_directory"].includes(d.permission)) return refuser("projet-vps",t("Ce projet est sur un VPS. Utilise vps__executer pour lire, modifier et exécuter sur le serveur distant."),proprietaire);
   } catch {
     return refuser("registre-illisible", t("Refusé par l'instance : son registre des sessions de code est illisible, elle ne sait pas pour qui tu travailles."));
   }

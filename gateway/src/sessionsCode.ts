@@ -50,6 +50,7 @@ export interface SessionCode {
   titre: string;
   modele: string;
   variante?: string;
+  vps?: string;
   creee: string;
   maj: string;
   /** Retirée de la liste (ou sortie par la borne) : toujours à sa propriétaire, mais plus affichée. */
@@ -137,6 +138,7 @@ export function noterSousSession(id: string, parent: string): Promise<void> {
       id,
       userId: mere.userId,
       dossier: mere.dossier,
+      vps: mere.vps,
       titre: "",
       modele: mere.modele,
       ...(mere.variante ? { variante: mere.variante } : {}),
