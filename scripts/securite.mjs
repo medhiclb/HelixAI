@@ -10168,6 +10168,7 @@ console.log("\n51. Outils choisis quand la place manque ; chemins hors du dossie
       import { join } from "node:path";
       const c = await import("./gateway/src/choixOutils.ts");
       const h = await import("./gateway/src/historique.ts");
+      const p = await import("./gateway/src/plan.ts");
       const o = await import("./gateway/src/opencode.ts");
       const f = await import("./gateway/src/fluxCode.ts");
       const outil = (nom, taille = 0) => ({ type: "function", function: { name: nom, description: "x".repeat(taille), parameters: { type: "object" } } });
@@ -10181,6 +10182,28 @@ console.log("\n51. Outils choisis quand la place manque ; chemins hors du dossie
       const neutre = c.choisirOutils(outils, { messages: q("Bonjour"), place: 1700 });
       const deja = c.choisirOutils(outils, { messages: q("et maintenant ?", [{ role: "user", content: "Regarde la scène" }, { role: "assistant", content: "", tool_calls: [{ id: "1", function: { name: "blender__look", arguments: "{}" } }] }, { role: "tool", tool_call_id: "1", content: "ok" }]), place: 1700 });
       const petit = c.choisirOutils(outils, { messages: q("Crée un sol dans Roblox"), place: 300 });
+      const conversation = [
+        { role: "system", content: "Tu es l'assistant." },
+        { role: "user", content: "Mon mot secret est ORANGE. Réponds OK." },
+        { role: "assistant", content: "OK" },
+        { role: "user", content: "Quel est mon mot secret ?" },
+      ];
+      const outilsConversation = [outil("fichiers__list_allowed_directories", 900), outil("agenda__list", 900)];
+      const questionConversation = c.outilsNecessairesPourQuestion(
+        "Quel est mon mot secret ?",
+        conversation,
+        outilsConversation,
+      );
+      const questionFichiers = c.outilsNecessairesPourQuestion(
+        "Quels sont les fichiers de mon dossier ?",
+        conversation,
+        outilsConversation,
+      );
+      const questionApresOutil = c.outilsNecessairesPourQuestion(
+        "Et maintenant ?",
+        [...conversation, { role: "assistant", content: "", tool_calls: [{ id: "1", function: { name: "agenda__list", arguments: "{}" } }] }],
+        outilsConversation,
+      );
       const nommes = [
         [...c.servicesNommes("Crée un sol en bois dans Roblox Studio", ["roblox", "blender", "drive"])],
         [...c.servicesNommes("mets à jour les drivers", ["drive"])],
@@ -10217,7 +10240,7 @@ console.log("\n51. Outils choisis quand la place manque ; chemins hors du dossie
         greffon: f.erreurOutil("Error: This path is outside the project folder: /app/PLAN.md. The project folder is P.", { filePath: "/app/PLAN.md" }),
         autre: f.erreurOutil("File not found: a.js", { filePath: "a.js" }),
       };
-      console.log(JSON.stringify({ roblox: noms(roblox), robloxUtiles: roblox.utilesRetires, neutre: noms(neutre), deja: noms(deja), petit: { gardes: noms(petit), utiles: petit.utilesRetires }, nommes, place32, greffon, erreurs }));
+      console.log(JSON.stringify({ roblox: noms(roblox), robloxUtiles: roblox.utilesRetires, neutre: noms(neutre), deja: noms(deja), petit: { gardes: noms(petit), utiles: petit.utilesRetires }, nommes, place32, questionConversation, questionFichiers, questionApresOutil, simple: p.estQuestionSimple("Quel est mon mot secret ?"), greffon, erreurs }));
       `,
     ],
     { cwd: RACINE, encoding: "utf8", timeout: 60_000, env: { ...process.env, HELIX_DATA_DIR: join(ici, "donnees"), HELIX_CONFIG: join(ici, "absent.json") } },
@@ -10249,6 +10272,11 @@ console.log("\n51. Outils choisis quand la place manque ; chemins hors du dossie
     "services nommés : « Roblox Studio » → roblox ; « drivers » n'est pas Drive ; le libellé d'un connecteur (Trello) ; « Unreal Engine »",
     JSON.stringify(v.nommes) === JSON.stringify([["roblox"], [], ["trello"], ["unreal"]]),
     JSON.stringify(v.nommes),
+  );
+  verifier(
+    "question conversationnelle courte : sans service nommé les outils ne sont pas nécessaires, mais un service nommé ou un appel déjà commencé les garde",
+    v.simple === true && v.questionConversation === false && v.questionFichiers === true && v.questionApresOutil === true,
+    JSON.stringify({ simple: v.simple, questionConversation: v.questionConversation, questionFichiers: v.questionFichiers, questionApresOutil: v.questionApresOutil }),
   );
   verifier("place réservée aux outils, modèle qui réfléchit à 32 768 jetons : 18 241 jetons", v.place32 === 18241, String(v.place32));
   const G = v.greffon ?? {};
@@ -10293,6 +10321,11 @@ console.log("\n51. Outils choisis quand la place manque ; chemins hors du dossie
   verifier(
     "Chat : la taille de 32 768 n'est conseillée qu'à un modèle chargé plus petit ; les outils sont choisis (choisirOutils), plus jamais tous retirés d'un coup",
     /contexteConversation > 0 && contexteConversation < 32_768 && tailleVisee\(\) >= 32_768/.test(chatSrc) && /const choix = choisirOutils\(tools, \{ messages, place: placeOutils, libelles \}\);/.test(chatSrc),
+    "chat.ts",
+  );
+  verifier(
+    "Chat : une question conversationnelle courte sans service nommé n'injecte pas les outils",
+    /estQuestionSimple\(questionCourte\)/.test(chatSrc) && /outilsNecessairesPourQuestion\(questionCourte, body\.messages, tools, libelles\)/.test(chatSrc),
     "chat.ts",
   );
   rmSync(ici, { recursive: true, force: true });
