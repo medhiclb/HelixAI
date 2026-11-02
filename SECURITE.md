@@ -7046,3 +7046,27 @@ Bilan du 02/11 : batterie complète 2 720 contrôles, zéro échec ; essai HTTP 
 nouvelles routes également exécuté séparément. Typecheck et six catalogues complets
 (interface et passerelle). La section 55 rejoue désormais ces quatre scripts lors
 des prochaines batteries. Aucun changement envoyé sur GitHub ni version publiée.
+
+## 71. Relance du moteur et défilement du Studio vidéo (02/11/2026)
+
+`POST /helix/provision/moteur/relancer` exige une séance et l'administration,
+refuse les profils pilotés, un moteur absent ou désactivé et une installation
+concurrente. Il ne télécharge rien et ne supprime aucun fichier. Le canal Windows
+reste limité au `lms.exe` du compte et aux deux commandes prévues ; le port optionnel
+n'est accepté que pour `server start`, entier entre 1 et 65535, transmis en argument
+séparé sans shell. Une adresse distante, HTTPS ou avec identifiants ne déclenche
+aucun démarrage local. Un serveur déjà en marche n'est pas redémarré.
+
+Les détails du processus restent au journal ; le message affiché est traduit.
+Le suivi de mise en route répond pendant le réveil, le code d'échec distingue le
+moteur d'un téléchargement de modèle. La présence d'un exécutable connu ne dépend
+plus de sa réponse à `version`. Le Studio possède un conteneur de défilement dans
+la hauteur disponible ; douze scènes et les commandes du bas atteintes dans le
+navigateur à 614 × 724, en clair et sombre.
+
+Contrôles ciblés : `essai-demarrage-moteur.mjs` (attente, concurrence, refus
+transitoire, port, serveur partagé, canal Windows et handler de relance),
+`essai-moteur-lmstudio.mjs` (15 succès) et `essai-memoire-conversation.mjs`
+(31 succès). Le premier passage complet a révélé une attente indue de la
+mémoire devant un moteur déjà déclaré en marche ; corrigée avant diffusion.
+La capture du PC ne fournit pas son journal : sa cause exacte n'est pas confirmée.

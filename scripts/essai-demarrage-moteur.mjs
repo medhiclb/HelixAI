@@ -100,3 +100,15 @@ for (const succes of [true, false]) {
   assert.equal(b.etats.at(-1).code, succes ? undefined : "moteur_demarrage");
 }
 console.log("Relance : séance, administration, profil piloté, moteur absent, concurrence et suivi contrôlés.");
+// Une autre fenêtre a déjà lancé le moteur : le 409 doit suivre le travail existant.
+const hookCode = (await transform(readFileSync("src/hooks/useProvision.ts", "utf8"), { loader: "ts", format: "cjs" })).code;
+const hookModule = { exports: {} }; let flux = 0;
+vm.runInNewContext(hookCode, { module: hookModule, exports: hookModule.exports, AbortSignal, setTimeout, clearTimeout,
+  require: nom => nom === "react" ? { useCallback: f => f, useEffect() {}, useRef: v => ({ current: v }), useState: v => [v, () => {}] }
+    : nom.endsWith("endpoint") ? { apiFetch: async () => ({ ok: false, status: 409 }) }
+    : nom.endsWith("flux") ? { ouvrirFlux: () => { flux++; return () => {}; } } : { tf: x => x },
+});
+hookModule.exports.useProvision().relancerMoteur();
+await new Promise(ok => setImmediate(ok));
+assert.equal(flux, 1);
+console.log("Écran de relance : suit aussi le démarrage déjà engagé par une autre fenêtre.");

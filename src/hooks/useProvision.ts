@@ -199,7 +199,7 @@ export function useProvision() {
   const relancerMoteur = useCallback(() => {
     setState({ phase: "checking", message: "" });
     void apiFetch("/helix/provision/moteur/relancer", { method: "POST" })
-      .then(async res => { if (res.ok) suivre(); await refusDit(res); })
+      .then(async res => { if (res.ok || res.status === 409) suivre(); await refusDit(res); })
       .catch(() => setUnreachable(true));
   }, [suivre, refusDit]);
 
