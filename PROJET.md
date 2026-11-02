@@ -7692,3 +7692,5 @@ relève en premier.
 
 **Libérer le port 8787 après un essai.** La passerelle de développement qui y traîne
 empêche l'application du client de démarrer, et le message affiché ne dit pas pourquoi.
+
+**02/11/2026, contrôle OpenClaw avant publication** : le runner Windows x64 installe et démarre réellement 2026.10.7, mais le contrôle de `--version` attend encore 2026.9.4 (76 succès, un échec). Corrigé pour comparer exactement la version épinglée et exiger le code de sortie zéro. Aucun changement au moteur installé.

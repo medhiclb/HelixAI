@@ -499,7 +499,7 @@ if (process.argv.includes("--installation")) {
     P.poserPath(envOc, P.joindrePath([dirname(lancement.node), P.pathSysteme(plateforme, process.env)], plateforme), plateforme);
     Object.assign(envOc, { HOME: maison, USERPROFILE: maison, OPENCLAW_STATE_DIR: etatOc, OPENCLAW_CONFIG_PATH: join(etatOc, "openclaw.json") });
     const version = spawnSync(lancement.fichier, [...lancement.prefixe, "--version"], { env: envOc, encoding: "utf8", timeout: 120_000, windowsHide: true });
-    verifier("OpenClaw installé répond à --version, lancé comme Helix le lance (node.exe openclaw.mjs sous Windows)", /2026\.9\.4/.test(version.stdout ?? ""), `${version.status} ${version.stdout} ${version.stderr}`);
+    verifier("OpenClaw installé répond à --version, lancé comme Helix le lance (node.exe openclaw.mjs sous Windows)", version.status === 0 && /(\d{4}\.\d+\.\d+)/.exec(version.stdout ?? "")?.[1] === eprouvee, `${version.status} ${version.stdout} ${version.stderr}`);
     const p = spawn(lancement.fichier, [...lancement.prefixe, "gateway", "run", "--port", String(port)], { env: envOc, stdio: ["ignore", "pipe", "pipe"], windowsHide: true });
     let journal = "";
     p.stdout.on("data", (b) => (journal += b));
