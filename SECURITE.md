@@ -7070,3 +7070,9 @@ transitoire, port, serveur partagé, canal Windows et handler de relance),
 (31 succès). Le premier passage complet a révélé une attente indue de la
 mémoire devant un moteur déjà déclaré en marche ; corrigée avant diffusion.
 La capture du PC ne fournit pas son journal : sa cause exacte n'est pas confirmée.
+
+Bilan final : 2722 contrôles complets réussis, zéro échec ; typecheck et traductions
+complets. Parcours Windows/Linux du moteur final réussi (`41466089212`). Le cas
+409 côté écran, ajouté ensuite, est couvert par le test du hook et le typecheck.
+Version 2026.1102.2 publiée, manifeste téléchargé depuis GitHub et signature relue
+avec la clé de l’application installée.
