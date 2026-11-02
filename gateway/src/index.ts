@@ -627,7 +627,8 @@ async function handleChat(
 
 async function handleProvisionStatus(res: http.ServerResponse): Promise<void> {
   const hardware = detectHardware();
-  const { models: available } = await discover();
+  // Le suivi doit répondre même pendant un long réveil du moteur (Windows, 02/11/2026).
+  const { models: available } = await discover({ attendreLmStudio: false });
   const chatModels = available.filter((m) => m.roles.includes("chat"));
   /*
    * « Déjà là » se juge sur le nom sans le préfixe d'éditeur : LM Studio range

@@ -72,3 +72,31 @@ assert.deepEqual(Array.from(enfants[0].args), ["server", "start", "--port", "123
 for (const demande of [{ lms, commande: "server start", port: "1234 & calc" }, { lms, commande: "server start", port: 65536 }, { lms, commande: "daemon up", port: 1234 }, { lms, commande: "constructor" }, { lms: "C:\\autre.exe", commande: "daemon up" }]) assert.equal((await lancer(demande)).code, -1);
 assert.equal(enfants.length, 1);
 console.log("Démarrage : retard, concurrence, port, refus transitoire, serveur partagé et canal Windows contrôlés.");
+// Le vrai handler de relance : refus avant toute action et progression suivie sans installation.
+const index = readFileSync("gateway/src/index.ts", "utf8");
+const handler = index.slice(index.indexOf("async function handleEngineRestart("), index.indexOf("async function handleEngineInstall("));
+const codeRoute = (await transform(handler + "\nexport { handleEngineRestart };", { loader: "ts", format: "cjs" })).code;
+function route({ seance = true, admin = true, automatique = true, installe = true, dejaEnCours = false, succes = true } = {}) {
+  const module = { exports: {} }; const etats = []; let lancements = 0;
+  let terminer; const attente = new Promise(ok => terminer = () => ok(succes));
+  const contexte = { module, exports: module.exports, console, demandeur: async () => seance ? { userId: "essai" } : null,
+    estAdministrateur: async () => admin, autoProvisionEnabled: () => automatique, moteurEnInstallation: dejaEnCours, echecDuMoteur: null,
+    moteurOuvert: () => false, backendById: () => ({ enabled: true }), appInstallee: async () => installe ? "C:\\lms.exe" : null,
+    moteurAPoser: () => false, llmsterPoseAilleurs: () => false, oublierLms() {}, setProvisionState: s => etats.push(s),
+    ensureLmStudioServer: () => { lancements++; return attente; }, invalidate() {}, getProvisionState: () => etats.at(-1),
+    conseilDemarrageLmStudio: () => "conseil", t: x => x, sansSeance: () => ({}), send: (res, status, body) => Object.assign(res, { status, body }),
+  };
+  vm.runInNewContext(codeRoute, contexte);
+  return { demander: async () => { const res = {}; await module.exports.handleEngineRestart({}, res, new URL("http://localhost")); return res; }, terminer, etats, get lancements() { return lancements; } };
+}
+for (const [opts, statut] of [[{ seance: false }, 401], [{ admin: false }, 403], [{ automatique: false }, 403], [{ installe: false }, 409], [{ dejaEnCours: true }, 409]]) {
+  const b = route(opts); assert.equal((await b.demander()).status, statut); assert.equal(b.lancements, 0); assert.equal(b.etats.length, 0);
+}
+for (const succes of [true, false]) {
+  const b = route({ succes }); assert.equal((await b.demander()).status, 202); assert.equal(b.etats[0].phase, "checking");
+  assert.equal((await b.demander()).status, 409); assert.equal(b.lancements, 1); b.terminer();
+  await new Promise(ok => setImmediate(ok));
+  assert.equal(b.etats.at(-1).phase, succes ? "ready" : "error");
+  assert.equal(b.etats.at(-1).code, succes ? undefined : "moteur_demarrage");
+}
+console.log("Relance : séance, administration, profil piloté, moteur absent, concurrence et suivi contrôlés.");
