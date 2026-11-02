@@ -340,7 +340,8 @@ async function demarrerServeurLmStudio(): Promise<boolean> {
     const etat = JSON.parse(String(stdout).trim() || "{}") as { running?: boolean; port?: number };
     if (etat.running) {
       echecDemarrage = etat.port !== undefined && etat.port !== portServeurLocal(LMSTUDIO_URL) ? "adresse" : "serveur";
-      return attendreEcoute(() => repond(LMSTUDIO_URL));
+      // Déjà en service : ne pas bloquer les autres découvertes (mémoire, outils).
+      return false;
     }
   } catch {
     /*

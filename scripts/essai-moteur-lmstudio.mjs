@@ -176,6 +176,17 @@ try {
     const r = await fetch(`${G}${chemin}`, corps === undefined ? { headers: entetes(seance) } : { method: "POST", headers: entetes(seance), body: JSON.stringify(corps) });
     return { statut: r.status, json: await r.json().catch(() => ({})) };
   };
+  // Le suivi répond pendant le réveil depuis le 02/11/2026 : attendre le modèle,
+  // pas une durée arbitraire ni le premier instantané encore en cours de démarrage.
+  const provisionPrete = async (seance) => {
+    let etat = {};
+    for (let i = 0; i < 100; i++) {
+      etat = (await appel("/helix/provision", seance)).json;
+      if (etat.hasChatModel) return etat;
+      await attendre(100);
+    }
+    return etat;
+  };
   // Compte d'essai sur la passerelle jetable (valeurs d'essai).
   const admin = await appel("/helix/auth/create", null, { fullName: "Admin Essai", email: "admin@example.test", password: "Admin2Essai!Solide42" });
   const seance = admin.json.session?.token ?? "";
@@ -216,7 +227,7 @@ try {
   writeFileSync(APPELS, "");
   const c0 = await appel("/helix/moteur-lmstudio", seance, { choix: "application" });
   verifier("le choix est retenu (200)", c0.statut === 200 && c0.json.choix === "application", `${c0.statut} ${JSON.stringify(c0.json)}`);
-  const c1 = (await appel("/helix/provision", seance)).json;
+  const c1 = await provisionPrete(seance);
   verifier("Helix démarre alors le service de l'application (`lms server start`), comme avant le 23/10/2026", appels().some((l) => l.startsWith("server start")) && c1.hasChatModel === true && c1.lmStudioFerme === false, `${appels().join(" | ")} ${JSON.stringify({ chat: c1.hasChatModel })}`);
   verifier("jamais par `open` (l'application n'est pas ouverte à la main)", !appels().some((l) => l.startsWith("open ")), appels().join(" | "));
   verifier("rangé dans les réglages de l'instance (collection `reglages`, chiffrée)", existsSync(join(DONNEES, "reglages.json")), "reglages.json absent");
@@ -231,7 +242,7 @@ try {
   mkdirSync(join(LMSTUDIO, "llmster"), { recursive: true });
   writeFileSync(join(LMSTUDIO, ".internal", "llmster-install-location.json"), JSON.stringify({ path: join(LMSTUDIO, "llmster"), argv: [], cwd: MAISON }));
   await appel("/helix/moteur-lmstudio", seance, { choix: "sansFenetre" });
-  const d2 = (await appel("/helix/provision", seance)).json;
+  const d2 = await provisionPrete(seance);
   const etatD = (await appel("/helix/moteur-lmstudio", seance)).json;
   verifier("llmster déclaré : moteur installé, et c'est le moteur sans interface qui est levé (`lms daemon up`)", d2.moteurInstalle === true && appels().some((l) => l.startsWith("daemon up")) && etatD.llmsterDeclare === true, `${JSON.stringify({ installe: d2.moteurInstalle })} ${appels().join(" | ")}`);
   verifier("jamais par `open`", !appels().some((l) => l.startsWith("open ")), appels().join(" | "));
