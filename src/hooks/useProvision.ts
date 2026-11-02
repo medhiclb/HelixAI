@@ -37,6 +37,8 @@ export type ProvisionPhase =
   | "error";
 
 export interface ProvisionState {
+  /** Échec du démarrage, distinct d’un téléchargement de modèle. */
+  code?: "moteur_demarrage";
   phase: ProvisionPhase;
   message: string;
   percent?: number;
@@ -193,7 +195,15 @@ export function useProvision() {
       .catch(() => setUnreachable(true));
   }, [suivre]);
 
+  /** Reprend un démarrage raté sans réinstaller ni retélécharger le moteur. */
+  const relancerMoteur = useCallback(() => {
+    setState({ phase: "checking", message: "" });
+    void apiFetch("/helix/provision/moteur/relancer", { method: "POST" })
+      .then(async res => { if (res.ok) suivre(); await refusDit(res); })
+      .catch(() => setUnreachable(true));
+  }, [suivre, refusDit]);
+
   useEffect(() => () => sourceRef.current?.(), []);
 
-  return { status, state, unreachable, start, installerMoteur, refresh: load };
+  return { status, state, unreachable, start, installerMoteur, relancerMoteur, refresh: load };
 }

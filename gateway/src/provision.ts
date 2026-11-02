@@ -649,6 +649,8 @@ export type ProvisionPhase =
   | "error";
 
 export interface ProvisionState {
+  /** Échec du démarrage, distinct d’un téléchargement de modèle. */
+  code?: "moteur_demarrage";
   phase: ProvisionPhase;
   message: string;
   /** Progression du téléchargement, de 0 à 100 quand elle est connue. */
@@ -677,7 +679,7 @@ export function setProvisionState(next: Partial<ProvisionState>): void {
 }
 
 function setState(next: Partial<ProvisionState>): void {
-  state = { ...state, ...next };
+  state = { ...state, ...next, ...(next.phase ? { code: next.code } : {}) };
   for (const fn of listeners) fn(state);
 }
 

@@ -54,15 +54,20 @@ function lancerLms(demande) {
     const delai = COMMANDES[demande.commande];
     const permis = lmsDuCompte().map((c) => path.resolve(c).toLowerCase());
     const lms = typeof demande.lms === "string" ? path.resolve(demande.lms) : "";
-    if (process.platform !== "win32" || !delai || !permis.includes(lms.toLowerCase()) || !fs.existsSync(lms)) {
+    if (process.platform !== "win32" || typeof delai !== "number" || !permis.includes(lms.toLowerCase()) || !fs.existsSync(lms)) {
       resolve({ code: -1, fin: "refusé : commande ou programme non prévu" });
+      return;
+    }
+    const port = demande.port;
+    if (port !== undefined && (demande.commande !== "server start" || !Number.isInteger(port) || port < 1 || port > 65535)) {
+      resolve({ code: -1, fin: "refusé : port non prévu" });
       return;
     }
     let fin = "";
     const garder = (b) => {
       fin = (fin + String(b)).slice(-4000);
     };
-    const enfant = spawn(lms, demande.commande.split(" "), { cwd: os.homedir(), stdio: ["ignore", "pipe", "pipe"], windowsHide: true });
+    const enfant = spawn(lms, [...demande.commande.split(" "), ...(port !== undefined ? ["--port", String(port)] : [])], { cwd: os.homedir(), stdio: ["ignore", "pipe", "pipe"], windowsHide: true });
     enfant.stdout.on("data", garder);
     enfant.stderr.on("data", garder);
     const garde = setTimeout(() => enfant.kill(), delai);

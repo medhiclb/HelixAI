@@ -25,9 +25,10 @@ try {
   const a = await (await q("/helix/auth/create", h, { fullName: "Essai", email: "essai@example.test", password: "Mot-de-passe-essai-2026!" })).json();
   assert.ok(a.session?.token, JSON.stringify(a));
   const admin = { ...h, "X-Helix-Session": a.session.token };
-  for (const [route, corps] of [["/helix/optimisation-locale", undefined], ["/helix/optimisation-locale", { mode: "standard" }], ["/helix/optimisation-locale/conseil", {}], ["/helix/videos/scenario", { brief: "Une tasse" }]]) {
+  for (const [route, corps] of [["/helix/provision/moteur/relancer", {}], ["/helix/optimisation-locale", undefined], ["/helix/optimisation-locale", { mode: "standard" }], ["/helix/optimisation-locale/conseil", {}], ["/helix/videos/scenario", { brief: "Une tasse" }]]) {
     assert.equal((await q(route, h, corps)).status, 401);
   }
+  assert.equal((await q("/helix/provision/moteur/relancer", admin, {})).status, 403);
   const diagnostic = await (await q("/helix/optimisation-locale", admin)).json();
   assert.equal(diagnostic.admin, true); assert.equal(diagnostic.mode, "automatique");
   assert.equal((await q("/helix/optimisation-locale", admin, { mode: "commande arbitraire" })).status, 400);

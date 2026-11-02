@@ -98,7 +98,8 @@ export function VideosPage() {
     finally { setExporte(false); }
   };
   const enCours = exporte || prepare || occupe || Boolean(studio?.scenes.some(s => s.travail));
-  return <div className="mx-auto w-full max-w-6xl space-y-6 p-4 sm:p-6">
+  return <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+    <div className="mx-auto w-full max-w-6xl space-y-6 p-4 pb-8 sm:p-6 sm:pb-10">
     <PageHeader title={t("Studio vidéo")} subtitle={t("Préparez vos scènes, créez vos clips sur cette machine et assemblez votre vidéo.")} />
     <div className="flex flex-wrap gap-2">
       <Button icon={Plus} onClick={() => nouveau("libre")}>{t("Nouveau projet vidéo")}</Button>
@@ -152,6 +153,7 @@ export function VideosPage() {
         </>}
         {erreur && <p role="alert" className="text-sm text-destructive">{erreur}</p>}
       </main>
+    </div>
     </div>
   </div>;
 }

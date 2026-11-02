@@ -33,6 +33,7 @@ import {
   oublierLms,
   ensureLmStudioServer,
   lmStudioRepond,
+  conseilDemarrageLmStudio,
   backendById,
 } from "./backends.ts";
 import { models, invalidate, resolve } from "./router.ts";
@@ -142,7 +143,7 @@ import {
   revokeAll,
 } from "./usersession.ts";
 import { filtrer, fusionner, type Demandeur } from "./authz.ts";
-import { installerMoteur, llmsterPoseAilleurs, lmStudioEnPlace, moteurAPoser } from "./engine.ts";
+import { appInstallee, installerMoteur, llmsterPoseAilleurs, lmStudioEnPlace, moteurAPoser } from "./engine.ts";
 import {
   diagnostic as atelierDiagnostic,
   preparer as preparerAtelier,
@@ -645,7 +646,7 @@ async function handleProvisionStatus(res: http.ServerResponse): Promise<void> {
   const ouvert = moteurOuvert();
   const moteurInstalle = ouvert
     ? llamaCppInstalle()
-    : lmStudioActif && ((await applicationEnAttenteDeChoix()) || (await findLms()) !== null) && !moteurAPoser() && !llmsterPoseAilleurs();
+    : lmStudioActif && ((await appInstallee()) !== null || (await findLms()) !== null) && !moteurAPoser() && !llmsterPoseAilleurs();
   /*
    * L'application LM Studio de la personne est là mais fermée, et Helix ne la
    * démarre pas sans son accord (23/10/2026, engine.ts) : l'écran de mise en
@@ -725,6 +726,32 @@ const CONDITIONS_MOTEUR = {
 let moteurEnInstallation = false;
 /** L'état publié par le dernier échec d'installation du moteur, tant qu'il est l'état courant (handleProvisionStatus). */
 let echecDuMoteur: ReturnType<typeof getProvisionState> | null = null;
+
+/** Relance seulement le moteur déjà installé : aucun téléchargement, aucune suppression de modèles. */
+async function handleEngineRestart(req: http.IncomingMessage, res: http.ServerResponse, url: URL): Promise<void> {
+  const qui = await demandeur(req, url);
+  if (!qui) return send(res, 401, sansSeance());
+  if (!(await estAdministrateur(qui.userId))) return send(res, 403, { error: { message: t("Seul l'administrateur de l'instance installe le moteur des modèles.") } });
+  if (!autoProvisionEnabled()) return send(res, 403, { error: { message: t("Sur ce poste, les modèles sont préparés par l'intégrateur.") } });
+  if (moteurEnInstallation) return send(res, 409, { error: { message: t("Le moteur est déjà en cours d'installation.") } });
+  if (moteurOuvert() || backendById("lmstudio")?.enabled !== true || !(await appInstallee()) || moteurAPoser() || llmsterPoseAilleurs()) {
+    return send(res, 409, { error: { message: t("Installez d'abord le moteur des modèles.") } });
+  }
+  moteurEnInstallation = true;
+  echecDuMoteur = null;
+  oublierLms();
+  setProvisionState({ phase: "checking", message: t("Démarrage du moteur..."), error: undefined, model: undefined, percent: undefined });
+  void ensureLmStudioServer().then(pret => {
+    invalidate();
+    setProvisionState(pret
+      ? { phase: "ready", message: t("Moteur installé et démarré."), error: undefined }
+      : { phase: "error", code: "moteur_demarrage", message: t("Le moteur est installé, mais il n'a pas démarré."), error: conseilDemarrageLmStudio() });
+  }).catch(err => {
+    console.error("[helix] relance du moteur :", err);
+    setProvisionState({ phase: "error", code: "moteur_demarrage", message: t("Le moteur est installé, mais il n'a pas démarré."), error: conseilDemarrageLmStudio() });
+  }).finally(() => { moteurEnInstallation = false; });
+  send(res, 202, { started: true, state: getProvisionState() });
+}
 
 async function handleEngineInstall(
   req: http.IncomingMessage,
@@ -815,8 +842,9 @@ async function handleEngineInstall(
       if (!ecoute) {
         setProvisionState({
           phase: "error",
+          code: "moteur_demarrage",
           message: t("Le moteur est installé, mais il n'a pas démarré."),
-          error: tf("Quittez {0} puis rouvrez-le : il réessaiera au démarrage. Si cela se répète, redémarrez la machine.", nomProduit()),
+          error: conseilDemarrageLmStudio(),
           percent: undefined,
         });
         return;
@@ -1897,6 +1925,7 @@ async function profilDe(accountId: string): Promise<Demandeur | null> {
 const EXECUTION: { methode: string; chemin: string }[] = [
   { methode: "POST", chemin: "/helix/models/load" },
   { methode: "POST", chemin: "/helix/provision/moteur" },
+  { methode: "POST", chemin: "/helix/provision/moteur/relancer" },
   { methode: "POST", chemin: "/helix/provision/start" },
   // L'emplacement des modèles (28/09/2026) : les chemins de la machine, et le choix de l'administrateur.
   { methode: "GET", chemin: "/helix/emplacement-modeles" },
@@ -5976,6 +6005,8 @@ const traiter = (
       return handleChat(req, res, url);
     if (req.method === "POST" && path === "/helix/models/load") return handleLoad(req, res);
     if (req.method === "GET" && path === "/helix/provision") return handleProvisionStatus(res);
+    if (req.method === "POST" && path === "/helix/provision/moteur/relancer")
+      return handleEngineRestart(req, res, url);
     if (req.method === "POST" && path === "/helix/provision/moteur")
       return handleEngineInstall(req, res, url);
     if (req.method === "POST" && path === "/helix/provision/start")

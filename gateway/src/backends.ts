@@ -17,6 +17,7 @@ import { calculSurProcesseur, detectHardware, relaisApresDefaillance } from "./p
 import { aEssayer, essayerModele, noterEssai } from "./santeModeles.ts";
 import { canalOuvert, ecouterLApplication, envoyerALApplication } from "./canalApplication.ts";
 import { optionsOptimisees } from "./optimisationLocale.ts";
+import { attendreEcoute, portServeurLocal } from "./demarrageLmStudio.ts";
 import { reveilPermis } from "./reglagesMoteur.ts";
 
 const exec = promisify(execFile);
@@ -79,17 +80,11 @@ async function lmsInstalle(): Promise<string | null> {
   if (lmsPathCache !== undefined) return lmsPathCache;
   for (const candidate of LMS_CANDIDATES()) {
     try {
-      /*
-       * 30 s pour un fichier présent à sa place connue (essai sous Ubuntu du
-       * 27/09/2026) : le `lms` du moteur sans interface pèse 109 Mo et mettait
-       * plus de 5 s à répondre sur une machine lente, et Helix le déclarait
-       * absent juste après l'avoir installé. Présent et exécutable, il compte
-       * même si sa réponse tarde : les appels suivants diront s'il est cassé.
-       */
+      // 02/11/2026 : un exécutable connu présent compte comme installé, même si son
+      // démarrage échoue. Ne pas confondre cette panne avec une installation absente.
       const connu = candidate !== "lms" && existsSync(candidate);
-      await exec(candidate, ["version"], { timeout: connu ? 30_000 : 5000 }).catch((err) => {
-        if (!(connu && (err as { killed?: boolean }).killed)) throw err;
-      });
+      if (connu) { lmsPathCache = candidate; return candidate; }
+      await exec(candidate, ["version"], { timeout: 5000 });
       lmsPathCache = candidate;
       return candidate;
     } catch {
@@ -211,6 +206,12 @@ async function fetchJson(
  * On le démarre donc nous-mêmes, sans bruit.
  */
 const LMSTUDIO_URL = BACKENDS.find((b) => b.id === "lmstudio")?.baseUrl ?? "";
+let echecDemarrage: "service" | "adresse" | "serveur" = "serveur";
+/** Une explication utile à l'écran ; les détails techniques restent au journal. */
+export function conseilDemarrageLmStudio(): string {
+  if (echecDemarrage === "adresse") return tf("Le moteur tourne déjà, mais ne répond pas à l'adresse attendue. Dans LM Studio, choisissez le port {0}, puis réessayez.", portServeurLocal(LMSTUDIO_URL) ?? 1234);
+  return t("Réessayez le démarrage ici. Si le problème persiste, vérifiez que votre antivirus autorise LM Studio et consultez le journal de l'application.");
+}
 
 /** Ne pas relancer en boucle quand la machine n'a tout simplement pas LM Studio. */
 let dernierEssai = 0;
@@ -244,6 +245,7 @@ let numeroLancement = 0;
  * (serveur, essais), comme avant. Rejette comme `execFile` en cas d'échec.
  */
 async function lancerLms(lms: string, commande: "daemon up" | "server start", delaiMs: number): Promise<void> {
+  const port = commande === "server start" ? portServeurLocal(LMSTUDIO_URL) : null;
   if (process.platform === "win32" && canalOuvert()) {
     const id = ++numeroLancement;
     const r = await new Promise<{ code?: unknown; fin?: unknown } | null>((resolve) => {
@@ -258,7 +260,7 @@ async function lancerLms(lms: string, commande: "daemon up" | "server start", de
         arreter();
         resolve(msg);
       });
-      if (!envoyerALApplication({ type: "lancer-lms", id, lms, commande })) {
+      if (!envoyerALApplication({ type: "lancer-lms", id, lms, commande, ...(port ? { port } : {}) })) {
         clearTimeout(minuterie);
         arreter();
         resolve(null);
@@ -270,7 +272,7 @@ async function lancerLms(lms: string, commande: "daemon up" | "server start", de
       throw Object.assign(new Error(`lms ${commande} : code ${String(r.code)}`), { stderr: typeof r.fin === "string" ? r.fin : "" });
     }
   }
-  await exec(lms, commande.split(" "), { timeout: delaiMs });
+  await exec(lms, [...commande.split(" "), ...(port ? ["--port", String(port)] : [])], { timeout: delaiMs });
 }
 
 /** Le service de LM Studio tourne-t-il ? (`lms daemon status`, sans rien démarrer.) */
@@ -304,9 +306,11 @@ export function ensureLmStudioServer(): Promise<boolean> {
 
 async function demarrerServeurLmStudio(): Promise<boolean> {
   if (!LMSTUDIO_URL) return false;
+  echecDemarrage = "serveur";
   // Avant tout, même serveur déjà en marche : sans ce dossier, llmster ne charge aucun modèle (engine.ts).
   preparerDossiersLlmster();
   if (await repond(LMSTUDIO_URL)) return true;
+  if (portServeurLocal(LMSTUDIO_URL) === null) return false;
   /*
    * Mac à puce Apple sans moteur que `lms` sache démarrer (engine.ts) : rien à
    * allumer, le moteur est à installer. Sans ce garde, la simple lecture de
@@ -333,8 +337,11 @@ async function demarrerServeurLmStudio(): Promise<boolean> {
    */
   try {
     const { stdout } = await exec(lms, ["server", "status", "--json"], { timeout: 10_000 });
-    const etat = JSON.parse(String(stdout).trim() || "{}") as { running?: boolean };
-    if (etat.running) return false;
+    const etat = JSON.parse(String(stdout).trim() || "{}") as { running?: boolean; port?: number };
+    if (etat.running) {
+      echecDemarrage = etat.port !== undefined && etat.port !== portServeurLocal(LMSTUDIO_URL) ? "adresse" : "serveur";
+      return attendreEcoute(() => repond(LMSTUDIO_URL));
+    }
   } catch {
     /*
      * Statut illisible (ancienne version de `lms`, ou commande en échec quand
@@ -366,6 +373,7 @@ async function demarrerServeurLmStudio(): Promise<boolean> {
      */
     if (!leve) {
       for (let i = 0; i < 36 && !(await serviceLmStudioEnMarche(lms)); i++) await new Promise((r) => setTimeout(r, 5000));
+      if (!(await serviceLmStudioEnMarche(lms))) { echecDemarrage = "service"; return false; }
     }
   }
   try {
@@ -384,6 +392,12 @@ async function demarrerServeurLmStudio(): Promise<boolean> {
     const essais = moteurSansInterface() ? 4 : 1;
     for (let n = 1; ; n++) {
       try {
+        // Un essai précédent peut avoir démarré le serveur malgré sa sortie en erreur.
+        // Ne jamais le redémarrer : il peut déjà servir un autre logiciel du poste.
+        if (n > 1) {
+          const statut = await exec(lms, ["server", "status", "--json"], { timeout: 10_000 }).then(r => JSON.parse(String(r.stdout)), () => null).catch(() => null);
+          if (statut?.running === true) { echecDemarrage = typeof statut.port === "number" && statut.port !== portServeurLocal(LMSTUDIO_URL) ? "adresse" : "serveur"; return attendreEcoute(() => repond(LMSTUDIO_URL)); }
+        }
         await lancerLms(lms, "server start", 60_000);
         break;
       } catch (err) {
@@ -412,20 +426,15 @@ async function demarrerServeurLmStudio(): Promise<boolean> {
     let demarre = false;
     for (let i = 0; i < 12 && !demarre; i++) {
       await new Promise((r) => setTimeout(r, 5000));
-      demarre = await exec(lms, ["server", "start"], { timeout: 60_000 }).then(() => true, () => false);
+      demarre = await lancerLms(lms, "server start", 60_000).then(() => true, () => false);
     }
     if (!demarre) return false;
   }
 
-  // Le serveur met un instant à écouter : on lui laisse le temps.
-  for (let i = 0; i < 10; i++) {
-    if (await repond(LMSTUDIO_URL)) {
-      console.log("[helix] serveur LM Studio démarré.");
-      return true;
-    }
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  return false;
+  // Le premier démarrage peut dépasser cinq secondes sur un PC analysé par l'antivirus.
+  const pret = await attendreEcoute(() => repond(LMSTUDIO_URL));
+  if (pret) console.log("[helix] serveur LM Studio démarré.");
+  return pret;
 }
 
 /** Modèles que cette instance a chargés elle-même (loadModel). */

@@ -3,7 +3,7 @@
   "nomAffiche": "Helix",
   "depotMisesAJour": "medhiclb/HelixAI",
   "private": true,
-  "version": "2026.1102.1",
+  "version": "2026.1102.2",
   "license": "AGPL-3.0-only",
   "description": "Plateforme d'IA souveraine, locale et open source",
   "desktopName": "helix-plateforme.desktop",
@@ -46,7 +46,8 @@
     "essai:optimisation": "node scripts/essai-optimisation.mjs",
     "essai:scenario-video": "node scripts/essai-scenario-video.mjs",
     "essai:ajouts-http": "node scripts/essai-ajouts-http.mjs",
-    "essai:studio-video": "node scripts/essai-studio-video.mjs"
+    "essai:studio-video": "node scripts/essai-studio-video.mjs",
+    "essai:demarrage-moteur": "node scripts/essai-demarrage-moteur.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",

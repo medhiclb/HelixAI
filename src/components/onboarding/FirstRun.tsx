@@ -26,7 +26,7 @@ import { t, tf, locale } from "@/lib/i18n";
  * sans que l'utilisateur ait à comprendre ce qui se passe (ADR-009).
  */
 export function FirstRun({ onReady }: { onReady: () => void }) {
-  const { status, state, unreachable, start, installerMoteur, refresh } = useProvision();
+  const { status, state, unreachable, start, installerMoteur, relancerMoteur, refresh } = useProvision();
   const [conditions, setConditions] = useState(false);
   // Le modèle choisi à la place du recommandé (null : le recommandé), et la liste dépliée.
   const [choix, setChoix] = useState<string | null>(null);
@@ -124,6 +124,15 @@ export function FirstRun({ onReady }: { onReady: () => void }) {
    * l'utilisateur d'aller chercher un logiciel tiers, c'est là que la plupart
    * des installations s'arrêtent.
    */
+  if (state.phase === "error" && state.code === "moteur_demarrage") {
+    return <Shell>
+      <LogoMark size={52} animated />
+      <h1 className="text-2xl font-semibold tracking-tight text-foreground">{state.message}</h1>
+      {state.error && <p role="alert" className="max-w-md text-sm leading-relaxed text-muted-foreground">{state.error}</p>}
+      <Button icon={RefreshCw} onClick={relancerMoteur}>{t("Réessayer le démarrage")}</Button>
+    </Shell>;
+  }
+
   if (!status.moteurInstalle) {
     /*
      * Mac Intel : le moteur est llama.cpp, logiciel libre (MIT), que Helix
