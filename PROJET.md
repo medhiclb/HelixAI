@@ -10,7 +10,7 @@ refaite à l'envers.
 
 | | |
 |---|---|
-| Version | 2026.1102.3 (`package.json`) |
+| Version | 2026.1102.4 (`package.json`) |
 | Dernière mise à jour | 30 septembre 2026 |
 | Vérifié | `npm run securite` : 2290 contrôles, 0 échec (30/09/2026, sur le code fusionné avec les vrais catalogues) ; `npm run typecheck` ; relevés à 100 % dans les six catalogues (interface 3 893 phrases, passerelle 1 503) ; essai Windows sur GitHub Actions ; `essai:cli`, `essai:vscode`, `essai:palmier` |
 | Reste à essayer | sur les vraies machines : § 5, « Ce qui reste à essayer sur les postes de Medhi » |
@@ -7799,3 +7799,20 @@ Qualité pédagogique avec un vrai modèle local et vrai support à essayer sur 
 Les clients existants passent : CLI 33 contrôles, extension VS Code 16 contrôles,
 contre des passerelles jetables. L'extension utilise un faux hôte vscode et un
 modèle simulé : son affichage dans un vrai VS Code reste à essayer.
+
+
+### 02/11/2026 : canevas vidéo libre (2026.1102.4)
+
+À la demande de Medhi, l'atelier utilise des coordonnées de projet indépendantes
+de la caméra. Les scènes, l'idée et les notes se déplacent par leur en-tête, avec
+positions enregistrées à la fin du geste ; les flèches du clavier déplacent un
+bloc focalisé de 10 unités (50 avec Maj). L'ordre du montage reste distinct.
+Le fond se déplace au glisser, à la molette, par l'outil main ou Espace + glisser.
+Ctrl/Commande + molette zoome autour du pointeur, les boutons autour du centre.
+Limites 5 à 200 %, cadrage de tous les blocs, retour à 100 %, réorganisation.
+Les lignes sont calculées dans le même repère que les blocs et suivent les gestes.
+L'atelier prend la hauteur disponible ; ses commandes restent dans sa fenêtre.
+Essai navigateur isolé : déplacement à 32 %, liaison mise à jour, passage au montage
+puis retour avec position conservée, déplacement clavier et réorganisation.
+Le geste de pincement du trackpad n'a pas été reproduit par l'outil de navigateur ;
+il passe par les événements molette avec Ctrl des navigateurs Chromium.

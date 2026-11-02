@@ -1377,7 +1377,14 @@ Ouvrez **Services** dans la barre latérale, puis **Studio vidéo**. Partez d'un
 projet libre, d'une vidéo produit ou d'une histoire courte. Dans **Atelier**, décrivez
 votre idée ; **Préparer les scènes** propose des plans avec un modèle de texte local.
 Ajoutez des blocs de texte et cochez ceux à relier à chaque scène. Les liaisons
-alimentent la description envoyée au générateur. **Modèles et réglages** donne accès
+alimentent la description envoyée au générateur. Déplacez les blocs par leur en-tête
+pour organiser votre espace ; cela ne change pas l'ordre du montage. Faites glisser
+le fond pour naviguer, ou utilisez Espace et le glisser. Ctrl ou ⌘ avec la molette
+zoome autour du pointeur. Les commandes du bas permettent de zoomer, revenir à
+100 %, **Tout afficher** ou **Réorganiser les blocs**. Les positions sont conservées.
+Au clavier, placez le focus sur un en-tête et utilisez les flèches pour déplacer
+le bloc, avec Maj pour un pas plus grand.
+**Modèles et réglages** donne accès
 aux moteurs locaux d'image et de vidéo et aux téléchargements compatibles.
 
 Générez une image ou un clip par scène, ou lancez les clips manquants dans l'ordre.

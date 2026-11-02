@@ -1,28 +1,38 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import type { StudioVideo } from "@/lib/studioVideo";
+import { Hand, Maximize, Minus, Plus, RotateCcw } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { t } from "@/lib/i18n";
+import type { StudioVideo, PositionStudio } from "@/lib/studioVideo";
 
-/** Les liaisons suivent les cartes et représentent exclusivement les textes sélectionnés. */
-export function FluxStudio({studio,children}:{studio:StudioVideo;children:ReactNode}) {
-  const racine=useRef<HTMLDivElement>(null);
-  const [traits,setTraits]=useState<{id:string;d:string}[]>([]);
-  const [dimensions,setDimensions]=useState({largeur:1,hauteur:1});
-  useLayoutEffect(()=>{
-    const r=racine.current;if(!r)return;
-    let frame=0;
-    const mesurer=()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>{
-      const base=r.getBoundingClientRect();const echelle=base.width/r.offsetWidth || 1;
-      const noeuds=new Map(Array.from(r.querySelectorAll<HTMLElement>('[data-noeud]')).map(n=>[n.dataset.noeud!,n.getBoundingClientRect()]));
-      const liens:{id:string;d:string}[]=[];
-      for(const scene of studio.scenes){const arrivee=noeuds.get(scene.id);if(!arrivee)continue;
-        for(const id of scene.sources??['brief']){const depart=noeuds.get(id);if(!depart)continue;
-          const x1=(depart.right-base.left)/echelle,y1=(depart.top-base.top)/echelle+36;
-          const x2=(arrivee.left-base.left)/echelle,y2=(arrivee.top-base.top)/echelle+36;
-          liens.push({id:`${id}-${scene.id}`,d:`M${x1},${y1} C${x1+24},${y1} ${x2-24},${y2} ${x2},${y2}`});
-        }
-      }setTraits(liens);setDimensions({largeur:r.scrollWidth,hauteur:r.scrollHeight});
-    })};
-    const observateur=new ResizeObserver(mesurer);observateur.observe(r);r.querySelectorAll('[data-noeud]').forEach(n=>observateur.observe(n));mesurer();
-    return()=>{cancelAnimationFrame(frame);observateur.disconnect()};
-  },[studio]);
-  return <div ref={racine} className="relative"><svg aria-hidden="true" width={dimensions.largeur} height={dimensions.hauteur} className="pointer-events-none absolute inset-0 overflow-visible text-primary/40">{traits.map(l=><path key={l.id} d={l.d} fill="none" stroke="currentColor" strokeWidth={2}/>)}</svg><div className="relative">{children}</div></div>;
+const borner=(z:number)=>Math.min(2,Math.max(.05,z));
+/** Coordonnées du projet indépendantes du zoom et de l'ordre de montage. */
+export function FluxStudio({studio,children,onPositions}:{studio:StudioVideo;children:ReactNode;onPositions:(p:Record<string,PositionStudio>)=>void}) {
+ const cadre=useRef<HTMLDivElement>(null),monde=useRef<HTMLDivElement>(null);
+ const [camera,setCamera]=useState({x:40,y:40,z:1});const cameraRef=useRef(camera);cameraRef.current=camera;
+ const [main,setMain]=useState(false),[brouillon,setBrouillon]=useState<Record<string,PositionStudio>|null>(null);
+ const [traits,setTraits]=useState<{id:string;d:string}[]>([]);
+ const boites=useRef<{x:number;y:number;w:number;h:number}[]>([]);
+ const geste=useRef<{pointeur:number;x:number;y:number;camera:typeof camera;id?:string;positions:Record<string,PositionStudio>;depart?:PositionStudio;bouge:boolean}|null>(null);
+ const positionsRef=useRef<Record<string,PositionStudio>>({});
+ useLayoutEffect(()=>{
+  const r=monde.current;if(!r)return;let frame=0;
+  const mesurer=()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>{
+   const noeuds=Array.from(r.querySelectorAll<HTMLElement>('[data-noeud]'));const positions:Record<string,PositionStudio>={};let texteY=0,sceneY=0;
+   for(const n of noeuds){const id=n.dataset.noeud!;const texte=id==='brief'||studio.notes?.some(x=>x.id===id);n.style.position='absolute';n.style.width=texte?'280px':'672px';n.style.margin='0';const defaut={x:texte?0:360,y:texte?texteY:sceneY};const p=brouillon?.[id]??studio.positions?.[id]??defaut;positions[id]=Number.isFinite(p.x)&&Number.isFinite(p.y)?p:defaut;n.style.left=positions[id]!.x+'px';n.style.top=positions[id]!.y+'px';if(texte)texteY+=n.offsetHeight+24;else sceneY+=n.offsetHeight+24;}
+   positionsRef.current=positions;const cartes=new Map(noeuds.map(n=>[n.dataset.noeud!,{x:positions[n.dataset.noeud!]!.x,y:positions[n.dataset.noeud!]!.y,w:n.offsetWidth,h:n.offsetHeight}]));boites.current=[...cartes.values()];const liens:{id:string;d:string}[]=[];
+   for(const s of studio.scenes){const a=cartes.get(s.id);if(!a)continue;for(const source of s.sources??['brief']){const d=cartes.get(source);if(!d)continue;const x=d.x+d.w,y=d.y+36,finX=a.x,finY=a.y+36,courbe=Math.max(48,Math.abs(finX-x)*.4);liens.push({id:source+'-'+s.id,d:`M${x},${y} C${x+courbe},${y} ${finX-courbe},${finY} ${finX},${finY}`})}}
+   setTraits(liens);
+  })};const observer=new ResizeObserver(mesurer);r.querySelectorAll('[data-noeud]').forEach(n=>observer.observe(n));mesurer();return()=>{observer.disconnect();cancelAnimationFrame(frame)};
+ },[studio,brouillon]);
+ const zoomer=(z:number,px?:number,py?:number)=>{const r=cadre.current;if(!r)return;setCamera(c=>{const nouveau=borner(z),x=px??r.clientWidth/2,y=py??r.clientHeight/2;return{x:x-(x-c.x)*nouveau/c.z,y:y-(y-c.y)*nouveau/c.z,z:nouveau}})};
+ useLayoutEffect(()=>{const r=cadre.current;if(!r)return;const roue=(e:WheelEvent)=>{if((e.target as HTMLElement).closest('textarea,input,select,[data-commandes]'))return;e.preventDefault();if(e.ctrlKey||e.metaKey){const b=r.getBoundingClientRect();zoomer(cameraRef.current.z*Math.exp(-e.deltaY*.006),e.clientX-b.left,e.clientY-b.top)}else setCamera(c=>({...c,x:c.x-e.deltaX,y:c.y-e.deltaY}))};r.addEventListener('wheel',roue,{passive:false});return()=>r.removeEventListener('wheel',roue)},[]);
+ const toutAfficher=()=>{const r=cadre.current,b=boites.current;if(!r||!b.length)return;const x=Math.min(...b.map(v=>v.x)),y=Math.min(...b.map(v=>v.y)),w=Math.max(...b.map(v=>v.x+v.w))-x,h=Math.max(...b.map(v=>v.y+v.h))-y;const z=borner(Math.min((r.clientWidth-80)/w,(r.clientHeight-120)/h,1));setCamera({x:(r.clientWidth-w*z)/2-x*z,y:40-y*z,z})};
+ return <div ref={cadre} tabIndex={0} aria-label={t("Espace de travail vidéo")} className="relative min-h-0 flex-1 overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-ring" style={{touchAction:'none',cursor:main?'grab':undefined}}
+ onKeyDown={e=>{if((e.target as HTMLElement).closest('input,textarea,select,button'))return;if(e.key===' '){e.preventDefault();setMain(true)}if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();const noeud=(e.target as HTMLElement).closest<HTMLElement>('[data-noeud]');if(noeud&&(e.target as HTMLElement).closest('[data-poignee]')){const id=noeud.dataset.noeud!,p=positionsRef.current[id];if(p){const pas=e.shiftKey?50:10;onPositions({...positionsRef.current,[id]:{x:p.x+(e.key==='ArrowLeft'?-pas:e.key==='ArrowRight'?pas:0),y:p.y+(e.key==='ArrowUp'?-pas:e.key==='ArrowDown'?pas:0)}})}return;}setCamera(c=>({...c,x:c.x+(e.key==='ArrowLeft'?60:e.key==='ArrowRight'?-60:0),y:c.y+(e.key==='ArrowUp'?60:e.key==='ArrowDown'?-60:0)}))}if(e.key==='0'){e.preventDefault();toutAfficher()}if(e.key==='Escape'){geste.current=null;setBrouillon(null);setMain(false)}}} onKeyUp={e=>{if(e.key===' ')setMain(false)}} onBlur={()=>setMain(false)}
+ onPointerDown={e=>{const cible=e.target as HTMLElement;if(cible.closest('[data-commandes]'))return;const carte=cible.closest<HTMLElement>('[data-noeud]');const poignee=cible.closest('[data-poignee]');const interactif=cible.closest('button,input,textarea,select,a,video,audio,label');const deplacer=e.button===1||main||(!carte&&!interactif);if(!deplacer&&(!poignee||interactif))return;if(e.button!==0&&e.button!==1)return;e.preventDefault();cadre.current?.focus({preventScroll:true});cadre.current?.setPointerCapture(e.pointerId);const id=!deplacer?carte?.dataset.noeud:undefined;geste.current={pointeur:e.pointerId,x:e.clientX,y:e.clientY,camera:cameraRef.current,id,depart:id?positionsRef.current[id]:undefined,positions:{...positionsRef.current},bouge:false}}}
+ onPointerMove={e=>{const g=geste.current;if(!g||g.pointeur!==e.pointerId)return;const dx=e.clientX-g.x,dy=e.clientY-g.y;if(Math.abs(dx)+Math.abs(dy)>3)g.bouge=true;if(g.id&&g.depart){g.positions={...g.positions,[g.id]:{x:g.depart.x+dx/g.camera.z,y:g.depart.y+dy/g.camera.z}};setBrouillon(g.positions)}else setCamera({...g.camera,x:g.camera.x+dx,y:g.camera.y+dy})}}
+ onPointerUp={e=>{const g=geste.current;if(!g||g.pointeur!==e.pointerId)return;geste.current=null;if(g.id&&g.bouge)onPositions(g.positions);setBrouillon(null);if(cadre.current?.hasPointerCapture(e.pointerId))cadre.current.releasePointerCapture(e.pointerId)}} onPointerCancel={()=>{geste.current=null;setBrouillon(null)}} onLostPointerCapture={()=>{geste.current=null;setBrouillon(null)}}>
+ <div ref={monde} className="absolute left-0 top-0" style={{width:1,height:1,transformOrigin:'0 0',transform:`translate(${camera.x}px,${camera.y}px) scale(${camera.z})`}}><svg aria-hidden="true" width={1} height={1} className="pointer-events-none absolute overflow-visible text-primary/40">{traits.map(l=><path key={l.id} d={l.d} fill="none" stroke="currentColor" strokeWidth={2}/>)}</svg>{children}</div>
+ <div data-commandes className="absolute bottom-4 start-1/2 z-20 flex max-w-[calc(100%-2rem)] -translate-x-1/2 flex-wrap items-center justify-center gap-1 rounded-2xl border border-border bg-background p-2 shadow-lg"><Button variant={main?'secondary':'ghost'} icon={Hand} aria-label={t("Déplacer la vue")} aria-pressed={main} onClick={()=>setMain(v=>!v)}/><Button variant="ghost" icon={Minus} aria-label={t("Réduire")} onClick={()=>zoomer(camera.z/1.2)}/><button className="min-w-14 rounded-lg px-2 py-2 text-xs tabular-nums focus-visible:ring-2 focus-visible:ring-ring" onClick={()=>zoomer(1)} aria-label={t("Revenir à 100 %")}>{Math.round(camera.z*100)}%</button><Button variant="ghost" icon={Plus} aria-label={t("Agrandir")} onClick={()=>zoomer(camera.z*1.2)}/><Button variant="ghost" icon={Maximize} title={t("Tout afficher")} aria-label={t("Tout afficher")} onClick={toutAfficher}/><Button variant="ghost" icon={RotateCcw} title={t("Réorganiser les blocs")} aria-label={t("Réorganiser les blocs")} onClick={()=>onPositions({})}/></div>
+ </div>;
 }
