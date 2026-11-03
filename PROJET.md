@@ -7956,3 +7956,16 @@ langues. Les essais couvrent aussi une transcription qui revient après Pause
 et la lecture d’un bilan sans demander le micro. Un exemple WAV de 7,72 s est
 généré avec la voix système Thomas du Mac, depuis un texte fictif, sans micro ;
 il ne constitue pas un essai de la voix Windows ou du lecteur WebSpeech.
+
+Reproduction visuelle du sélecteur réel dans un banc où apiFetch ne répond
+jamais : Chargement puis Hors ligne, erreur de délai et Réessayer visibles ;
+un clic relance proprement la recherche. Aucun moteur réel utilisé. Les
+clients repassent sur cette version : CLI 33/33, extension VS Code 16/16.
+
+Validation de publication 2026.1103.1 : les trois parcours du run 41626912798
+sont réussis (application Windows avec modèle, réflexion Linux avec modèle,
+Code Linux), sur f6c1d4c. Les commits suivants ne changent que les essais et ce
+document ; analyse 41628456915 réussie. Les 21 fichiers du brouillon ont leurs
+tailles/SHA-256 comparés aux originaux et leurs signatures relues avec la clé
+de l’application installée. Kokoro dédié reste une proposition en attente de
+l’accord de licences demandé à Medhi ; aucun moteur ni poids Kokoro installé.
