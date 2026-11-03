@@ -493,9 +493,10 @@ export function ModelBehaviorPicker({
             <p className="flex items-start gap-2 text-muted-foreground">
               <CircleAlert size={15} strokeWidth={1.75} className="mt-0.5 shrink-0 text-warning" />
               <span>
-                {t("Aucun moteur d'inférence joignable. Démarrez LM Studio (serveur local) ou le cluster.")}
+                {error}
               </span>
             </p>
+            <button type="button" className="mt-3 rounded-full border border-border px-4 py-2 hover:bg-muted disabled:opacity-50" disabled={loading} onClick={refresh}>{t("Réessayer")}</button>
           </div>
         )}
 

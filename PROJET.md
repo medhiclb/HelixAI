@@ -10,7 +10,7 @@ refaite à l'envers.
 
 | | |
 |---|---|
-| Version | 2026.1102.4 (`package.json`) |
+| Version | 2026.1103.1 (`package.json`) |
 | Dernière mise à jour | 30 septembre 2026 |
 | Vérifié | `npm run securite` : 2290 contrôles, 0 échec (30/09/2026, sur le code fusionné avec les vrais catalogues) ; `npm run typecheck` ; relevés à 100 % dans les six catalogues (interface 3 893 phrases, passerelle 1 503) ; essai Windows sur GitHub Actions ; `essai:cli`, `essai:vscode`, `essai:palmier` |
 | Reste à essayer | sur les vraies machines : § 5, « Ce qui reste à essayer sur les postes de Medhi » |
@@ -7915,3 +7915,37 @@ Linux). Les trois installations OpenClaw du run 41609940431 sont réussies.
 Analyse GitHub 41612153147 réussie. Ces parcours portent sur c528e1e ; les
 commits suivants ne changent que le contrôle textuel Unreal et ce document.
 REA lui-même reste essayé réellement sur Mac seulement, comme indiqué plus haut.
+
+### 03/11/2026 : entretien réellement oral et chargement des modèles borné
+
+Medhi précise que l'entretien doit être parlé. Le mode oral devient le parcours
+initial des entretiens ; il peut aussi s'activer dans les cours. Recruteur au
+centre, transcription repliable, réglages de voix locale et de débit. Un clic
+explicite demande le micro ; la lecture finit avant sa réouverture. Whisper de
+l'instance transcrit dans la langue de la séance, puis la réponse est envoyée au
+même service local de coach. Détection de parole puis 1,8 s de silence, bouton
+Terminer et limite de cinq minutes. Pause, navigation, compte changé et fenêtre
+masquée coupent capture et lecture ; une permission tardive relâche ses pistes.
+Le bilan peut être écouté sans demander le micro. Le mode écrit reste disponible.
+
+Le TTS utilisé ici est la voix locale annoncée par le système, pas un nouveau
+modèle neural distribué par Helix. La qualité et les langues dépendent donc des
+voix installées. Kokoro, Pocket TTS et Qwen TTS ont été examinés ; aucun poids ni
+nouveau runtime TTS téléchargé dans cette modification. Aucun service de voix
+cloud et aucune reconnaissance WebSpeech ne servent de repli. La voix réelle et
+le vrai micro Windows/Linux restent à essayer ; les tests de séquencement sont
+simulés, et ne constituent pas une mesure de naturel de la voix.
+
+La capture d'un chargement de modèles infini correspond à un défaut reproductible :
+useModels invalidait chaque résultat dès la relecture de 15 secondes, même si
+l'appel précédent travaillait encore. Les relectures automatiques sont désormais
+fusionnées ; un rechargement explicite annule l'appel courant. La requête et son
+corps JSON sont bornés à 20 s, même si un transport ignore l'annulation. Une erreur
+persistante et Réessayer remplacent l'attente infinie. Cache existant conservé sur
+échec, réponse du compte précédent ignorée après changement d'identité. La cause
+précise du PC photographié ne peut pas être confirmée sans son journal.
+
+Parcours d’interface isolé : création, démarrage oral, alternance lecture/micro
+fictifs, réponse enregistrée, progression 0→1, seconde question, bilan puis mode
+écrit avec transcription conservée. Portrait et commandes visibles en 1280×720.
+Aucune voix ni capture réelle utilisée pour ce parcours de navigateur.

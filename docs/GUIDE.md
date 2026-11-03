@@ -1484,3 +1484,17 @@ L'analyse JavaScript accepte un répertoire d'application ou une archive `.asar`
 Les analyses de binaires natifs peuvent demander un moteur externe installé sur
 la machine. Frida et les moteurs externes se préparent séparément. REA travaille
 sur la machine de la passerelle ; une session VPS conserve son parcours SSH.
+
+
+### S'entraîner à voix haute
+
+Dans Services, ouvrez une simulation d'entretien puis « Démarrer avec le micro ».
+Le recruteur lit sa question, puis le micro s'ouvre pour votre réponse. Un silence
+termine la réponse ; vous pouvez aussi utiliser « Terminer ma réponse ». La
+transcription locale est envoyée au coach, qui prépare la question suivante.
+« Pause » coupe le micro et la lecture. « Mode écrit » retrouve le clavier.
+
+« Voix et rythme » permet de choisir une voix locale installée sur le système et
+sa vitesse. Ajoutez une voix dans les réglages de langue du système si la liste
+est vide. Le bouton de préparation installe la transcription locale lorsqu'elle
+manque. Les échanges transcrits et le bilan restent consultables dans la séance.

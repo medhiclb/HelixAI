@@ -1,0 +1,20 @@
+/** Réponses lentes, absence de réponse et changement de compte, sans moteur réel. */
+import assert from 'node:assert/strict';import vm from 'node:vm';import{readFileSync}from'node:fs';import{transform}from'esbuild';
+const source=readFileSync('src/lib/gateway.ts','utf8'),debut=source.indexOf('export async function fetchModels('),fin=source.indexOf('\n}',debut)+2;
+const code=(await transform(source.slice(debut,fin),{loader:'ts',format:'cjs'})).code;
+let appeler,limite,annulations=0;const m={exports:{}};
+vm.runInNewContext(code,{module:m,exports:m.exports,AbortController,Promise,Error,Array,apiFetch:(...a)=>appeler(...a),t:x=>x,tf:(x,n)=>x.replace('{0}',n),setTimeout:f=>(limite=f,1),clearTimeout:()=>annulations++});
+let signal;appeler=async(_,o)=>{signal=o.signal;return new Promise(()=>{})};const attente=m.exports.fetchModels();limite();await assert.rejects(attente,/trop de temps/);assert.equal(signal.aborted,true);
+appeler=async()=>({ok:true,json:()=>new Promise(()=>{})});const corps=m.exports.fetchModels();await Promise.resolve();limite();await assert.rejects(corps,/trop de temps/);
+appeler=async()=>({ok:true,json:async()=>({models:[{id:'local'}]})});assert.equal((await m.exports.fetchModels())[0].id,'local');assert.equal(annulations,3);
+const hooks=(await transform(readFileSync('src/hooks/useModels.ts','utf8'),{loader:'ts',format:'cjs'})).code;
+const slots=[],effets=[],evenements=new Map(),demandes=[];let curseur=0,intervalle;const egal=(a,b)=>a&&b&&a.length===b.length&&a.every((v,i)=>v===b[i]);
+const react={useState:v=>{const i=curseur++;if(!(i in slots))slots[i]=v;return[slots[i],f=>slots[i]=typeof f==='function'?f(slots[i]):f]},useRef:v=>{const i=curseur++;return slots[i]??(slots[i]={current:v})},useCallback:(f,d)=>{const i=curseur++;if(!egal(slots[i]?.d,d))slots[i]={d,f};return slots[i].f},useEffect:(f,d)=>{const i=curseur++;if(!egal(slots[i]?.d,d)){slots[i]?.nettoyer?.();slots[i]={d};effets.push(()=>slots[i].nettoyer=f())}}};
+const hm={exports:{}};const surface={hidden:false,addEventListener:(n,f)=>evenements.set(n,f),removeEventListener:n=>evenements.delete(n),setInterval:f=>(intervalle=f,1)};
+vm.runInNewContext(hooks,{module:hm,exports:hm.exports,AbortController,window:surface,document:surface,clearInterval(){},require:n=>n==='react'?react:{fetchModels:signal=>new Promise((ok,non)=>demandes.push({signal,ok,non}))}});
+const rendre=()=>{curseur=0;const r=hm.exports.useModels();effets.splice(0).forEach(f=>f());return r};const attendre=async()=>{for(let i=0;i<6;i++)await Promise.resolve()};
+assert.equal(rendre().loading,true);intervalle();intervalle();evenements.get('focus')();assert.equal(demandes.length,1,'les lectures périodiques ne remplacent pas une recherche lente');
+demandes[0].ok([{id:'lent',roles:['chat']}]);await attendre();assert.equal(rendre().models[0].id,'lent');assert.equal(rendre().loading,false);
+rendre().refresh();demandes[1].non(Error('moteur absent'));await attendre();assert.equal(rendre().models[0].id,'lent');assert.equal(rendre().loading,false);assert.match(rendre().error,/absent/);
+rendre().refresh();evenements.get('helix:identite-changee')();assert.equal(demandes[2].signal.aborted,true);assert.equal(demandes.length,4);demandes[2].ok([{id:'autre-compte',roles:['chat']}]);demandes[3].ok([{id:'compte-actuel',roles:['code']}]);await attendre();assert.equal(rendre().models[0].id,'compte-actuel');
+for(const s of slots)s?.nettoyer?.();console.log('Modèles : délai borné, corps bloqué, réponse lente conservée, cache et isolation des comptes contrôlés.');

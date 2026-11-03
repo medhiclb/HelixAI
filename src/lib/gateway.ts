@@ -66,11 +66,30 @@ export async function fetchHealth(): Promise<HealthReport> {
   return res.json();
 }
 
-export async function fetchModels(): Promise<GatewayModel[]> {
-  const res = await apiFetch(`/helix/models`);
-  if (!res.ok) throw new Error(tf("Impossible de lister les modèles ({0})", res.status));
-  const data = (await res.json()) as { models: GatewayModel[] };
-  return data.models;
+export async function fetchModels(signal?: AbortSignal): Promise<GatewayModel[]> {
+  const controle = new AbortController();
+  const annuler = () => controle.abort();
+  signal?.addEventListener("abort", annuler, { once: true });
+  if (signal?.aborted) controle.abort();
+  let timer: ReturnType<typeof setTimeout>;
+  const limite = new Promise<never>((_, refuser) => {
+    timer = setTimeout(() => {
+      refuser(new Error(t("La recherche des modèles a pris trop de temps. Vérifiez le moteur puis réessayez.")));
+      controle.abort();
+    }, 20_000);
+  });
+  try {
+    return await Promise.race([limite, (async () => {
+      const res = await apiFetch(`/helix/models`, { signal: controle.signal });
+      if (!res.ok) throw new Error(tf("Impossible de lister les modèles ({0})", res.status));
+      const data = await res.json() as { models?: GatewayModel[] };
+      if (!Array.isArray(data.models)) throw new Error(t("L'instance n'a pas répondu."));
+      return data.models;
+    })()]);
+  } finally {
+    clearTimeout(timer!);
+    signal?.removeEventListener("abort", annuler);
+  }
 }
 
 /**

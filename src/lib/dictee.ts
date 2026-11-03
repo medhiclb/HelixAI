@@ -127,10 +127,11 @@ export async function installer(onProgres: (p: ProgresDictee) => void): Promise<
 }
 
 /** Envoie un enregistrement à l'instance et rend le texte transcrit. */
-export async function transcrire(son: Blob): Promise<Transcription> {
+export async function transcrire(son: Blob, langue = "fr", signal?: AbortSignal): Promise<Transcription> {
   let res: Response;
   try {
-    res = await apiFetch("/helix/dictee?langue=fr", {
+    res = await apiFetch(`/helix/dictee?langue=${encodeURIComponent(langue)}`, {
+      signal,
       method: "POST",
       headers: { "Content-Type": son.type || "application/octet-stream" },
       body: son,
@@ -195,11 +196,12 @@ export class Enregistreur {
   private recorder: MediaRecorder | null = null;
   private morceaux: Blob[] = [];
 
-  async demarrer(): Promise<void> {
+  async demarrer(observerFlux?: (flux: MediaStream) => void): Promise<void> {
     this.flux = await navigator.mediaDevices.getUserMedia({
       audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true },
       video: false,
     });
+    try { observerFlux?.(this.flux); } catch (e) { this.relacher(); throw e; }
     const mimeType = formatEnregistrement();
     this.morceaux = [];
     this.recorder = new MediaRecorder(this.flux, {

@@ -7154,3 +7154,14 @@ promesse de confinement OS. Tests unitaires de refus, archive fausse, configurat
 sans installation, concurrence ; tests de dispatch (nom réel sur carte, refus,
 rôle, VPS, attribution). Installation et analyse JavaScript réelles sur données
 fictives, autres systèmes et moteurs natifs non essayés.
+
+
+### Entretien oral (03/11/2026)
+
+Le micro requiert le clic de démarrage, puis s'ouvre entre les lectures du coach.
+Les pistes sont libérées avant envoi à Whisper et à chaque pause/départ/changement
+de compte. Une acquisition asynchrone achevée après départ libère ses pistes.
+L'annulation de transcription empêche son résultat tardif d'être envoyé au coach.
+Seules les voix TTS déclarées locales par le système sont sélectionnables. Aucun
+nouveau téléchargement de modèle TTS. La simulation évalue le contenu transcrit,
+jamais l'accent ou une caractéristique acoustique. Limite audio inchangée : 5 min.
