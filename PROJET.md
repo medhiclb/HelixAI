@@ -7985,7 +7985,7 @@ l’anglais courant), et les séparateurs de phonèmes sont retirés avant Kokor
 
 Téléchargement volontaire depuis Voix et rythme, réservé à l’administrateur,
 700 Mo libres avant installation ; environ 93 Mo pour les poids/voix et un
-runtime séparé. Pas de téléchargement à l’ouverture. Le mode neuronale est
+runtime séparé. Pas de téléchargement à l’ouverture. Le mode neuronal est
 proposé en français seulement ; les autres langues gardent les voix système.
 Disponible dans le même composant pour entretien et cours. Préparation
 annoncée avant lecture, Pause annule requête/lecture et tue le processus de
@@ -8037,3 +8037,16 @@ L’interface prépare un seul passage suivant pendant le son courant ; les
 passages sont bornés à 300 caractères pour commencer plus tôt et ne pas
 attendre tout le cours. La fin de tous les passages précède l’ouverture du
 micro. Pause annule aussi cette génération anticipée ; aucune file infinie.
+
+Essai final du moteur borné à quatre fils : GitHub 41659177672 réussi
+sous Windows et Linux, sortie identique au WAV français initial (même SHA-256).
+Sur cet exemple court, les runners mesurent 14,112 s Windows et 12,405 s Linux :
+le gain du passage long sur Mac ne se généralise pas aux phrases courtes ni
+aux machines virtuelles. Le chargement anticipé reste limité à un passage.
+Le contrôle client couvre la lecture de plusieurs passages jusqu’au dernier
+et Pause pendant une génération anticipée encore en attente, sans rejet
+non traité ni ouverture du micro.
+
+Une reprise complète de sécurité sous charge a échoué sur la reconnexion
+du faux serveur MCP SSE (délai dépassé). Le même essai isolé repasse 89/89 ;
+une dernière batterie complète est relancée sans benchmark de voix simultané.
