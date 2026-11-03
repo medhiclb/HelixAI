@@ -7997,7 +7997,9 @@ réussies ; restauration si la mise en place échoue.
 
 Essai réel sur instance temporaire Mac : installation npm verrouillée, poids
 issus du téléchargement officiel vérifié, phrase française fictive produisant
-5,65 s de WAV en 8,83 s, réseau de synthèse rendu indisponible. Whisper small
+5,65 s de WAV en 8,83 s. Le banc intercepte fetch dans le parent ; cela
+ne constitue pas une barrière réseau du processus de calcul. Les poids,
+la voix et le runtime de calcul sont ouverts par chemins locaux. Whisper small
 local retranscrit la phrase mot pour mot. Annulation tue le calcul, second
 calcul concurrent refusé, voix modifiée refusée. Aucun micro réel utilisé.
 Ces mesures ne garantissent ni le naturel perçu ni la vitesse Windows/Linux ;
