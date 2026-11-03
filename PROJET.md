@@ -7835,3 +7835,52 @@ création, réponse, progression de 0 à 1, retour avec historique conservé ; i
 visuelle claire et sombre. Pas de nouvel essai avec un vrai modèle dans cette refonte.
 La première batterie pendant les modifications a trouvé le catalogue en cours de
 traduction (2721/2722) ; les six catalogues sont remplis puis la batterie relancée.
+
+
+### 02/11/2026 : REA pour Code (accord de licences explicite)
+
+Medhi demande morluto/rea comme outil de Code. Ce n'est pas un condenseur de
+sorties comme RTK : c'est un serveur MCP d'analyse de logiciels. Il autorise
+explicitement ses dépendances nécessaires hors MIT/Apache (LGPL-3.0+, BSD, ISC,
+BlueOak, Zlib), notices conservées ; aucun Frida ni moteur externe installé
+automatiquement. Licence de REA : MIT. Version 6.8.0, archive npm SHA-256
+8d542ec76a9cb350584b60a6c9c088706ff812d5bb5b094c20c95b6dc25698bb,
+verrou de la révision 160d821ac9a0310afcb8d1fc427862dd6508add5 conservé et embarqué.
+Installation explicite au branchement du connecteur : Node privé 24.22.1 déjà
+épinglé, tarball vérifié, npm ci sans scripts, sans développement ni modules
+facultatifs, HOME/config/cache privés. Aucun `rea setup`, aucun réglage des
+agents du poste modifié. La mise à niveau du Node privé passe par un paramètre
+optionnel du helper existant, dont les appels antérieurs gardent le comportement.
+
+229 outils reçus lors de l'essai du vrai MCP. Code n'en reçoit pas 229 schémas à
+chaque tour : deux outils découvrent le catalogue borné et appellent l'outil
+choisi. L'identifiant et les arguments réels sont remis à la barrière avant la
+carte ; toute action REA se confirme, y compris en « Tout approuver ». La recherche
+locale de métadonnées reste une lecture. Administrateur seul, pas dans les outils
+Cowork/employés, refus sur les sessions VPS pour ne pas agir sur la mauvaise machine.
+Les arguments de chemins passent aussi par les zones protégées. REA peut lancer
+des programmes via certains outils : la carte, avec tous les arguments, reste la
+frontière de confiance, comme pour les scripts Blender ; ce n'est pas une cage OS.
+Le serveur REA partage son état d'analyse entre les administrateurs de l'instance.
+Résultat transmis au modèle borné à 64 000 caractères avec annonce d'abrègement.
+
+Essai réel isolé sous /private/tmp : installation et version de REA, MCP stdio,
+229 outils, analyse du répertoire JavaScript fictif et fonction addition retrouvée.
+Une première requête sur le seul fichier .js a été refusée par REA : il attend
+un répertoire ou un .asar. Budget de réponse minimal réel 10 Mio ; un budget de
+64 Kio empêche le démarrage, donc 10 Mio côté serveur et 64 000 caractères côté
+passerelle. Frida absent de node_modules. Windows/Linux et moteurs natifs non
+exécutés dans cette session. Les tests de contexte passent en exécution isolée
+(16/16) après un échec sous charge ; un nettoyage de répertoire d'essai désormais
+réessaie les dernières suppressions, sans changer les assertions de l'application.
+Le fond de l'atelier reçoit une trame de points liée à sa caméra et un éclairage
+léger ; les liaisons utilisent l'accent. Les formulaires de coaching reviennent
+en haut lors d'un changement de vue.
+
+Reprise du 03/11/2026 : les premiers contrôles ont détecté un repli de REA sur
+process.execPath, inadapté dans Electron ; supprimé, moteur privé obligatoire et
+refus explicite couvert par essai-rea. Deux contrôles textuels anciens dépendaient
+de la place des prédicats ; leur ordre initial est conservé, sans retirer les
+protections REA. CLI 33/33 et extension VS Code 16/16 après intégration. Les copies
+de compilation et l’installation d’essai REA ont été effacées lors du manque de
+place ; la nouvelle construction utilise une copie isolée avec clonage APFS.

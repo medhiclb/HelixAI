@@ -1069,7 +1069,7 @@ async function appelerOutil(tool: McpTool, entry: Live, args: Record<string, unk
    * `~/.helix/data/instance-token`.
    */
   const fichiers = tool.serverId === "fichiers";
-  if (fichiers) {
+  if (fichiers || tool.serverId === "rea") {
     const fautif = cheminProtegeDans(args, espaceCourant);
     if (fautif) {
       return {
@@ -1102,7 +1102,8 @@ async function appelerOutil(tool: McpTool, entry: Live, args: Record<string, unk
     try {
       const result = await appeler(client);
       const brut = rendreResultat(result as ResultatOutil);
-      const text = fichiers ? filtrerResultat(tool.toolName, args, brut, espaceCourant) : brut;
+      const filtre = fichiers ? filtrerResultat(tool.toolName, args, brut, espaceCourant) : brut;
+      const text = tool.serverId === "rea" && filtre.length > 64000 ? filtre.slice(0,64000)+"\n\n"+t("Résultat REA abrégé : affinez la requête ou demandez une vue plus ciblée.") : filtre;
       return { ok: !result.isError, content: expliquerSi(text) || "(résultat vide)" };
     } catch (err) {
       const message = masquer(err instanceof Error ? err.message : String(err), entry.config.env);

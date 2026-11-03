@@ -17,7 +17,7 @@ import { estEcritureBlender, estLectureBlender, horsMachineBlender, lookHorsScen
 import { estEcritureUnreal, estLectureUnreal, resumeUnreal } from "./unrealRegles.ts";
 
 /** Une écriture d'une application de création ouverte sur la machine (Palmier Pro, Roblox Studio, Blender, Unreal Editor). */
-const estEcritureApplication = (outil: string): boolean => estEcriturePalmier(outil) || estEcritureRoblox(outil) || estEcritureBlender(outil) || estEcritureUnreal(outil);
+const estEcritureApplication = (outil: string): boolean => estEcriturePalmier(outil) || estEcritureRoblox(outil) || estEcritureBlender(outil) || estEcritureUnreal(outil) || (outil.startsWith("rea__") && outil!=="rea__chercher");
 
 /**
  * Approbation des actions de l'agent.
@@ -409,6 +409,7 @@ export function definirLecturesPerso(fn: LecturePerso): void {
 const CODE_LECTURE = new Set(["code__read", "code__glob", "code__grep", "code__list", "code__lsp"]);
 
 export function modifie(outil: string): boolean {
+  if(outil.startsWith("rea__"))return outil!=="rea__chercher";
   if (outil.startsWith("code__")) return !CODE_LECTURE.has(outil);
   if (outil.startsWith("courrier__")) return !COURRIER_LECTURE.has(outil);
   /*

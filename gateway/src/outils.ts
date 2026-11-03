@@ -1,3 +1,4 @@
+import { t } from "./langue.ts";
 import { statSync } from "node:fs";
 import { basename, isAbsolute, join, resolve } from "node:path";
 import { toolsForModel as outilsMcp, callTool as appelerMcp, workspace } from "./mcp.ts";
@@ -75,7 +76,7 @@ export function outilsDeFamille(famille: Famille): DefinitionOutil[] {
       // Sans les écritures de Trello, Monday, ClickUp, Todoist, Calendly et Zoom : un employé ne parle pas au nom de l'organisation (SECURITE.md § 48).
       // Ni celles de Palmier Pro (29/09/2026) : il tourne sous le compte de qui l'a ouvert, avec ses crédits.
       // Celles de Roblox Studio et de Blender restent offertes aux employés dont la propriétaire administre l'instance (12/10/2026, demande de Medhi) : serveurOutils.ts les retire aux autres, carte à chaque appel (refusApplication).
-      const mcp = outilsMcp().filter((o) => !estEcritureMcpProjet(o.function.name) && !estEcriturePalmier(o.function.name));
+      const mcp = outilsMcp().filter((o) => !estEcritureMcpProjet(o.function.name) && !estEcriturePalmier(o.function.name) && !o.function.name.startsWith("rea__"));
       return mcp.length > 0 ? [...mcp, ...controleWeb.toolsForModel()] : mcp;
     }
   }
@@ -120,6 +121,7 @@ const administre = async (compte: string | undefined): Promise<boolean> => Boole
  *    Blender hors de la scène compte comme une écriture (blenderRegles.ts).
  */
 export async function refusApplication(nom: string, args: Record<string, unknown>, pour?: Pick<PourQui, "userId" | "proprietaire">): Promise<string | null> {
+  if(nom.startsWith("rea__")&&!(await administre(pour?.userId)))return t("Les outils d'analyse REA sont réservés à l'administrateur de l'instance.");
   if (estEcriturePalmier(nom) && !(await administre(pour?.userId))) {
     return "Refusé : faire modifier un projet ou générer par Palmier Pro, ouvert sur la machine de l'instance avec le compte Palmier de la personne qui l'a lancé, est réservé à l'administrateur de l'instance. Dis-le à l'utilisateur ; rien n'a été fait.";
   }

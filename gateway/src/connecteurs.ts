@@ -1,3 +1,4 @@
+import { reaProposable, commandeRea, envRea, refusRea, preparerRea, serveurReaAPoser } from "./rea.ts";
 import { chmodSync, copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -217,6 +218,7 @@ export const CATEGORIES: Categorie[] = [
  * chaque paquet, sa version et sa licence sur le registre npm.
  */
 export const CATALOGUE: EntreeCatalogue[] = [
+  {id:"rea",label:"REA",description:"Analyser un projet JavaScript, une application Electron ou des binaires avec les outils locaux de REA. Disponible dans Code pour l'administrateur, avec accord à chaque appel. Les moteurs externes se préparent séparément.",categorie:"Développement",lanceur:true,documentation:"https://github.com/morluto/rea",secrets:[]},
   {
     id: "fichiers",
     label: "Système de fichiers",
@@ -853,6 +855,7 @@ interface ApplicationStdio {
   serie?: true;
 }
 const APPLICATIONS_STDIO: Record<string, ApplicationStdio> = {
+  rea:{proposable:reaProposable,commande:commandeRea,env:envRea,avantLancement:refusRea,avantAppel:refusRea,preparer:preparerRea,remplaceServeur:serveurReaAPoser,serie:true},
   roblox: {
     proposable: robloxProposable,
     commande: commandeRoblox,
@@ -1460,7 +1463,7 @@ const ID_VALIDE = /^[a-z0-9][a-z0-9_-]{0,31}$/;
  * nommé « linkedin » aurait apporté des `linkedin__profil` que la barrière
  * range parmi les lectures. Et ceux du commerce (natifs/commerce.ts, § 47).
  */
-const IDS_RESERVES = new Set(["vps","courrier", "agenda", "drive", "slack", "bureau", "ecran", "bibliotheque", "reunions", "controle", "code", "connaissances", "taches", "machine", "helix", "web", "sheets", "slides", "youtube", "linkedin", "facebook", "instagram", "tiktok", "x", "docs", "forms", "dropbox", "telegram", "discord", "whatsapp", "stripe", "shopify", "woocommerce", "salesforce", "pipedrive", "zendesk", "brevo", "mailchimp", "microsoft", "outlook", "onedrive", "sharepoint", "excel", "word", "teams"]);
+const IDS_RESERVES = new Set(["rea","vps","courrier", "agenda", "drive", "slack", "bureau", "ecran", "bibliotheque", "reunions", "controle", "code", "connaissances", "taches", "machine", "helix", "web", "sheets", "slides", "youtube", "linkedin", "facebook", "instagram", "tiktok", "x", "docs", "forms", "dropbox", "telegram", "discord", "whatsapp", "stripe", "shopify", "woocommerce", "salesforce", "pipedrive", "zendesk", "brevo", "mailchimp", "microsoft", "outlook", "onedrive", "sharepoint", "excel", "word", "teams"]);
 
 /**
  * Ce que la requête a le droit d'apporter, selon le régime de l'instance.

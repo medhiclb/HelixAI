@@ -1470,3 +1470,17 @@ Répondez par écrit ou avec la dictée locale. La lecture des questions utilise
 voix locale disponible sur votre ordinateur. À la fin, retrouvez un bilan sur le
 contenu de vos réponses et un exercice pour progresser. Les séances se reprennent,
 s'exportent et se placent dans la corbeille depuis votre historique.
+
+
+## Analyser un logiciel avec REA
+
+Dans **Réglages, Connecteurs**, cherchez **REA**, puis cliquez **Brancher**.
+Le premier branchement installe son moteur privé et ses dépendances. Ouvrez ensuite
+votre projet local dans **Code** et demandez une analyse avec REA. L'agent cherche
+l'outil adapté et vous présente l'action et ses arguments avant de l'exécuter.
+Le parcours est réservé à l'administrateur de l'instance.
+
+L'analyse JavaScript accepte un répertoire d'application ou une archive `.asar`.
+Les analyses de binaires natifs peuvent demander un moteur externe installé sur
+la machine. Frida et les moteurs externes se préparent séparément. REA travaille
+sur la machine de la passerelle ; une session VPS conserve son parcours SSH.

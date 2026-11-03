@@ -1805,3 +1805,14 @@ SOFTWARE.
 | zod-to-json-schema | 3.25.2 | ISC |
 
 <!-- fin de la partie générée -->
+
+
+## REA (optional local Code connector)
+
+REA 6.8.0, copyright (c) 2026 morluto, MIT, https://github.com/morluto/rea.
+The upstream package and its notices are retained in the private installation.
+Its dependency lock is taken from revision 160d821ac9a0310afcb8d1fc427862dd6508add5.
+Runtime dependencies include MIT, Apache-2.0, BSD, ISC, BlueOak-1.0.0, Zlib and
+OpenPGP under LGPL-3.0+. Frida and external analysis engines are not automatically
+installed. See REA's THIRD_PARTY_NOTICES.md and licenses/ in the installed package
+for the complete copyright and license texts.

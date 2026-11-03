@@ -482,7 +482,9 @@ export function Connecteurs({ maison = [] }: { maison?: ServiceMaison[] } = {}) 
                   title={
                     distant
                       ? t("Service distant : rien ne s'installe sur cette machine.")
-                      : entree.lanceur
+                      : entree.id === "rea"
+                        ? t("Outil local installé au premier branchement, avec ses dépendances verrouillées.")
+                        : entree.lanceur
                         ? t("Application installée sur la machine de l'instance, dont l'instance lance le serveur d'outils.")
                         : local
                           ? t("Application ouverte sur la machine de l'instance, reliée par la boucle locale.")

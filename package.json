@@ -51,6 +51,7 @@
     "essai:modeles-code": "node scripts/essai-modeles-code.mjs",
     "essai:vps": "node scripts/essai-vps.mjs && node scripts/essai-permissions-vps.mjs && node scripts/essai-outils-vps.mjs",
     "essai:studio-interface": "node scripts/essai-studio-interface.mjs",
+    "essai:rea": "node scripts/essai-rea.mjs && node scripts/essai-outils-rea.mjs && node scripts/essai-regles-rea.mjs",
     "essai:entretiens": "node scripts/essai-entretiens.mjs && node scripts/essai-voix-entretien.mjs"
   },
   "dependencies": {
