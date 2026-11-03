@@ -10,7 +10,7 @@ refaite à l'envers.
 
 | | |
 |---|---|
-| Version | 2026.1103.1 (`package.json`) |
+| Version | 2026.1103.2 (`package.json`) |
 | Dernière mise à jour | 30 septembre 2026 |
 | Vérifié | `npm run securite` : 2290 contrôles, 0 échec (30/09/2026, sur le code fusionné avec les vrais catalogues) ; `npm run typecheck` ; relevés à 100 % dans les six catalogues (interface 3 893 phrases, passerelle 1 503) ; essai Windows sur GitHub Actions ; `essai:cli`, `essai:vscode`, `essai:palmier` |
 | Reste à essayer | sur les vraies machines : § 5, « Ce qui reste à essayer sur les postes de Medhi » |
@@ -7969,3 +7969,36 @@ document ; analyse 41628456915 réussie. Les 21 fichiers du brouillon ont leurs
 tailles/SHA-256 comparés aux originaux et leurs signatures relues avec la clé
 de l’application installée. Kokoro dédié reste une proposition en attente de
 l’accord de licences demandé à Medhi ; aucun moteur ni poids Kokoro installé.
+
+
+### 03/11/2026 : voix Kokoro française pour les séances orales
+
+Medhi autorise explicitement Kokoro et ses dépendances (« fais tkt fais »),
+y compris eSpeak NG GPL-3.0 et dépendances BSD/ISC. Exception inscrite dans
+AGENTS.md. Poids ONNX int8 et voix ff_siwis Apache-2.0 épinglés à
+1939ad2a8e416c0acfeecc08a694d14ef25f2231, SHA-256 vérifiés. Runtime séparé
+ONNX Runtime Web 1.24.3 WASM, eSpeak NG Emscripten 0.3.5, verrou npm
+SHA-512 sans scripts de cycle de vie, licences/notices conservées. Le paquet
+phonemizer initialement examiné est écarté : sa distribution filtre l’anglais.
+Le port eSpeak complet reçoit « fr » (fr-fr retourne un refus et laisse
+l’anglais courant), et les séparateurs de phonèmes sont retirés avant Kokoro.
+
+Téléchargement volontaire depuis Voix et rythme, réservé à l’administrateur,
+700 Mo libres avant installation ; environ 93 Mo pour les poids/voix et un
+runtime séparé. Pas de téléchargement à l’ouverture. Le mode neuronale est
+proposé en français seulement ; les autres langues gardent les voix système.
+Disponible dans le même composant pour entretien et cours. Préparation
+annoncée avant lecture, Pause annule requête/lecture et tue le processus de
+calcul. Aucun texte dans les arguments, les journaux ou des fichiers audio.
+Calcul isolé, un seul à la fois, entrée 3000 caractères, durée/son bornés,
+aucun téléchargement pendant synthèse. Segments longs divisés sans troncature.
+L’ancien dossier n’est déplacé qu’après installation et génération d’un WAV
+réussies ; restauration si la mise en place échoue.
+
+Essai réel sur instance temporaire Mac : installation npm verrouillée, poids
+issus du téléchargement officiel vérifié, phrase française fictive produisant
+5,65 s de WAV en 8,83 s, réseau de synthèse rendu indisponible. Whisper small
+local retranscrit la phrase mot pour mot. Annulation tue le calcul, second
+calcul concurrent refusé, voix modifiée refusée. Aucun micro réel utilisé.
+Ces mesures ne garantissent ni le naturel perçu ni la vitesse Windows/Linux ;
+les vrais moteurs de voix sur ces deux plateformes restent à essayer.

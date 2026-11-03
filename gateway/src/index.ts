@@ -1,3 +1,4 @@
+import * as voixNeurale from "./kokoro.ts";
 import * as entretiens from "./entretiens.ts";
 import * as vps from "./vps.ts";
 import { preparerScenario } from "./videosScenario.ts";
@@ -1926,6 +1927,9 @@ async function profilDe(accountId: string): Promise<Demandeur | null> {
  * détail est en regard de chacun.
  */
 const EXECUTION: { methode: string; chemin: string }[] = [
+  { methode: "GET", chemin: "/helix/voix" },
+  { methode: "POST", chemin: "/helix/voix" },
+  { methode: "POST", chemin: "/helix/voix/installer" },
   { methode: "POST", chemin: "/helix/models/load" },
   { methode: "POST", chemin: "/helix/services/entretiens" },
   { methode: "POST", chemin: "/helix/code/vps" },
@@ -3081,6 +3085,23 @@ async function handleDossiers(
     ...listerDossiers(url.searchParams.get("chemin") ?? courant),
     courant,
   });
+}
+
+/** Voix privée : une séance pour lire/générer, un administrateur pour télécharger. */
+async function handleVoix(req:http.IncomingMessage,res:http.ServerResponse,url:URL):Promise<void>{
+ const qui=await demandeur(req,url);if(!qui)return send(res,401,sansSeance());
+ if(req.method==='GET'){const etat=voixNeurale.etatKokoro();return send(res,200,{...etat,installable:etat.installable&&await estAdministrateur(qui.userId)})}
+ try{
+ const corps=await readJson(req,24*1024) as Record<string,unknown>;
+ if(!corps||typeof corps!=='object'||Array.isArray(corps))return send(res,400,{error:{message:t("Paramètres de lecture vocale invalides.")}});
+ if(url.pathname.endsWith('/installer')){
+  if(!await estAdministrateur(qui.userId))return send(res,403,{error:{message:t("Seul l'administrateur peut préparer la voix locale.")}});
+  if(corps.accord!==true)return send(res,400,{error:{message:t("Installation non confirmée : `accord` doit valoir true.")}});
+  await voixNeurale.preparerKokoro();return send(res,200,voixNeurale.etatKokoro());
+ }
+ const controle=new AbortController();const annuler=()=>controle.abort();res.once('close',annuler);
+ try{const son=await voixNeurale.parlerKokoro(corps,controle.signal);if(!res.destroyed){res.writeHead(200,{...entetesOrigine(req),...ENTETES_SECURITE,'Content-Type':'audio/wav','Content-Length':son.length,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(son)}}finally{res.removeListener('close',annuler)}
+ }catch(e){if(!res.destroyed)send(res,e instanceof voixNeurale.ErreurVoix?e.statut:500,{error:{message:e instanceof voixNeurale.ErreurVoix?e.message:t("La préparation de la voix a échoué. Réessayez.")}})}
 }
 
 async function handleEntretiens(req:http.IncomingMessage,res:http.ServerResponse,url:URL):Promise<void>{
@@ -6316,6 +6337,7 @@ const traiter = (
     if (req.method === "POST" && path === "/helix/atelier/verifier")
       return handleAtelierVerifier(res);
 
+    if ((req.method === "GET" || req.method === "POST") && path === "/helix/voix" || req.method === "POST" && path === "/helix/voix/installer") return handleVoix(req,res,url);
     if (req.method === "GET" && path === "/helix/dictee") return handleDicteeEtat(res);
     if (req.method === "POST" && path === "/helix/dictee/installer")
       return handleDicteeInstaller(req, res, url);

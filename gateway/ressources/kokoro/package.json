@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@echogarden/espeak-ng-emscripten": "0.3.5",
+    "onnxruntime-web": "1.24.3"
+  }
+}

@@ -1,0 +1,40 @@
+name: Voix locale Kokoro
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'gateway/src/kokoro*'
+      - 'gateway/ressources/kokoro/**'
+      - 'scripts/essai-kokoro-ci.mjs'
+      - '.github/workflows/essai-voix.yml'
+permissions:
+  contents: read
+jobs:
+  voix:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Installer et générer une voix française
+        run: npm run essai:kokoro-ci
+        env:
+          HELIX_ESSAI_MACHINE_JETABLE: '1'
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: voix-${{ matrix.os }}
+          path: essai-voix-sortie
+          if-no-files-found: warn
+          retention-days: 7
