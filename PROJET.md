@@ -7949,3 +7949,10 @@ Parcours d’interface isolé : création, démarrage oral, alternance lecture/m
 fictifs, réponse enregistrée, progression 0→1, seconde question, bilan puis mode
 écrit avec transcription conservée. Portrait et commandes visibles en 1280×720.
 Aucune voix ni capture réelle utilisée pour ce parcours de navigateur.
+
+Bilan local .1103.1 : build/typecheck réussis, 2727 contrôles de sécurité sans
+échec, 4471 clés interface et 1681 passerelle traduites à 100 % dans les six
+langues. Les essais couvrent aussi une transcription qui revient après Pause
+et la lecture d’un bilan sans demander le micro. Un exemple WAV de 7,72 s est
+généré avec la voix système Thomas du Mac, depuis un texte fictif, sans micro ;
+il ne constitue pas un essai de la voix Windows ou du lecteur WebSpeech.

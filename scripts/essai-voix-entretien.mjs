@@ -5,6 +5,6 @@ try{
  const v=await import(join(d,'client.mjs'));assert.equal(v.voixLocale('fr'),undefined);
  const distante={localService:false,lang:'fr-FR'},anglaise={localService:true,lang:'en-GB'},locale={localService:true,lang:'fr-FR'};let voix=[distante,anglaise,locale],phrase;
  globalThis.speechSynthesis={getVoices:()=>voix,cancel:()=>{},speak:p=>phrase=p};globalThis.SpeechSynthesisUtterance=class{constructor(text){this.text=text}};
- assert.equal(v.voixLocale('fr'),locale);v.lireQuestion('Présentez votre projet.','fr');assert.equal(phrase.voice,locale);assert.equal(phrase.lang,'fr-FR');voix=[distante];assert.throws(()=>v.lireQuestion('Question','fr'));assert.equal(v.voixLocale('en'),undefined);
+ assert.equal(v.voixLocale('fr'),locale);v.lireQuestion('Présentez votre projet.','fr');assert.equal(phrase.voice,locale);assert.equal(phrase.lang,'fr-FR');let fins=0;v.lireQuestion('Question','fr',{voix:'distante',vitesse:3,fin:()=>fins++});assert.equal(phrase.voice,locale);assert.equal(phrase.rate,1.2);phrase.onend();assert.equal(fins,1);voix=[distante];assert.throws(()=>v.lireQuestion('Question','fr'));assert.equal(v.voixLocale('en'),undefined);
  console.log('Entretien vocal : seules les voix locales de la langue choisie sont utilisées, aucun repli distant.');
 }finally{delete globalThis.speechSynthesis;delete globalThis.SpeechSynthesisUtterance;rmSync(d,{recursive:true,force:true})}
