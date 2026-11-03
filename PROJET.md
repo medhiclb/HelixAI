@@ -8002,3 +8002,30 @@ local retranscrit la phrase mot pour mot. Annulation tue le calcul, second
 calcul concurrent refusé, voix modifiée refusée. Aucun micro réel utilisé.
 Ces mesures ne garantissent ni le naturel perçu ni la vitesse Windows/Linux ;
 les vrais moteurs de voix sur ces deux plateformes restent à essayer.
+
+Essai Kokoro GitHub 41635643835 réussi sur Windows x64 et Linux x64 :
+installation réelle des moteurs/poids, WAV 24 kHz, annulation, refus concurrent
+et refus d’une voix altérée. Le WAV produit est identique octet par octet
+sur les trois machines Mac/Windows/Linux (SHA-256
+fbbdcc9291f0de105af9ddb5402e461e17baba801113dd6516ee685f208eeb21).
+Calcul mesuré : 13,465 s sur le runner Windows, 8,067 s sur Linux, 8,833 s
+sur ce Mac, pour 5,65 s de parole. Aucune promesse de temps réel.
+CLI 33/33 et extension VS Code 16/16 ; essais oraux simulés sans voix système
+aussi : lecture neuronale finie avant micro, génération tardive ignorée après
+Pause. Contrôle visuel isolé : voix française sélectionnable, préparation
+affichée, commandes Pause et réglages accessibles, aucun micro réel capturé.
+Les vrais périphériques micro et haut-parleurs Windows/Linux restent à essayer.
+
+Bilan local 2026.1103.2 : build/typecheck réussis, 2728 contrôles de sécurité
+sans échec ; 4477/4477 traductions interface et 1696/1696 passerelle dans les
+six langues. Les quatre applications empaquetées ont leur interface complète,
+passerelle, CLI et notices comparées aux fichiers compilés. Les signatures
+Mac et le manifeste de mise à jour Windows utilisent la clé d’éditeur déjà
+installée ; pas de nouveau certificat Apple ni de notarisation ajoutée.
+
+La lecture côté interface divise les cours/bilans longs en passages d’au plus
+1200 caractères sans retirer de mots, puis lit chaque WAV successivement.
+Le micro ne se rouvre qu’après le dernier passage. Chaque passage reste sous
+la borne serveur de 3000 caractères et peut être annulé pendant sa préparation
+ou sa lecture. Cela évite de refuser un bilan ou un cours légitime plus long
+que la limite d’une requête vocale.

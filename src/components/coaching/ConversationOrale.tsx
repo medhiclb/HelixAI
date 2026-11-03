@@ -68,7 +68,7 @@ export function ConversationOrale({session,occupe,onReponse,onBilan}:{session:En
   if(!voixDisponible)return;interrompre();const g=generation.current;setErreur("");setPhase("lecture");phaseRef.current="lecture";
   const texte=session.bilan?[t("Votre bilan d'entraînement"),...session.bilan.forces,...session.bilan.progres,session.bilan.exercice].join('. '):[tour?.correction,tour?.explication,tour?.question].filter(Boolean).join('\n');
   const fin=()=>{if(!valable(g))return;setPhase("repos");phaseRef.current="repos";if(derniere.current.automatique)void ecouterRef.current()};
-  if(kokoro){const abort=new AbortController();controle.current=abort;setPhase('preparation');phaseRef.current='preparation';void lireVoixNeurale(texte,vitesse,abort.signal,()=>{if(valable(g)){setPhase('lecture');phaseRef.current='lecture'}}).then(fin).catch(e=>echouer(e,g));return;}
+  if(kokoro){const abort=new AbortController();controle.current=abort;setPhase('preparation');phaseRef.current='preparation';void lireVoixNeurale(texte,vitesse,abort.signal,()=>{if(valable(g)){setPhase('lecture');phaseRef.current='lecture'}},()=>{if(valable(g)){setPhase('preparation');phaseRef.current='preparation'}}).then(fin).catch(e=>echouer(e,g));return;}
   try{lireQuestion(texte,session.langue,{voix:choisie?.voiceURI,vitesse,fin,erreur:m=>echouer(new Error(m),g)})}catch(e){echouer(e,g)}
  };
  const prononcerRef=useRef(prononcer);prononcerRef.current=prononcer;

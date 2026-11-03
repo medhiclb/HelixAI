@@ -4,7 +4,15 @@ export interface EtatVoix {installee:boolean;installationEnCours:boolean;install
 export async function etatVoix():Promise<EtatVoix|null>{try{const r=await apiFetch('/helix/voix',{signal:AbortSignal.timeout(10000)});return r.ok?await r.json():null}catch{return null}}
 export async function installerVoix():Promise<EtatVoix>{const r=await apiFetch('/helix/voix/installer',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accord:true}),signal:AbortSignal.timeout(600000)});const b=await r.json();if(!r.ok)throw Error(b.error?.message??t("La préparation de la voix a échoué. Réessayez."));return b}
 /** Le WAV n'est présent qu'en mémoire, et son URL cesse d'exister après lecture ou annulation. */
-export async function lireVoixNeurale(texte:string,vitesse:number,signal:AbortSignal,debut?:()=>void):Promise<void>{
+export function passagesVoix(texte:string):string[]{
+ const passages:string[]=[];let reste=texte.trim();
+ while(reste.length>1200){let fin=reste.lastIndexOf(' ',1200);if(fin<1)fin=1200;if(/[\uD800-\uDBFF]/.test(reste.charAt(fin-1)))fin--;passages.push(reste.slice(0,fin));reste=reste.slice(fin).trimStart()}
+ if(reste)passages.push(reste);return passages;
+}
+export async function lireVoixNeurale(texte:string,vitesse:number,signal:AbortSignal,debut?:()=>void,attente?:()=>void):Promise<void>{
+ for(const passage of passagesVoix(texte)){signal.throwIfAborted();attente?.();await lirePassage(passage,vitesse,signal,debut)}
+}
+async function lirePassage(texte:string,vitesse:number,signal:AbortSignal,debut?:()=>void):Promise<void>{
  const r=await apiFetch('/helix/voix',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({texte,langue:'fr',vitesse}),signal});
  if(!r.ok){const b=await r.json().catch(()=>({}));throw Error(b.error?.message??t("La génération de la voix a échoué. Réessayez."))}
  const son=await r.blob();signal.throwIfAborted();const url=URL.createObjectURL(son),audio=new Audio(url);
