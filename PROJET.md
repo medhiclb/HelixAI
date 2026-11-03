@@ -8024,8 +8024,16 @@ Mac et le manifeste de mise à jour Windows utilisent la clé d’éditeur déj�
 installée ; pas de nouveau certificat Apple ni de notarisation ajoutée.
 
 La lecture côté interface divise les cours/bilans longs en passages d’au plus
-1200 caractères sans retirer de mots, puis lit chaque WAV successivement.
+300 caractères sans retirer de mots, puis lit chaque WAV successivement.
 Le micro ne se rouvre qu’après le dernier passage. Chaque passage reste sous
 la borne serveur de 3000 caractères et peut être annulé pendant sa préparation
 ou sa lecture. Cela évite de refuser un bilan ou un cours légitime plus long
 que la limite d’une requête vocale.
+
+Mesure complémentaire sur 1190 caractères de cours fictif : 74,75 s de parole
+calculées en 111,03 s avec un fil WASM, 64,80 s avec quatre fils (sur ce Mac).
+Le moteur utilise désormais au plus quatre fils, bornés par availableParallelism.
+L’interface prépare un seul passage suivant pendant le son courant ; les
+passages sont bornés à 300 caractères pour commencer plus tôt et ne pas
+attendre tout le cours. La fin de tous les passages précède l’ouverture du
+micro. Pause annule aussi cette génération anticipée ; aucune file infinie.

@@ -1,12 +1,13 @@
 /** Calcul séparé : aucun texte dans les arguments, journaux ou fichiers temporaires. */
 import { readFileSync } from 'node:fs';
+import { availableParallelism } from 'node:os';
 import * as ort from 'onnxruntime-web';
 import initialiser from '@echogarden/espeak-ng-emscripten';
 const espeak=await initialiser();
 const prononciation=new espeak.eSpeakNGWorker();
 if(prononciation.set_voice('fr')!==0)throw Error('voix française absente');
 // Le runtime WASM ne charge que ses fichiers voisins. Aucun modèle ni voix par URL.
-ort.env.wasm.numThreads=1;
+ort.env.wasm.numThreads=Math.max(1,Math.min(4,availableParallelism()));
 ort.env.wasm.proxy=false;
 const dossier=process.argv[2];
 const vocab=JSON.parse(readFileSync(`${dossier}/tokenizer.json`,'utf8')).model.vocab;
