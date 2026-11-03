@@ -7899,3 +7899,19 @@ Nettoyage de disque : 70 installateurs locaux anciens, déjà publiés et identi
 en taille/SHA-256, supprimés (9,02 Gio). Journal de leurs liens conservé sous
 release/journaux/doublons-supprimes-2026-11-03.json, hors Git ; aucune donnée,
 aucun modèle ni application installée retiré.
+
+Bilan local final du 03/11/2026 : build et typecheck réussis, 2725 contrôles de
+sécurité sans échec ; 4442/4442 traductions interface et 1681/1681 passerelle
+dans les six langues. CLI 33/33, VS Code 16/16. Paquets finaux comparés au
+JavaScript et à la passerelle compilés pour Mac ARM64/Intel, Windows x64 et
+Linux x64. Démarrage du Mac ARM64 en profil jetable : passerelle HTTP 200.
+Le paquet Debian reçoit explicitement l’adresse du dépôt dans ses métadonnées,
+car la copie isolée ne porte pas le .git dont le constructeur la déduisait.
+Journaux conservés sous release/journaux/2026.1102.4-*.log, hors Git.
+
+Validation de publication .4 : les trois parcours du run 41609940312 sont
+réussis (application Windows avec modèle, réflexion Linux avec modèle, Code
+Linux). Les trois installations OpenClaw du run 41609940431 sont réussies.
+Analyse GitHub 41612153147 réussie. Ces parcours portent sur c528e1e ; les
+commits suivants ne changent que le contrôle textuel Unreal et ce document.
+REA lui-même reste essayé réellement sur Mac seulement, comme indiqué plus haut.
