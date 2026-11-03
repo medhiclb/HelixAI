@@ -9933,7 +9933,7 @@ console.log("\n47. Blender muet, Unreal Editor, serveurs MCP ajoutés par l'admi
   );
   verifier(
     "Unreal Editor : `call_tool` et tout outil non reconnu sur carte à chaque appel, administrateur (ou employé d'une administratrice) au moment d'agir, retiré de la liste des autres employés",
-    /\|\| estEcritureUnreal\(outil\);/.test(approSrc) && /estLectureUnreal\(outil\)\) return false;/.test(approSrc) && /if \(estEcritureUnreal\(nom\) && !\(\(await administre\(pour\?\.userId\)\) \|\| \(await administre\(pour\?\.proprietaire\)\)\)\)/.test(outilsSrc),
+    /\|\| estEcritureUnreal\(outil\)(?= \|\||;)/.test(approSrc) && /estLectureUnreal\(outil\)\) return false;/.test(approSrc) && /if \(estEcritureUnreal\(nom\) && !\(\(await administre\(pour\?\.userId\)\) \|\| \(await administre\(pour\?\.proprietaire\)\)\)\)/.test(outilsSrc),
     "approbation.ts, outils.ts",
   );
   verifier(

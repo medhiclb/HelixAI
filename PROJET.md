@@ -7884,3 +7884,18 @@ de la place des prédicats ; leur ordre initial est conservé, sans retirer les
 protections REA. CLI 33/33 et extension VS Code 16/16 après intégration. Les copies
 de compilation et l’installation d’essai REA ont été effacées lors du manque de
 place ; la nouvelle construction utilise une copie isolée avec clonage APFS.
+
+Batterie reprise : 2724/2725. Le seul échec restant est le contrôle textuel
+Unreal qui exigeait son prédicat en dernier, avant le point-virgule. Il accepte
+désormais un autre prédicat relié par OU ; le contrôle du droit administrateur
+et de la carte reste identique. Les essais exécutés des règles REA sont verts.
+
+Essais GitHub du code applicatif c528e1e : OpenClaw Windows x64, ARM64 et
+compte à espaces/accents réussis (41609940431). Session Code Linux réussie
+(41609940312). Les deux parcours avec modèle continuent à cet instant.
+Les 21 fichiers du brouillon .4 sont comparés aux originaux en taille/SHA-256 ;
+les signatures Mac et Windows sont relues avec la clé de l’application du poste.
+Nettoyage de disque : 70 installateurs locaux anciens, déjà publiés et identiques
+en taille/SHA-256, supprimés (9,02 Gio). Journal de leurs liens conservé sous
+release/journaux/doublons-supprimes-2026-11-03.json, hors Git ; aucune donnée,
+aucun modèle ni application installée retiré.
