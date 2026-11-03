@@ -8050,3 +8050,16 @@ non traité ni ouverture du micro.
 Une reprise complète de sécurité sous charge a échoué sur la reconnexion
 du faux serveur MCP SSE (délai dépassé). Le même essai isolé repasse 89/89 ;
 une dernière batterie complète est relancée sans benchmark de voix simultané.
+
+La dernière batterie complète du moteur optimisé repasse 2728/2728 sans
+benchmark simultané ; typecheck et catalogues à 100 %. Lecture du vrai WAV
+Kokoro par le vrai lecteur Audio du navigateur isolé, volume à zéro :
+événement de lecture, fin du WAV puis micro fictif, Pause contrôlée. Le banc
+accepte HELIX_ESSAI_VOIX_FICHIER pour reproduire ce parcours sans périphérique
+réel. Aucune capture du micro personnel et aucune sortie sonore réelle.
+
+Parcours applicatif 41659177784 : Code Linux et réflexion Linux réussis.
+Windows échoue sur le téléchargement Qwen3 1.7B par LM Studio : environ
+118 Ko/s, 40,76 Mo sur 1,67 Go puis quatre reprises et délais dépassés.
+L’essai Kokoro Windows est réussi séparément. Une reprise du seul job Windows
+est demandée ; la release reste en brouillon tant que ce parcours n’est pas vert.
