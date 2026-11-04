@@ -10,7 +10,7 @@ refaite à l'envers.
 
 | | |
 |---|---|
-| Version | 2026.1103.2 (`package.json`) |
+| Version | 2026.1104.1 (`package.json`) |
 | Dernière mise à jour | 30 septembre 2026 |
 | Vérifié | `npm run securite` : 2290 contrôles, 0 échec (30/09/2026, sur le code fusionné avec les vrais catalogues) ; `npm run typecheck` ; relevés à 100 % dans les six catalogues (interface 3 893 phrases, passerelle 1 503) ; essai Windows sur GitHub Actions ; `essai:cli`, `essai:vscode`, `essai:palmier` |
 | Reste à essayer | sur les vraies machines : § 5, « Ce qui reste à essayer sur les postes de Medhi » |
@@ -8065,3 +8065,41 @@ Windows échoue sur le téléchargement Qwen3 1.7B par LM Studio : environ
 118 Ko/s, 40,76 Mo sur 1,67 Go puis quatre reprises et délais dépassés.
 L’essai Kokoro Windows est réussi séparément. Une reprise du seul job Windows
 est demandée ; la release reste en brouillon tant que ce parcours n’est pas vert.
+
+
+### 04/11/2026 : Radeon, téléchargements automatiques et outils Roblox
+
+Medhi rapporte une Radeon RX 16 Go non reconnue, des installations de modèles
+qui échouent et le message récurrent d’outils Roblox écartés. Défaut confirmé
+dans le code : seule NVIDIA était interrogée et son absence forçait --gpu off.
+La détection Windows lit maintenant les contrôleurs actifs et la mémoire
+QWORD du pilote, sans traiter le DWORD tronqué comme une mémoire fiable de
+plus de 4 Go. Radeon RX/Pro et Intel Arc dédiées reconnues laissent LM Studio
+choisir son accélération ; iGPU inconnus restent au processeur et la variable
+HELIX_DECHARGEMENT_GPU garde priorité. Sous Linux, la VRAM DRM/sysfs identifie
+les cartes AMD/Intel avec au moins 4 Go dédiés. Détection mise en cache.
+Aucun pilote installé ou modifié. Le vrai PC de la capture n’a pas été essayé ;
+la compatibilité de chaque pilote/ROCm/Vulkan doit être confirmée sur place.
+
+Les descriptions des outils connectés sont raccourcies avant sélection :
+contraintes, propriétés, enum, required, défauts et exemples restent entiers.
+Le service explicitement demandé passe avant les outils d’un ancien service
+utilisé dans le Chat. Un outil utile réellement retiré reste annoncé. Banc
+avec 28 outils Roblox, descriptions longues et place de 18 000 jetons : tous
+sont conservés après allègement. Aucun vrai Studio sur le poste du signalement
+ni ses définitions exactes lus : la capture seule ne prouve pas le budget réel.
+
+Quand lms get échoue, les quatre modèles Qwen GGUF déjà épinglés ont désormais
+un secours direct depuis leur révision Apache-2.0 officielle, via le même
+téléchargeur reprenable et SHA-256 que llama.cpp. Aucun moteur llama.cpp
+installé ou lancé pour ce secours. Import lms import --yes --user-repo, sans
+copie supplémentaire, puis catalogue relu avant chargement. Le dossier des
+modèles choisi par l’utilisateur est respecté. Après un arrêt du catalogue
+LM Studio, un modèle de secours épinglé plus léger peut encore être essayé ;
+un secours réseau raté arrête les nouveaux téléchargements directs. Le Qwen3
+1.7B est annoncé à 1,9 Go conformément au fichier Q8_0 épinglé (1 834 426 016
+octets), au lieu de 1,2 Go. Les fichiers existants différents sont conservés.
+
+Le contrôle Windows du précédent candidat Kokoro 41659177784 est finalement
+réussi à sa seconde tentative, comme les deux parcours Linux. La .1103.2 est
+publique depuis le 04/11, avec ses 21 fichiers et son manifeste signé contrôlés après publication ; les corrections présentes se préparent en .1104.1.

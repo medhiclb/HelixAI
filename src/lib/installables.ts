@@ -41,7 +41,7 @@ export interface EtatCatalogue {
   moteurInstalle: boolean;
   /** « llamacpp » sur un Mac Intel (catalogue GGUF épinglé), « lmstudio » ailleurs. */
   moteur: "lmstudio" | "llamacpp";
-  machine?: { totalMemoryGb: number; gpuVramGb?: number; appleSilicon: boolean; platform: string };
+  machine?: { totalMemoryGb: number; gpuVramGb?: number; gpuNom?:string; gpuFabricant?:string; gpuDedie?:boolean; appleSilicon: boolean; platform: string };
 }
 
 export interface EtatInstallation {

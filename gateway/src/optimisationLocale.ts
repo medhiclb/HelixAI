@@ -37,12 +37,12 @@ export function diagnosticOptimisation(hw: Hardware) {
   return {
     mode, memoireGo: hw.totalMemoryGb, libreGo: Math.round(freemem() / 1024 ** 3 * 10) / 10,
     processeurs: hw.cpuCount, cpu: cpus()[0]?.model ?? "", vramGo: hw.gpuVramGb,
-    calcul: hw.appleSilicon ? "apple" : hw.gpuVramGb !== undefined ? "nvidia" : "cpu",
+    calcul: hw.appleSilicon ? "apple" : (hw.gpuDedie || hw.gpuVramGb !== undefined) ? (hw.gpuFabricant ?? "nvidia") : "cpu",
     conseils: [
       t("Une réponse à la fois réduit la mémoire réservée et la concurrence entre générations."),
       t("Les réglages s'appliquent au prochain chargement effectué par l'instance. Un modèle déjà chargé reste intact."),
       ...(freemem() < totalmem() * .15 ? [t("La mémoire disponible est faible : fermez les applications inutilisées avant de charger un modèle.")] : []),
-      ...(!hw.appleSilicon && hw.gpuVramGb === undefined ? [t("Aucune carte NVIDIA n'est détectée. Pour une carte AMD ou Intel, vérifiez l'accélération dans le moteur avant de modifier son réglage.")] : []),
+      ...(!hw.appleSilicon && hw.gpuVramGb === undefined && !hw.gpuDedie ? [t("Aucune carte NVIDIA n'est détectée. Pour une carte AMD ou Intel, vérifiez l'accélération dans le moteur avant de modifier son réglage.")] : []),
       t("La quantification, l'accélération et la taille de conversation influencent la vitesse. Comparez les mesures sur le même modèle et la même demande."),
     ],
   };

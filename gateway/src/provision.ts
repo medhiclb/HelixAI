@@ -1,6 +1,7 @@
+import { lireCarteNonNvidia, type CarteGraphique } from "./cartesGraphiques.ts";
 import { execFileSync, spawn } from "node:child_process";
 import os from "node:os";
-import { readdirSync, statSync, type Dirent } from "node:fs";
+import { existsSync, readdirSync, statSync, type Dirent } from "node:fs";
 import { join } from "node:path";
 import { backendById, ensureLmStudioServer, faireLaPlace, findLms, lmStudioRepond, optionsDeChargement } from "./backends.ts";
 import { nomProduit } from "./marque.ts";
@@ -11,7 +12,7 @@ import { applicationEnAttenteDeChoix } from "./reglagesMoteur.ts";
 import { aEssayer, essayerModele, estDefaillant, nomDuModele, noterCoupure, noterEssai, type Verdict } from "./santeModeles.ts";
 import { autoProvisionEnabled } from "./deployment.ts";
 import { cleLlamaCpp, moteurOuvert, urlLlamaCpp } from "./llamaCppBase.ts";
-import { chargerModeleLlama, dechargerModeleLlama, installerModeleLlama, llamaCppInstalle, modelesLlamaCpp, MODELES_GGUF } from "./llamaCpp.ts";
+import { chargerModeleLlama, dechargerModeleLlama, installerModeleLlama, llamaCppInstalle, modelesLlamaCpp, telechargerGgufVerifie, MODELES_GGUF } from "./llamaCpp.ts";
 import { invalidate, resolve } from "./router.ts";
 import { moteurDeLaMachine, type ModelInfo } from "./types.ts";
 
@@ -24,6 +25,9 @@ import { moteurDeLaMachine, type ModelInfo } from "./types.ts";
  */
 
 export interface Hardware {
+  gpuFabricant?: "nvidia" | "amd" | "intel";
+  gpuNom?: string;
+  gpuDedie?: boolean;
   platform: NodeJS.Platform;
   arch: string;
   /** Mémoire totale, en gigaoctets. */
@@ -32,9 +36,8 @@ export interface Hardware {
   /** Apple Silicon : mémoire unifiée, donc utilisable par le GPU. */
   appleSilicon: boolean;
   /**
-   * Mémoire de la carte graphique NVIDIA, en Go, sur Windows et Linux. Absente
-   * sans carte NVIDIA (ou sans `nvidia-smi`) : la machine est alors traitée
-   * comme calculant au processeur, ce qui est prudent.
+   * Mémoire dédiée de la carte, en Go. NVIDIA par nvidia-smi, AMD/Intel par
+   * le pilote du système. Une mémoire illisible reste inconnue.
    */
   gpuVramGb?: number;
 }
@@ -70,27 +73,30 @@ function lireMemoireGraphique(): number | undefined {
   }
 }
 
+let autreCarte: {carte:CarteGraphique|undefined}|null=null;
 export function detectHardware(): Hardware {
   const platform = os.platform();
   const arch = os.arch();
   const vram = memoireGraphique(platform);
+  if(vram===undefined&&!autreCarte)autreCarte={carte:lireCarteNonNvidia(platform)};
+  const carte=vram===undefined?autreCarte?.carte:undefined;
   return {
     platform,
     arch,
     totalMemoryGb: Math.round((os.totalmem() / 1024 ** 3) * 10) / 10,
     cpuCount: os.cpus().length,
     appleSilicon: platform === "darwin" && arch === "arm64",
-    ...(vram !== undefined ? { gpuVramGb: vram } : {}),
+    ...(vram !== undefined ? { gpuVramGb: vram, gpuFabricant: "nvidia" as const, gpuDedie:true } : carte??{}),
   };
 }
 
 /**
  * Le modèle doit-il calculer au processeur ? Windows ou Linux sans carte
- * NVIDIA vue par `nvidia-smi` : c'est ainsi que `tientSur` choisit déjà le
+ * dédiée identifiée : c'est ainsi que `tientSur` choisit déjà le
  * modèle, et c'est là qu'il est chargé (`--gpu off`, backends.ts, 27/09/2026).
  */
 export function calculSurProcesseur(hw: Hardware): boolean {
-  return (hw.platform === "win32" || hw.platform === "linux") && hw.gpuVramGb === undefined;
+  return (hw.platform === "win32" || hw.platform === "linux") && hw.gpuVramGb === undefined && !hw.gpuDedie;
 }
 
 export interface CatalogEntry {
@@ -196,7 +202,7 @@ const FICHES: Fiche[] = [
   { key: "qwen/qwen3.5-2b", label: "Qwen3.5 2B", editeur: "Alibaba (Qwen)", licence: "Apache 2.0", downloadGb: 1.6, vision: true, kvGo: 0.38, outils: true, raisonne: true, verifie: false },
   { key: "ibm/granite-4.1-8b", label: "Granite 4.1 8B", editeur: "IBM", licence: "Apache 2.0", downloadGb: 5, kvGo: 5.0, outils: true, verifie: false },
   { key: "mistralai/ministral-3-14b-reasoning", label: "Ministral 3 14B", editeur: "Mistral AI", licence: "Apache 2.0", downloadGb: 9, vision: true, outils: true, raisonne: true, verifie: false },
-  { key: "qwen3-1.7b", label: "Qwen3 1.7B", editeur: "Alibaba (Qwen)", licence: "Apache 2.0", downloadGb: 1.2, kvGo: 3.5, outils: true, raisonne: true, verifie: true },
+  { key: "qwen3-1.7b", label: "Qwen3 1.7B", editeur: "Alibaba (Qwen)", licence: "Apache 2.0", downloadGb: 1.9, kvGo: 3.5, outils: true, raisonne: true, verifie: true },
   { key: "mistralai/ministral-3-8b", label: "Ministral 3 8B", editeur: "Mistral AI", licence: "Apache 2.0", downloadGb: 6.5, vision: true, kvGo: 4.25, outils: true, verifie: false },
   { key: "allenai/olmo-3-7b-think", label: "OLMo 3 7B Think", editeur: "Ai2", licence: "Apache 2.0", downloadGb: 6, kvGo: 5.5, raisonne: true, verifie: false },
   { key: "mistralai/ministral-3-3b", label: "Ministral 3 3B", editeur: "Mistral AI", licence: "Apache 2.0", downloadGb: 2.5, vision: true, kvGo: 3.25, outils: true, verifie: false },
@@ -870,7 +876,9 @@ export function raisonTelechargement(sortie: string): string {
     .split(/\r?\n|\r/)
     .map((l) => l.trim())
     .filter((l) => l && !/^[⠀-⣿]?\s*\[?[▏▎▍▌▋▊▉█\s]*\]?\s*\d+(?:\.\d+)?%\s*\|/.test(l) && !/^\d+(?:\.\d+)?%\s*\|/.test(l));
-  const reste = [...new Set(propre)].join(" ").slice(-300).trim();
+  const erreurs=propre.filter(l=>/\b(error|failed|timed.?out|connection|ENOSPC|ECONN|EAI_AGAIN)\b/i.test(l)).map(l=>{const i=l.search(/\b(?:Error|Erreur)\s*:|\b(?:Download failed|Timed.out|ECONN\w*|EAI_AGAIN|ENOSPC)\b/i);return i>=0?l.slice(i):l});
+  const utiles=erreurs.length?erreurs:propre.filter(l=>!/%|[⠀-⣿▏▎▍▌▋▊▉█]|\bETA\b/.test(l));
+  const reste = [...new Set(utiles)].join(" ").slice(-300).trim();
   return reste || t("La connexion s'est arrêtée pendant le téléchargement, ou elle est trop lente : vérifiez-la, puis réessayez.");
 }
 
@@ -1181,6 +1189,7 @@ async function provision(
   let echec: { message: string; error: string } | null = null;
   /** Un téléchargement a cessé d'avancer : la connexion est arrêtée, les modèles à télécharger ne sont plus tentés. */
   let reseauArrete = false;
+  let secoursEchoue=false;
   for (const choice of candidates) {
     if (choice.downloadGb >= plafondGo) continue;
     // Noté défaillant pendant cette mise en route, ou avant : pas réessayé d'office.
@@ -1224,7 +1233,7 @@ async function provision(
 
     if (!installed.output.includes(choice.key)) {
       // Connexion arrêtée sur un modèle précédent : seuls les modèles déjà là sont encore essayés.
-      if (reseauArrete) continue;
+      if (reseauArrete && (!MODELES_GGUF[choice.key] || secoursEchoue)) continue;
       setState({
         phase: "downloading",
         message: tf("Téléchargement de {0} (~{1} Go)...", choice.label, choice.downloadGb),
@@ -1246,13 +1255,13 @@ async function provision(
        * 40 %, et Helix passait à Qwen3 8B (5 Go), puis Granite 4.1 8B, encore
        * plus longs à venir sur la même connexion.
        */
-      const ESSAIS = 5;
+      const ESSAIS = MODELES_GGUF[choice.key] ? 2 : 5;
       let got: { ok: boolean; output: string; muet?: boolean } = { ok: false, output: "" };
       let meilleur = 0;
       let affiche = -1;
       let lu = 0;
       let sansProgres = 0;
-      for (let essai = 0; essai < ESSAIS; essai++) {
+      for (let essai = 0; !reseauArrete && essai < ESSAIS; essai++) {
         if (essai > 0) {
           setState({ message: tf("Téléchargement de {0} interrompu, reprise ({1} sur {2})...", choice.label, essai, ESSAIS - 1) });
           await new Promise((r) => setTimeout(r, Math.min(essai * 5_000, 15_000)));
@@ -1269,13 +1278,27 @@ async function provision(
           if (Math.floor(percent) === affiche) return;
           affiche = Math.floor(percent);
           setState({ percent, message: tf("Téléchargement de {0}... {1}%", choice.label, affiche) });
-        }, { silenceMaxMs: SANS_PROGRES_MS, progres: () => `${tailleDesModeles()}|${lu}` });
+        }, { silenceMaxMs: SANS_PROGRES_MS, ...(MODELES_GGUF[choice.key] ? {totalMaxMs:5*60_000} : {}), progres: () => `${tailleDesModeles()}|${lu}` });
         // Réussi ou moteur absent (dit plus bas) : rien à reprendre.
         if (got.ok || /daemon is not running|no valid installation|failed to start or connect to local LM Studio/i.test(got.output)) break;
         sansProgres = meilleur > meilleurAvant || tailleDesModeles() > tailleAvant ? 0 : sansProgres + 1;
         if (sansProgres >= 2) break;
       }
 
+      // Le catalogue distant de LM Studio peut expirer malgré un réseau disponible.
+      // Le secours reste limité aux modèles Apache-2.0 déjà épinglés par empreinte.
+      if(!got.ok&&MODELES_GGUF[choice.key]&&!secoursEchoue&&!/daemon is not running|no valid installation|failed to start or connect to local LM Studio/i.test(got.output)){
+       try{
+        const racine=dossierModelesLmStudio();if(!existsSync(racine))throw Error(t("L'emplacement des modèles est introuvable."));
+        const fichier=join(racine,'.helix-telechargements',MODELES_GGUF[choice.key]!.fichier);
+        for(let tentative=0;;tentative++){try{await telechargerGgufVerifie(choice.key,fichier,p=>setState({phase:'downloading',percent:p,message:tf("Téléchargement de {0}... {1}%",choice.label,p)}));break}catch(e){if(tentative>=2)throw e;await new Promise(r=>setTimeout(r,5000))}}
+        await run(lms,['import',fichier,'--user-repo',`qwen/${choice.key.split('/').at(-1)}`,'--yes'],()=>{}, {totalMaxMs:DELAI_LMS_CHARGEMENT_MS});
+        const liste=await run(lms,['ls','--json'],()=>{});
+        const modeles=liste.ok?JSON.parse(liste.output):[];
+        if(!Array.isArray(modeles)||!modeles.some(m=>typeof m?.modelKey==='string'&&memeModele(m.modelKey,choice.key)))throw Error(t("Le modèle téléchargé n'a pas pu être importé dans le moteur."));
+        got={ok:true,output:liste.output};reseauArrete=false;
+       }catch(e){secoursEchoue=true;console.error('[helix] téléchargement de secours :',e instanceof Error?e.message:String(e))}
+      }
       if (!got.ok) {
         const message = tf("Le téléchargement de {0} a échoué.", choice.label);
         /*

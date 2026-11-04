@@ -884,8 +884,9 @@ function optionsStandard(): string[] {
  * donc là aussi, `--gpu off`, sans rien laisser au hasard. Une carte NVIDIA
  * (vue par `nvidia-smi`) garde le choix de LM Studio, par CUDA ; un Mac aussi.
  *
- * Contrepartie assumée : une carte AMD ou Intel dédiée, que Helix ne sait pas
- * encore reconnaître, calcule elle aussi au processeur (plus lent, mais juste).
+ * Depuis le 04/11/2026, une Radeon RX/Pro ou Intel Arc dédiée identifiée par
+ * le pilote conserve aussi le choix automatique du moteur (Vulkan/ROCm).
+ * Détecter la carte ne garantit pas la compatibilité de son pilote.
  * `HELIX_DECHARGEMENT_GPU` rend la main : « auto » laisse LM Studio décider,
  * « max », « off » ou une part entre 0 et 1 sont passés tels quels à `lms load`.
  */

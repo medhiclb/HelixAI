@@ -8,7 +8,7 @@ import { niveauEffort } from "./config.ts";
 import { resolve, invalidate, peutVoir } from "./router.ts";
 import { loadModel } from "./backends.ts";
 import { toolsForModel, hasTools, workspace, status as etatMcp } from "./mcp.ts";
-import { choisirOutils, placeDesOutils, serviceDe } from "./choixOutils.ts";
+import { choisirOutils, allegerOutilsConnectes, placeDesOutils, serviceDe } from "./choixOutils.ts";
 import { executerOutil, cibleDe, refusApplication } from "./outils.ts";
 import { cheminReel, estProtege } from "./zonesProtegees.ts";
 import * as computer from "./computer.ts";
@@ -1690,6 +1690,7 @@ export async function handleChatRequest(
     if (jetonsOutils > placeOutils) {
       const libelles: Record<string, string> = {};
       for (const s of etatMcp()) libelles[s.id] = s.label;
+      tools = allegerOutilsConnectes(tools);
       const choix = choisirOutils(tools, { messages, place: placeOutils, libelles });
       console.log(
         `[chat] ${tools.length} outils (~${jetonsOutils} jetons) pour ~${placeOutils} jetons de place aux outils (${model.id}, contexte ${contexteConversation}) : ${choix.gardes.length} gardés (~${choix.jetonsApres} jetons)` +
