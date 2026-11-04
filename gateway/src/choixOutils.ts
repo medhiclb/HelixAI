@@ -45,8 +45,7 @@ const plat = (s: string) =>
  * Mots qui désignent un service sans porter son identifiant. Des noms propres
  * surtout, les mêmes dans toutes les langues ; quelques noms communs pour les
  * familles de l'instance. « studio » seul vaut Roblox Studio (demande de
- * Medhi) : « LM Studio » dans une question ne fait que garder ces outils en
- * tête, rien de plus.
+ * Medhi), sauf les noms explicites des autres logiciels Studio.
  */
 const ALIAS: Record<string, string[]> = {
   roblox: ["roblox", "studio", "luau"],
@@ -108,7 +107,7 @@ function texte(m: unknown): string {
 export interface ChoixOutils<T> {
   gardes: T[];
   retires: T[];
-  /** Outils des rangs 1 et 2 (déjà appelés, service nommé) qui n'ont pas tenu. */
+  /** Outils utiles au service demandé ou poursuivi, qui n’ont pas tenu. */
   utilesRetires: string[];
   /** Services nommés dans la demande. */
   nommes: string[];
@@ -134,12 +133,32 @@ export function choisirOutils<T extends OutilNomme>(
   const cherche = derniere.trim().length < 25 && questions.length > 1 ? `${questions[questions.length - 2]}\n${derniere}` : derniere;
   const nommes = servicesNommes(cherche, services, libelles);
   const appeles = outilsDejaAppeles(messages);
+  // 04/11/2026 : repérer Studio ne suffit pas. Au tour suivant, ses outils de
+  // lecture et d’écriture restent prioritaires même s’ils n’ont pas encore servi.
+  // Un service explicitement demandé garde toujours la première place.
+  let serviceActif: string | undefined;
+  for (const message of messages) {
+    if ((message as { role?: string })?.role !== "assistant") continue;
+    const appels = (message as { tool_calls?: unknown })?.tool_calls;
+    if (!Array.isArray(appels)) continue;
+    for (const appel of appels) {
+      const nom = appel?.function?.name;
+      if (typeof nom === "string" && noms.includes(nom)) serviceActif = serviceDe(nom);
+    }
+  }
 
+  const serviceSpecialiseNomme = [...nommes].some((s) => !COURANTS.includes(s));
+  const continuerService = serviceActif !== undefined && !COURANTS.includes(serviceActif) && !serviceSpecialiseNomme;
+  const servicesUtiles = continuerService ? new Set([serviceActif]) : nommes;
   const rang = (i: number): number => {
     const n = noms[i]!;
     const s = serviceDe(n);
-    if (nommes.has(s)) return 0;
+    // « Crée un dossier » dans le travail Studio ne doit pas faire passer
+    // les fichiers du poste devant les dossiers du jeu.
+    if (continuerService && s === serviceActif) return 0;
+    if (nommes.has(s)) return continuerService ? 1 : 0;
     if (appeles.has(n)) return 1;
+    if (s === serviceActif) return 1.5;
     const c = COURANTS.indexOf(s);
     return c >= 0 ? 2 + c / 10 : 3;
   };
@@ -164,7 +183,7 @@ export function choisirOutils<T extends OutilNomme>(
   return {
     gardes,
     retires,
-    utilesRetires: outils.map((_, i) => i).filter((i) => !garde.has(i) && (nommes.size>0?nommes.has(serviceDe(noms[i]!)):appeles.has(noms[i]!))).map((i) => noms[i]!),
+    utilesRetires: outils.map((_, i) => i).filter((i) => !garde.has(i) && (servicesUtiles.size>0?servicesUtiles.has(serviceDe(noms[i]!)):appeles.has(noms[i]!))).map((i) => noms[i]!),
     nommes: [...nommes],
     jetonsAvant,
     jetonsApres: [...garde].reduce((a, i) => a + couts[i]!, 0),

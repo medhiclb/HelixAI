@@ -8113,3 +8113,15 @@ et Arc intégrée sont distinguées dans les essais. Les quatre applications
 empaquetées correspondent aux fichiers construits ; les notes se relisent dans
 les sept langues. Publication .1104.1 encore suspendue au parcours Windows
 GitHub 41857025573, sur da3d4239e324fa58ec46e8798d09d3d8dfb4f272.
+
+Complément du 04/11, capture GPT-OSS 20B avec 70 outils : le dernier service
+ayant réellement été appelé garde la priorité de sa famille entière au tour
+suivant, et pas seulement celle de l’outil de détection déjà appelé. Une demande
+explicite d’un autre service garde priorité ; « crée un dossier » pendant un
+travail Studio ne fait plus passer les fichiers du poste avant les outils du
+jeu. Le banc avec 42 outils de fichiers et 28 outils Roblox, sur un budget
+contraint de 8 000 jetons d’outils, conserve les 28 outils Roblox après une
+relance longue sans répéter le nom du service. Pas d’alerte sur les outils de
+fichiers écartés dans ce cas. Essai ciblé et 56 vérifications Roblox/Blender
+réussis ; pas de vrai GPT-OSS 20B ni de Studio du poste signalé essayés.
+Ce complément doit remplacer les paquets du brouillon .1104.1 avant publication.
