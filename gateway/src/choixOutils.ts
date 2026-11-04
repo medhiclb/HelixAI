@@ -143,7 +143,11 @@ export function choisirOutils<T extends OutilNomme>(
     if (!Array.isArray(appels)) continue;
     for (const appel of appels) {
       const nom = appel?.function?.name;
-      if (typeof nom === "string" && noms.includes(nom)) serviceActif = serviceDe(nom);
+      if (typeof nom === "string" && noms.includes(nom)) {
+        const service = serviceDe(nom);
+        // Lire un fichier intermédiaire ne termine pas le travail dans Studio.
+        if (!COURANTS.includes(service) || serviceActif === undefined || COURANTS.includes(serviceActif)) serviceActif = service;
+      }
     }
   }
 
