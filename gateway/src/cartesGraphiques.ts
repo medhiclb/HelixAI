@@ -10,7 +10,7 @@ export function carteWindows(brut:string):CarteGraphique|undefined{
   if(!c||typeof c!=='object')return[];const {nom,id,octets}=c as Record<string,unknown>;if(typeof nom!=='string')return[];
   const amd=/AMD|Radeon/i.test(nom)||typeof id==='string'&&/VEN_1002/i.test(id);const intel=/Intel/i.test(nom)||typeof id==='string'&&/VEN_8086/i.test(id);if(!amd&&!intel)return[];
   const go=typeof octets==='number'&&Number.isFinite(octets)&&octets>0&&octets<1024**4?Math.round(octets/1024**3*10)/10:undefined;
-  const dedie=amd?/\b(RX\s*\d[\w-]*|Radeon\s+PRO|FirePro)\b/i.test(nom):/\bArc\b/i.test(nom);
+  const dedie=amd?/\b(RX\s*\d[\w-]*|Radeon\s+PRO|FirePro)\b/i.test(nom):/\bArc(?:\(TM\))?\s+(?:Pro\s+)?[AB]\d{2,3}\b/i.test(nom);
   return[{gpuFabricant:amd?'amd' as const:'intel' as const,gpuNom:nom.slice(0,160),gpuDedie:dedie,...(go&&dedie?{gpuVramGb:go}:{})}];
  });return cartes.sort((a,b)=>Number(b.gpuDedie)-Number(a.gpuDedie)||(b.gpuVramGb??0)-(a.gpuVramGb??0))[0];
 }

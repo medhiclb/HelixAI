@@ -3,6 +3,7 @@ const d=mkdtempSync(join(tmpdir(),'helix-machines-'));const charger=async(nom)=>
 try{
  const gpu=await charger('cartesGraphiques');
  const amd=gpu.carteWindows(JSON.stringify([{nom:'AMD Radeon RX 9060 XT',id:'PCI\\VEN_1002',octets:16*1024**3},{nom:'Intel UHD Graphics',id:'PCI\\VEN_8086',octets:512*1024**2}]));assert.equal(amd.gpuFabricant,'amd');assert.equal(amd.gpuVramGb,16);assert.equal(amd.gpuDedie,true);
+ assert.equal(gpu.carteWindows(JSON.stringify({nom:'Intel(R) Arc(TM) A770 Graphics',octets:16*1024**3})).gpuDedie,true);assert.equal(gpu.carteWindows(JSON.stringify({nom:'Intel Arc 140V Graphics',octets:512*1024**2})).gpuDedie,false);
  assert.equal(gpu.carteWindows('{'),undefined);assert.equal(gpu.carteWindows('[]'),undefined);assert.equal(gpu.carteWindows(JSON.stringify({nom:'AMD Radeon RX960XT',octets:null})).gpuDedie,true);assert.equal(gpu.carteWindows(JSON.stringify({nom:'AMD Radeon Graphics',octets:16*1024**3})).gpuDedie,false);
  const source=readFileSync('gateway/src/provision.ts','utf8');const fn=source.match(/export function calculSurProcesseur[\s\S]*?\n}/)[0];const m={exports:{}};vm.runInNewContext((await transform(fn,{loader:'ts',format:'cjs'})).code,{module:m,exports:m.exports});
  assert.equal(m.exports.calculSurProcesseur({platform:'win32',...amd}),false);assert.equal(m.exports.calculSurProcesseur({platform:'win32',gpuDedie:true}),false);assert.equal(m.exports.calculSurProcesseur({platform:'win32'}),true);assert.equal(m.exports.calculSurProcesseur({platform:'linux',gpuVramGb:8}),false);
