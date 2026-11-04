@@ -8125,3 +8125,11 @@ relance longue sans répéter le nom du service. Pas d’alerte sur les outils d
 fichiers écartés dans ce cas. Essai ciblé et 56 vérifications Roblox/Blender
 réussis ; pas de vrai GPT-OSS 20B ni de Studio du poste signalé essayés.
 Ce complément doit remplacer les paquets du brouillon .1104.1 avant publication.
+
+Validation finale du complément Roblox : build et typecheck réussis, 2 730
+contrôles de sécurité sans échec, 16 essais de contexte et 56 essais
+Roblox/Blender réussis. Catalogues inchangés complets à 100 %. Paquets des
+quatre plateformes reconstruits et comparés au code construit ; 21 fichiers
+du brouillon remplacés, tailles/SHA-256 et signatures relus. Dernière révision
+embarquée : c56d0171256c677d62d60cf405cf2528ab1fa79a. Le parcours GitHub
+41901615274 est encore en cours ; la .1104.1 reste en brouillon à cette étape.
