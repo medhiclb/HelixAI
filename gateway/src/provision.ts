@@ -1,3 +1,4 @@
+import { delaiVeilleSecondes } from "./contextesModeles.ts";
 import { lireCarteNonNvidia, type CarteGraphique } from "./cartesGraphiques.ts";
 import { execFileSync, spawn } from "node:child_process";
 import os from "node:os";
@@ -644,7 +645,7 @@ export function refusTropLourd(hw: Hardware, key: string, role: "chat" | "gui"):
 }
 
 /** Délai d'inactivité au bout duquel un modèle libère la mémoire. */
-const TTL_SECONDES = 20 * 60;
+// Délai d’inactivité relu au chargement, commun aux modèles locaux.
 
 export type ProvisionPhase =
   | "idle"
@@ -1353,7 +1354,7 @@ async function provision(
     // Le nom sous lequel LM Studio a rangé le modèle (« qwen/qwen3-1.7b » pour « qwen3-1.7b », `nomChezLmStudio`).
     const cle = await nomChezLmStudio(lms, choice.key, "ls");
     const charger = () =>
-      run(lms, ["load", cle, "--yes", "--ttl", String(TTL_SECONDES), ...optionsDeChargement()], () => {}, { totalMaxMs: DELAI_LMS_CHARGEMENT_MS });
+      run(lms, ["load", cle, "--yes", "--ttl", delaiVeilleSecondes(), ...optionsDeChargement(cle)], () => {}, { totalMaxMs: DELAI_LMS_CHARGEMENT_MS });
 
     /*
      * Déjà en mémoire (le modèle de repli, chargé par une mise en route

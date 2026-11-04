@@ -31,6 +31,7 @@ export interface UserProfile {
   customInstructions: string;
   /** Contexte personnel réutilisable (métier, préférences, projets). */
   personalInfo: string;
+  modeTravail?: "solo" | "equipe";
   memoryEnabled: boolean;
   memories: Memory[];
   /** Modèle préféré (uid passerelle) et niveau d'effort par défaut. */
@@ -137,7 +138,7 @@ export function buildSystemPrompt(
     parts.push(agentInstructions.trim());
   } else {
     parts.push(
-      tf("Tu es {0}, l'assistant IA de l'entreprise. Tu réponds ", productName) +
+      tf("Tu es {0}, un assistant IA. Tu réponds ", productName) +
         t("de façon claire et utile, sans jargon inutile."),
     );
   }
@@ -160,10 +161,15 @@ export function buildSystemPrompt(
    */
   parts.push(
     t("Réponds directement aux questions générales avec tes propres connaissances. ") +
-      t("N'utilise les outils que pour ce qui concerne les données de l'entreprise ") +
+      t("N’utilise les outils que pour les données de la personne ou de son équipe ") +
       t("(documents, mails, agenda, fichiers) ou pour agir, et jamais pour vérifier une connaissance générale."),
   );
 
+  if (profile.modeTravail === "solo") {
+    parts.push(t("La personne travaille seule. Adapte tes réponses à un usage individuel. Ne suppose pas l’existence de collègues, d’une équipe, d’une entreprise ou d’un service interne. Propose des actions qu’elle peut réaliser elle-même, sauf si elle mentionne explicitement d’autres personnes."));
+  } else if (profile.modeTravail === "equipe") {
+    parts.push(t("La personne travaille en équipe. Tu peux tenir compte de la collaboration, sans inventer de collègues, de rôles ni de services internes."));
+  }
   if (profile.customInstructions.trim()) {
     parts.push(tf("Instructions de l'utilisateur :\n{0}", profile.customInstructions.trim()));
   }

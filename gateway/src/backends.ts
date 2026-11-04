@@ -1,3 +1,4 @@
+import { optionsContexte, tailleValide, delaiVeilleSecondes } from "./contextesModeles.ts";
 import { redirectionPour, refusSortie } from "./sortieReseau.ts";
 import { execFile, execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
@@ -113,6 +114,7 @@ interface LmsModelEntry {
   contextLength?: number;
   /** `lms ps` : le nom sous lequel le serveur sert ce chargement (« qwen3-8b:2 » pour une seconde copie). */
   identifier?: string;
+  queued?: number;
 }
 
 /**
@@ -820,7 +822,7 @@ export function backendById(id: string): BackendConfig | undefined {
 }
 
 /** Durée d'inactivité au bout de laquelle un modèle libère la mémoire. */
-const TTL_SECONDES = "1200";
+// Délai d’inactivité choisi dans les réglages, appliqué à chaque chargement.
 
 /**
  * Taille de conversation et parallélisme au chargement, selon la mémoire.
@@ -850,8 +852,8 @@ const TTL_SECONDES = "1200";
  * lmstudio.ai/docs/app/advanced/parallel-requests). Les requêtes suivantes
  * attendent leur tour dans le moteur, sans rien mêler.
  */
-export function optionsDeChargement(): string[] {
-  return optionsOptimisees(optionsStandard());
+export function optionsDeChargement(modele?: string): string[] {
+  return optionsContexte(optionsOptimisees(optionsStandard()), modele);
 }
 
 function optionsStandard(): string[] {
@@ -1086,6 +1088,7 @@ export async function libererPourImage(octets: number): Promise<number> {
  * un autre modèle.
  */
 export async function loadModel(modelKey: string, options: { auto?: boolean } = {}): Promise<{ ok: boolean; message: string }> {
+  if (rechargementContexte) return { ok: false, message: t("Un rechargement de modèle est déjà en cours.") };
   if (moteurOuvert()) return chargerSurMoteurOuvert(modelKey, options);
   const essaye = aEssayer(modelKey) && !/embed|nomic|rerank|bge-|e5-/i.test(modelKey);
   const r = await chargerModele(modelKey);
@@ -1156,7 +1159,7 @@ async function chargerModele(modelKey: string): Promise<{ ok: boolean; message: 
   }
 
   const charger = () =>
-    exec(lms, ["load", modelKey, "--yes", "--ttl", TTL_SECONDES, ...optionsDeChargement()], { timeout: 300_000 });
+    exec(lms, ["load", modelKey, "--yes", "--ttl", delaiVeilleSecondes(), ...optionsDeChargement(modelKey)], { timeout: 300_000 });
 
   await faireLaPlace(lms, modelKey, enMemoire);
   // Sans ce dossier, llmster ne charge aucun modèle (engine.ts) : garanti avant chaque chargement, pas seulement au démarrage.
@@ -1166,7 +1169,7 @@ async function chargerModele(modelKey: string): Promise<{ ok: boolean; message: 
     await charger();
     chargesParHelix.add(modelKey);
     // Au journal, avec ses options : sur un poste, c'est ce qui dit que le modèle a été chargé par Helix, et comment (27/09/2026).
-    console.log(`[helix] ${modelKey} chargé par Helix : ${optionsDeChargement().join(" ")}`);
+    console.log(`[helix] ${modelKey} chargé par Helix : ${optionsDeChargement(modelKey).join(" ")}`);
     return { ok: true, message: tf("Modèle {0} chargé.", modelKey), neuf: true };
   } catch (err) {
     const detail = err instanceof Error ? `${err.message}` : String(err);
@@ -1203,8 +1206,8 @@ async function chargerModele(modelKey: string): Promise<{ ok: boolean; message: 
 }
 
 /** Taille de conversation que Helix vise pour un modèle de LM Studio : la sienne au chargement, 32 768 à défaut. */
-export function tailleVisee(): number {
-  const options = optionsDeChargement();
+export function tailleVisee(modele?: string): number {
+  const options = optionsDeChargement(modele);
   const i = options.indexOf("--context-length");
   const n = i >= 0 ? Number(options[i + 1]) : NaN;
   return Number.isFinite(n) && n > 0 ? n : 32_768;
@@ -1239,7 +1242,8 @@ export type Agrandissement =
  */
 export async function agrandirLaConversation(model: ModelInfo, auRechargement?: () => void): Promise<Agrandissement> {
   const avant = model.contexteCharge ?? 0;
-  const visee = model.contexteMax ? Math.min(tailleVisee(), model.contexteMax) : tailleVisee();
+  if (rechargementContexte) return { fait: false, avant, raison: "occupe" };
+  const visee = model.contexteMax ? Math.min(tailleVisee(model.id), model.contexteMax) : tailleVisee(model.id);
   if (model.backendKind !== "lmstudio" || !avant || moteurOuvert()) return { fait: false, avant, raison: "inconnu" };
   if (avant >= Math.min(visee, 16_384)) return { fait: false, avant, raison: "assez" };
   /*
@@ -1273,7 +1277,7 @@ export async function agrandirLaConversation(model: ModelInfo, auRechargement?: 
     await exec(lms, ["unload", model.id], { timeout: 30_000 });
     chargesParHelix.delete(model.id);
     preparerDossiersLlmster();
-    await exec(lms, ["load", model.id, "--yes", "--ttl", TTL_SECONDES, "--context-length", String(visee), ...options], { timeout: 300_000 });
+    await exec(lms, ["load", model.id, "--yes", "--ttl", delaiVeilleSecondes(), "--context-length", String(visee), ...options], { timeout: 300_000 });
     chargesParHelix.add(model.id);
   } catch (err) {
     console.warn(`[helix] ${model.id} : rechargement avec ${visee} jetons raté (${err instanceof Error ? err.message.slice(0, 200) : String(err)})`);
@@ -1290,4 +1294,40 @@ export async function agrandirLaConversation(model: ModelInfo, auRechargement?: 
   }
   console.log(`[helix] ${model.id} rechargé par Helix : conversation de ${avant} à ${apres} jetons`);
   return apres > avant ? { fait: true, avant, apres } : { fait: false, avant, raison: "echec" };
+}
+
+
+let rechargementContexte = false;
+/** Changement demandé par l’administrateur : seulement le moteur local,
+ * un modèle au repos, aucun alias partagé ; retour à l’ancienne taille si le chargement échoue. */
+export async function changerContexteLocal(model: ModelInfo, taille: number): Promise<number> {
+  if (rechargementContexte) throw Error(t("Un rechargement de modèle est déjà en cours."));
+  if (model.backendId !== "lmstudio" || model.backendKind !== "lmstudio" || moteurOuvert() || !tailleValide(taille) || (model.contexteMax && taille > model.contexteMax) || !/^[A-Za-z0-9@_./:+-]{1,300}$/.test(model.id) || model.id.startsWith("-")) throw Error(t("Cette taille de contexte n’est pas disponible pour ce modèle local."));
+  rechargementContexte = true;
+  try {
+    const lms = await findLms();
+    if (!lms) throw Error(t("Le moteur local est introuvable."));
+    const lire = async () => {
+      const { stdout } = await exec(lms, ["ps", "--json"], { timeout: 8000, maxBuffer: 4 * 1024 * 1024 });
+      const liste = JSON.parse(stdout);
+      if (!Array.isArray(liste)) throw Error(t("L’état du modèle n’a pas pu être lu."));
+      return liste.filter((m: LmsModelEntry) => (m.modelKey ?? m.path) === model.id) as LmsModelEntry[];
+    };
+    const instances = await lire();
+    const avant = instances[0];
+    if (instances.length !== 1 || !avant || avant.status !== "idle" || (avant.queued ?? 0) > 0 || (avant.identifier && avant.identifier !== model.id) || !tailleValide(avant.contextLength)) throw Error(t("Le modèle doit être chargé et au repos avant de changer son contexte."));
+    const options = optionsDeChargement(model.id).filter((v, i, a) => v !== "--context-length" && a[i - 1] !== "--context-length");
+    await exec(lms, ["unload", model.id], { timeout: 30000 });
+    chargesParHelix.delete(model.id);
+    try {
+      await exec(lms, ["load", model.id, "--yes", "--ttl", delaiVeilleSecondes(), "--context-length", String(taille), ...options], { timeout: 300000 });
+    } catch {
+      try { await exec(lms, ["load", model.id, "--yes", "--ttl", delaiVeilleSecondes(), "--context-length", String(avant.contextLength), ...options], { timeout: 300000 }); chargesParHelix.add(model.id); } catch { /* Le prochain chargement reste possible, sans inventer un succès. */ }
+      throw Error(t("Le rechargement a échoué. Essayez une taille de contexte plus petite."));
+    }
+    chargesParHelix.add(model.id);
+    const apres = await lire();
+    if (apres.length !== 1 || apres[0]?.contextLength !== taille) throw Error(t("Le moteur n’a pas confirmé la taille demandée. Actualisez la liste des modèles."));
+    return taille;
+  } finally { rechargementContexte = false; }
 }

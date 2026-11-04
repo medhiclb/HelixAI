@@ -324,6 +324,28 @@ async function etapes() {
     }
   }
 
+  // 04/11/2026 : les réglages proposés par l’écran font réellement recharger
+  // un modèle au repos. Retour à la configuration initiale avant la suite.
+  dire("4 bis. Contexte et veille réglés depuis la passerelle");
+  const gestion = await appel("/helix/models/contexte");
+  const local = gestion.json.modeles?.find(m => nomDuModele(m.nom) === MODELE);
+  if (!verifier("le modèle chargé expose son contexte aux réglages", gestion.statut === 200 && gestion.json.admin === true && local?.actuel >= 2048, gestion.texte.slice(0, 500))) return;
+  const veille = await appel("/helix/models/contexte", { veilleMinutes: 10 });
+  if (!verifier("le délai de veille peut être enregistré", veille.statut === 200 && veille.json.veilleMinutes === 10, veille.texte.slice(0, 400))) return;
+  const tailleEssai = local.actuel === 8192 ? 4096 : 8192;
+  const recharge = await appel("/helix/models/contexte", { modele: local.uid, taille: tailleEssai }, 7 * 60_000);
+  if (!verifier("le moteur confirme le contexte demandé après rechargement", recharge.statut === 200 && recharge.json.actuel === tailleEssai, recharge.texte.slice(0, 600))) return;
+  const etatRecharge = spawnSync(lmsExe, ["ps", "--json"], { encoding: "utf8", timeout: 60_000, windowsHide: true });
+  writeFileSync(join(SORTIE, "lms-ps-contexte.json"), etatRecharge.stdout ?? "");
+  let apresRecharge = [];
+  try { apresRecharge = JSON.parse(etatRecharge.stdout); } catch { /* Dit par le contrôle ci-dessous. */ }
+  verifier("une seule copie rechargée, contexte et TTL confirmés par lms ps", Array.isArray(apresRecharge) && apresRecharge.filter(m => nomDuModele(m.modelKey ?? "") === MODELE).length === 1 && apresRecharge.some(m => nomDuModele(m.modelKey ?? "") === MODELE && m.contextLength === tailleEssai && m.ttlMs === 600000), etatRecharge.stdout?.slice(0, 600));
+  const confirme = await appel("/helix/models/contexte");
+  verifier("le contexte relu et le délai sauvegardé correspondent", confirme.json.modeles?.some(m => m.uid === local.uid && m.actuel === tailleEssai && m.souhaite === tailleEssai) && confirme.json.veilleMinutes === 10, confirme.texte.slice(0, 500));
+  await appel("/helix/models/contexte", { veilleMinutes: gestion.json.veilleMinutes });
+  const restaure = await appel("/helix/models/contexte", { modele: local.uid, taille: local.actuel }, 7 * 60_000);
+  if (!verifier("le contexte initial est rétabli avant les autres essais", restaure.statut === 200 && restaure.json.actuel === local.actuel, restaure.texte.slice(0, 600))) return;
+
   /*
    * 5. Le lendemain : l'application quittée, la machine redémarrée (le
    * service de LM Studio ne tourne plus), l'application rouverte. C'est ici

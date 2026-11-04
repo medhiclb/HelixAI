@@ -10,7 +10,7 @@ refaite à l'envers.
 
 | | |
 |---|---|
-| Version | 2026.1104.1 (`package.json`) |
+| Version | 2026.1104.2 (`package.json`) |
 | Dernière mise à jour | 30 septembre 2026 |
 | Vérifié | `npm run securite` : 2290 contrôles, 0 échec (30/09/2026, sur le code fusionné avec les vrais catalogues) ; `npm run typecheck` ; relevés à 100 % dans les six catalogues (interface 3 893 phrases, passerelle 1 503) ; essai Windows sur GitHub Actions ; `essai:cli`, `essai:vscode`, `essai:palmier` |
 | Reste à essayer | sur les vraies machines : § 5, « Ce qui reste à essayer sur les postes de Medhi » |
@@ -8133,3 +8133,80 @@ quatre plateformes reconstruits et comparés au code construit ; 21 fichiers
 du brouillon remplacés, tailles/SHA-256 et signatures relus. Dernière révision
 embarquée : c56d0171256c677d62d60cf405cf2528ab1fa79a. Le parcours GitHub
 41901615274 est encore en cours ; la .1104.1 reste en brouillon à cette étape.
+
+
+04/11/2026, suite : la 2026.1104.1 corrective est publique après réussite de
+41901615274. Ses 21 fichiers ont été relus en taille/SHA-256 et le manifeste
+public relu avec la clé de l’application installée. Les ajouts demandés ensuite
+(import de skills par lien, contexte par modèle, mode solo/équipe) préparent
+la 2026.1104.2 séparément.
+
+### 04/11/2026 : skills par lien et commandes, contexte, solo et veille (2026.1104.2)
+
+Demandes successives de Medhi : importer les skills GitHub et d’autres sources,
+régler le contexte depuis le logiciel, choisir entre travail seul ou en équipe,
+rendre la veille des modèles réglable et appeler les skills avec une commande `/`.
+
+- Import dans Réglages, Compétences : dépôt public GitHub, dossier, SKILL.md ou
+  lien HTTPS direct vers Markdown/ZIP. Plusieurs SKILL.md : choix avant lecture.
+  La branche est résolue en commit, les blobs téléchargés sont comparés à leurs
+  empreintes Git ; les liens et la révision restent dans SOURCE.txt. Licences et
+  notices du dossier ou de la racine passent avant les autres pièces jointes.
+  Quatre pièces plus la provenance, bornes existantes et avertissements conservés.
+  Prévisualisation dans l’éditeur avant ajout personnel. Aucun clone, sous-module,
+  dépendance, script ni commande exécuté. Import ponctuel, pas de synchronisation.
+  HTTPS public seulement, toutes les adresses DNS contrôlées puis fixées à la
+  connexion, sans identifiants ni redirection, 45 s et tailles bornées. Les dépôts
+  privés passent par l’import local existant. Les branches avec `/` dans leur nom
+  ne sont pas résolues par ce lecteur de liens ; utiliser un commit ou le ZIP local.
+- Commandes de compétences dans Chat, Cowork et Code OpenCode : `/` propose les
+  compétences visibles et activées, filtrables, avec navigation au clavier.
+  Une commande précise prime sur la sélection par mots, sans ouvrir une compétence
+  personnelle d’autrui ni rallumer une compétence éteinte. Noms identiques : suffixe
+  d’identifiant pour choisir sans ambiguïté. Un appel explicite réserve jusqu’à
+  16 000 caractères, dans la moitié du contexte estimé pour un petit modèle ; une
+  procédure trop grande n’est pas tronquée. Code Codex direct et réponses
+  d’entretien n’affichent pas ce sélecteur, leurs appels ne passent pas par ce chemin.
+- Réglages des modèles locaux : choix du modèle chargé, taille actuelle et limite
+  publiée, saisie de 2 048 à 262 144 jetons dans la limite du modèle. Administrateur
+  seul ; moteur LM Studio local seulement ; modèle au repos sans requête en file,
+  une seule copie, pas d’alias distinct. Rechargement avec les réglages de l’instance,
+  taille relue avant succès. Retour à l’ancienne taille tenté si le chargement rate.
+  Taille retenue par modèle dans les réglages pour les chargements suivants.
+  Écritures contexte/veille sérialisées et données existantes conservées.
+- Délai d’inactivité réglable de 5 à 120 minutes, 20 par défaut : appliqué aux
+  prochains chargements LMS, sans arrêter une réponse. Le moteur sans fenêtre
+  existait déjà. Auto ne reste plus sur un Coder chargé quand un généraliste du
+  même moteur est disponible pour le Chat ; modèle explicite et profil imposé
+  gardent la priorité. Aucun modèle supplémentaire téléchargé par ce réglage.
+- Personnalisation privée : sans préférence, solo ou équipe. Base neutre, sans
+  entreprise supposée. Solo demande de ne pas inventer collègues ou services
+  internes. Chat, Cowork et tâches utilisent le profil ; Code lit seulement le
+  choix solo/équipe de son auteur, sans lui ajouter les mémoires privées du profil.
+- Signalement Code sans détail : cause inconnue. Ajout d’un bouton de copie du
+  message d’erreur. Essais CLI (33), extension VS Code (16) et choix des modèles
+  de Code réussis. Pas de reproduction du PC de ce commentaire, ni de son erreur.
+
+Essais ciblés : liens privés/internes refusés, DNS fixé, redirection refusée,
+fichier trop grand, choix entre skills, empreinte de blob et fichier joint traité
+comme texte ; vrai skill public frontend-design de anthropics/skills lu à la
+révision ca45fc496a3436251f191354091d557da31c15b5, licence et provenance incluses,
+sans enregistrement dans le profil. Persistance, écritures concurrentes, refus
+modèle occupé/en file/alias, restauration après échec, taille relue et préférences
+personnelles isolées essayés avec doublures. UI vue dans un navigateur isolé :
+choix et prévisualisation avant ajout, mode solo, délai et contexte confirmés par
+une API fictive, sélection de `/relecture-d-un-texte` par Entrée. Captures temporaires
+/private/tmp/helix-reglages-modeles.jpg et /private/tmp/helix-commandes-skills.jpg.
+Pas de rechargement du moteur du poste de Medhi. Le parcours Windows est étendu
+pour réellement changer le contexte et le TTL puis restaurer les valeurs initiales
+sur la machine CI jetable, avant publication. Contrôle complet final en cours.
+
+Validation ciblée finale : typecheck et compilation réussis ; 41 essais
+compétences, 33 CLI, 16 extension VS Code et essais de routage réussis. Catalogues
+complets : 4 513 clés interface et 1 719 passerelle, six langues à 100 %.
+Le banc Roblox reproduit aussi 33 outils conservés sur 70, dont les 28 de Roblox.
+Les anciennes assertions textuelles des essais compétences ont été adaptées au
+préambule neutre, sans retirer les contrôles d’injection, de visibilité ni de taille.
+Les métadonnées du dernier vrai Windows réussi ont été relues (lms ps : modèle
+canonique, idle, queued 0, TTL 1 200 000 ms) pour préparer l’étape de rechargement.
+Contrôle complet et parcours Windows de ce nouveau candidat restent à terminer.

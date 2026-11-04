@@ -3,7 +3,7 @@
   "nomAffiche": "Helix",
   "depotMisesAJour": "medhiclb/HelixAI",
   "private": true,
-  "version": "2026.1104.1",
+  "version": "2026.1104.2",
   "license": "AGPL-3.0-only",
   "description": "Plateforme d'IA souveraine, locale et open source",
   "desktopName": "helix-plateforme.desktop",
@@ -55,7 +55,8 @@
     "essai:entretiens": "node scripts/essai-entretiens.mjs && node scripts/essai-voix-entretien.mjs && node scripts/essai-conversation-orale.mjs && node scripts/essai-kokoro.mjs",
     "essai:modeles-interface": "node scripts/essai-modeles-interface.mjs",
     "essai:kokoro-ci": "node scripts/essai-kokoro-ci.mjs",
-    "essai:machines": "node scripts/essai-correctifs-machines.mjs"
+    "essai:machines": "node scripts/essai-correctifs-machines.mjs",
+    "essai:skills": "node scripts/essai-skills-contexte-solo.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",

@@ -21,5 +21,6 @@ try {
  assert.ok((await cas([modele('prive',['chat'],{proprietaire:'alice'})],{acces:'bob'})).error);
  globalThis.__impose='absent';assert.ok((await cas([local])).error);globalThis.__impose=undefined;
  assert.equal((await cas([local],{model:local.id})).model.id,local.id);
+ globalThis.__modeles=[modele('qwen2.5-coder',['chat','code']),modele('qwen2.5-instruct',['chat'],{loaded:false})];invalidate();assert.equal((await choisir({role:'chat'})).model.id,'qwen2.5-instruct');assert.equal((await choisir({role:'code'})).model.id,'qwen2.5-coder');assert.equal((await choisir({role:'chat',model:'qwen2.5-coder'})).model.id,'qwen2.5-coder');globalThis.__modeles=[modele('qwen2.5-coder',['chat','code'])];invalidate();assert.equal((await choisir({role:'chat'})).model.id,'qwen2.5-coder');
  console.log('Code : modèle local générique, spécialiste prioritaire, embeddings exclus, clés et propriétaire respectés, profil imposé conservé.');
 }finally{delete globalThis.__modeles;delete globalThis.__impose;rmSync(d,{recursive:true,force:true})}

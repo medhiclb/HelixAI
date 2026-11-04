@@ -31,6 +31,8 @@ interface Regle {
  * jamais. Elles n'arrêtent que la répétition mécanique.
  */
 const REGLES: { methode: string; chemin: string; regle: Regle }[] = [
+  // Plusieurs lectures distantes et jusqu’à 8 Mo de catalogue, avant prévisualisation.
+  { methode: "POST", chemin: "/helix/competences/importer-lien", regle: { max: 6, fenetreMs: 60_000 } },
   // Relit tout le magasin et 90 jours de journal, en une requête.
   { methode: "GET", chemin: "/helix/export", regle: { max: 3, fenetreMs: 60_000 } },
   // Relit et rehache le journal du jour, deux fois.

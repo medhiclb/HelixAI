@@ -1,6 +1,7 @@
 import { db } from "./db.ts";
 import {
   choisirCompetences,
+  competenceExplicite,
   placeCompetences,
   voitCompetence,
   type ChoixCompetences,
@@ -78,7 +79,12 @@ export async function competencesPour(userId: string | null): Promise<Competence
 /** Ce qui part au modèle pour cette demande, mesuré contre la taille de sa conversation (en jetons). */
 export async function pourLaDemande(userId: string | null, demande: string, contexte: number): Promise<ChoixCompetences> {
   const liste = await competencesPour(userId);
-  const choix = choisirCompetences(liste, demande, placeCompetences(contexte));
+  const explicite = competenceExplicite(liste, demande);
+  // Un appel volontaire réserve davantage de place à la méthode choisie,
+  // sans dépasser la moitié d’un petit contexte ni 16 000 caractères.
+  const fenetre = Number.isFinite(contexte) && contexte > 0 ? contexte : 8192;
+  const place = explicite ? Math.max(placeCompetences(fenetre), Math.min(16000, Math.floor(fenetre * 1.5))) : placeCompetences(fenetre);
+  const choix = choisirCompetences(explicite ? [explicite] : liste, demande, place);
   if (choix.mode !== "aucune") {
     console.log(
       `[competences] ${liste.length} compétence(s), ${choix.mode === "entier" ? "toutes en entier" : `index et ${choix.appliquees.length} en entier`}, ${choix.consigne?.length ?? 0} caractères`,
