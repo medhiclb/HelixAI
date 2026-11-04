@@ -8103,3 +8103,13 @@ octets), au lieu de 1,2 Go. Les fichiers existants différents sont conservés.
 Le contrôle Windows du précédent candidat Kokoro 41659177784 est finalement
 réussi à sa seconde tentative, comme les deux parcours Linux. La .1103.2 est
 publique depuis le 04/11, avec ses 21 fichiers et son manifeste signé contrôlés après publication ; les corrections présentes se préparent en .1104.1.
+
+Validation locale du correctif 2026.1104.1 : compilation et contrôles TypeScript
+réussis, 2 730 contrôles de sécurité réussis sans échec. Les catalogues couvrent
+4 477 clés interface et 1 700 clés passerelle dans les six langues. Les 56 essais
+Roblox/Blender passent ; un schéma à contraintes volumineuses conserve aussi
+l’avertissement quand des outils doivent réellement être écartés. Arc A/B dédiée
+et Arc intégrée sont distinguées dans les essais. Les quatre applications
+empaquetées correspondent aux fichiers construits ; les notes se relisent dans
+les sept langues. Publication .1104.1 encore suspendue au parcours Windows
+GitHub 41857025573, sur da3d4239e324fa58ec46e8798d09d3d8dfb4f272.
