@@ -11,8 +11,8 @@ refaite à l'envers.
 | | |
 |---|---|
 | Version | 2026.1104.2 (`package.json`) |
-| Dernière mise à jour | 30 septembre 2026 |
-| Vérifié | `npm run securite` : 2290 contrôles, 0 échec (30/09/2026, sur le code fusionné avec les vrais catalogues) ; `npm run typecheck` ; relevés à 100 % dans les six catalogues (interface 3 893 phrases, passerelle 1 503) ; essai Windows sur GitHub Actions ; `essai:cli`, `essai:vscode`, `essai:palmier` |
+| Dernière mise à jour | 4 novembre 2026 |
+| Vérifié | 2026.1104.2 : `npm run typecheck`, build, 2 731 contrôles de sécurité sans échec, catalogues complets (4 513 clés interface, 1 719 passerelle), CLI (33), extension VS Code (16), parcours Windows avec rechargement réel du contexte et TTL, réflexion Linux et session Code Linux (41915718431) |
 | Reste à essayer | sur les vraies machines : § 5, « Ce qui reste à essayer sur les postes de Medhi » |
 | Documents liés | [ARCHITECTURE.md](ARCHITECTURE.md), [SECURITE.md](SECURITE.md), [SCREENS.md](SCREENS.md), [SIGNATURE.md](SIGNATURE.md), [README.md](README.md), [docs/GUIDE.md](docs/GUIDE.md) |
 
@@ -8210,3 +8210,12 @@ préambule neutre, sans retirer les contrôles d’injection, de visibilité ni 
 Les métadonnées du dernier vrai Windows réussi ont été relues (lms ps : modèle
 canonique, idle, queued 0, TTL 1 200 000 ms) pour préparer l’étape de rechargement.
 Contrôle complet et parcours Windows de ce nouveau candidat restent à terminer.
+
+Publication finale 2026.1104.2 : les trois jobs de 41915718431 sont réussis,
+ainsi que l’analyse GitHub 41915717006. Windows a confirmé le changement de
+contexte, une seule copie en mémoire et TTL 600 000 ms par `lms ps`, puis le
+retour à la taille initiale. Les 21 fichiers publics correspondent aux originaux,
+et le manifeste public a été téléchargé anonymement et relu avec la clé de
+l’application installée. La copie temporaire de fabrication est supprimée après
+ces preuves ; journaux et notes traduites conservés. Les vrais PC des signalements
+AMD, GPT-OSS 20B et Code sans erreur précise restent à essayer comme noté plus haut.
