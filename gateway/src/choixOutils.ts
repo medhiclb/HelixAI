@@ -96,6 +96,24 @@ export function outilsDejaAppeles(messages: unknown[]): Set<string> {
   return noms;
 }
 
+/**
+ * Dit si une question courte a une intention qui justifie d'envoyer des outils.
+ * Une question conversationnelle sans service nommé peut garder l'historique
+ * complet : injecter les outils de tous les connecteurs ne doit pas lui faire
+ * perdre les premiers échanges faute de place.
+ */
+export function outilsNecessairesPourQuestion(
+  texte: string,
+  messages: unknown[],
+  outils: Iterable<OutilNomme>,
+  libelles: Record<string, string> = {},
+): boolean {
+  if (outilsDejaAppeles(messages).size > 0) return true;
+  const services = new Set<string>();
+  for (const outil of outils) services.add(serviceDe(outil.function?.name ?? ""));
+  return servicesNommes(texte, services, libelles).size > 0;
+}
+
 /** Le texte d'un message, contenu simple ou en parties. */
 function texte(m: unknown): string {
   const c = (m as { content?: unknown })?.content;

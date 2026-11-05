@@ -8,7 +8,7 @@ import { niveauEffort } from "./config.ts";
 import { resolve, invalidate, peutVoir } from "./router.ts";
 import { loadModel } from "./backends.ts";
 import { toolsForModel, hasTools, workspace, status as etatMcp } from "./mcp.ts";
-import { choisirOutils, allegerOutilsConnectes, placeDesOutils, serviceDe } from "./choixOutils.ts";
+import { choisirOutils, outilsNecessairesPourQuestion, allegerOutilsConnectes, placeDesOutils, serviceDe } from "./choixOutils.ts";
 import { executerOutil, cibleDe, refusApplication } from "./outils.ts";
 import { cheminReel, estProtege } from "./zonesProtegees.ts";
 import * as computer from "./computer.ts";
@@ -1186,6 +1186,30 @@ export async function handleChatRequest(
    */
   const petit = petits.estPetitModele(model);
   if (petit && tools) tools = petits.outilsPourPetit(tools);
+
+  /*
+   * Une question conversationnelle courte n'a pas besoin des descriptions de
+   * tous les connecteurs. Quand « Outils » est activé, les injecter avant de
+   * mesurer l'historique pouvait retirer le premier échange d'un Chat très
+   * court (par exemple le mot secret demandé au tour suivant). Les outils
+   * restent actifs pour un service nommé, un appel déjà commencé, un agent ou
+   * une recherche web.
+   */
+  const questionCourte = petits.texteDuDernierMessage(body.messages);
+  if (
+    interfaceHelix &&
+    body.tools === true &&
+    body.web !== true &&
+    !(body as { agent?: unknown }).agent &&
+    tools &&
+    estQuestionSimple(questionCourte)
+  ) {
+    const libelles: Record<string, string> = {};
+    for (const s of etatMcp()) libelles[s.id] = s.label;
+    if (!outilsNecessairesPourQuestion(questionCourte, body.messages, tools, libelles)) {
+      tools = undefined;
+    }
+  }
 
   /*
    * Recherche sur le web (rechercheWeb.ts, 28/09/2026) : seulement l'écran de
