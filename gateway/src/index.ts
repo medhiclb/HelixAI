@@ -1,3 +1,7 @@
+import { consigneModeTravail } from "./profilTravail.ts";
+import { chargerContextesModeles, contexteSouhaite, enregistrerContexte, tailleValide, delaiVeilleMinutes, enregistrerVeille, veilleValide } from "./contextesModeles.ts";
+import { importerCompetenceLien } from "./importCompetences.ts";
+import * as voixNeurale from "./kokoro.ts";
 import * as entretiens from "./entretiens.ts";
 import * as vps from "./vps.ts";
 import { preparerScenario } from "./videosScenario.ts";
@@ -29,6 +33,7 @@ import { estProtege } from "./zonesProtegees.ts";
 import { PORT, HOST, surLeReseau, tousLesBackends } from "./config.ts";
 import {
   discover,
+  changerContexteLocal,
   loadModel,
   stopLmStudioIfStarted,
   findLms,
@@ -1926,6 +1931,12 @@ async function profilDe(accountId: string): Promise<Demandeur | null> {
  * détail est en regard de chacun.
  */
 const EXECUTION: { methode: string; chemin: string }[] = [
+  { methode: "POST", chemin: "/helix/competences/importer-lien" },
+  { methode: "GET", chemin: "/helix/models/contexte" },
+  { methode: "POST", chemin: "/helix/models/contexte" },
+  { methode: "GET", chemin: "/helix/voix" },
+  { methode: "POST", chemin: "/helix/voix" },
+  { methode: "POST", chemin: "/helix/voix/installer" },
   { methode: "POST", chemin: "/helix/models/load" },
   { methode: "POST", chemin: "/helix/services/entretiens" },
   { methode: "POST", chemin: "/helix/code/vps" },
@@ -3083,6 +3094,23 @@ async function handleDossiers(
   });
 }
 
+/** Voix privée : une séance pour lire/générer, un administrateur pour télécharger. */
+async function handleVoix(req:http.IncomingMessage,res:http.ServerResponse,url:URL):Promise<void>{
+ const qui=await demandeur(req,url);if(!qui)return send(res,401,sansSeance());
+ if(req.method==='GET'){const etat=voixNeurale.etatKokoro();return send(res,200,{...etat,installable:etat.installable&&await estAdministrateur(qui.userId)})}
+ try{
+ const corps=await readJson(req,24*1024) as Record<string,unknown>;
+ if(!corps||typeof corps!=='object'||Array.isArray(corps))return send(res,400,{error:{message:t("Paramètres de lecture vocale invalides.")}});
+ if(url.pathname.endsWith('/installer')){
+  if(!await estAdministrateur(qui.userId))return send(res,403,{error:{message:t("Seul l'administrateur peut préparer la voix locale.")}});
+  if(corps.accord!==true)return send(res,400,{error:{message:t("Installation non confirmée : `accord` doit valoir true.")}});
+  await voixNeurale.preparerKokoro();return send(res,200,voixNeurale.etatKokoro());
+ }
+ const controle=new AbortController();const annuler=()=>controle.abort();res.once('close',annuler);
+ try{const son=await voixNeurale.parlerKokoro(corps,controle.signal);if(!res.destroyed){res.writeHead(200,{...entetesOrigine(req),...ENTETES_SECURITE,'Content-Type':'audio/wav','Content-Length':son.length,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(son)}}finally{res.removeListener('close',annuler)}
+ }catch(e){if(!res.destroyed)send(res,e instanceof voixNeurale.ErreurVoix?e.statut:500,{error:{message:e instanceof voixNeurale.ErreurVoix?e.message:t("La préparation de la voix a échoué. Réessayez.")}})}
+}
+
 async function handleEntretiens(req:http.IncomingMessage,res:http.ServerResponse,url:URL):Promise<void>{
  const qui=await demandeur(req,url);if(!qui)return send(res,401,sansSeance());
  try{if(req.method==='GET')return send(res,200,{entretiens:await entretiens.listerEntretiens(qui.userId)});
@@ -3648,6 +3676,7 @@ async function traiterCodePrompt(
   const dossierDemande = reglageEnvoi.dossier;
   if (auteur) noterDemandeCode(body.sessionID, auteur.userId, dossierDemande);
   // Les compétences de la personne, après la méthode de travail (competences.ts, 23/10/2026) : du texte, rien qui s'exécute.
+  if (auteur) texteEnvoye += "\n\n" + await consigneModeTravail(auteur.userId);
   if (auteur) texteEnvoye += await competences.consignePourCode(auteur.userId, body.text);
   // Les accords donnés aux outils d'OpenCode valent pour un tour (permissionsCode.ts).
   nouveauTourCode(body.sessionID);
@@ -6084,6 +6113,39 @@ const traiter = (
       } else if (req.method !== "GET" || path.endsWith("/conseil")) return send(res, 405, {});
       return send(res, 200, { ...optimisation.diagnosticOptimisation(detectHardware()), admin });
     }
+    if (path === "/helix/models/contexte" && (req.method === "GET" || req.method === "POST")) {
+      const qui = await demandeur(req, url);
+      if (!qui) return send(res, 401, sansSeance());
+      const admin = await estAdministrateur(qui.userId);
+      const backend = backendById("lmstudio");
+      const reglable = !!backend && optimisation.backendLocalSur(backend) && !moteurOuvert();
+      const disponibles = reglable ? (await models(true)).filter(m => m.backendId === "lmstudio" && m.loaded && m.nature !== "embedding" && (m.roles.includes("chat") || m.roles.includes("code"))) : [];
+      if (req.method === "GET") return send(res, 200, { admin, reglable, veilleMinutes: delaiVeilleMinutes(), modeles: disponibles.map(m => ({ uid: m.uid, nom: m.id, actuel: m.contexteCharge, maximum: m.contexteMax, souhaite: contexteSouhaite(m.id) })) });
+      if (!admin) return send(res, 403, { error: { message: t("Seul l'administrateur de l'instance peut modifier ce réglage.") } });
+      if (!reglable) return send(res, 409, { error: { message: t("Cette taille de contexte n’est pas disponible pour ce modèle local.") } });
+      const corps = await readJson(req, 8192) as { modele?: unknown; taille?: unknown; veilleMinutes?: unknown };
+      if (corps.veilleMinutes !== undefined) {
+        if (!veilleValide(corps.veilleMinutes)) return send(res, 400, { error: { message: t("Choix inconnu.") } });
+        await enregistrerVeille(corps.veilleMinutes, qui.userId);
+        return send(res, 200, { veilleMinutes: delaiVeilleMinutes() });
+      }
+      const modele = disponibles.find(m => m.uid === corps.modele);
+      if (!modele || !tailleValide(corps.taille)) return send(res, 400, { error: { message: t("Cette taille de contexte n’est pas disponible pour ce modèle local.") } });
+      try {
+        const actuel = await changerContexteLocal(modele, corps.taille);
+        invalidate();
+        await enregistrerContexte(modele.id, actuel, qui.userId);
+        return send(res, 200, { actuel });
+      } catch (e) { invalidate(); return send(res, 409, { error: { message: e instanceof Error ? e.message : t("Demande refusée.") } }); }
+    }
+    if (req.method === "POST" && path === "/helix/competences/importer-lien") {
+      const qui = await demandeur(req, url);
+      if (!qui) return send(res, 401, sansSeance());
+      const corps = await readJson(req, 8192) as { adresse?: unknown; selection?: unknown };
+      if (typeof corps.adresse !== "string" || corps.adresse.length > 2048 || (corps.selection !== undefined && (typeof corps.selection !== "string" || corps.selection.length > 1000))) return send(res, 400, { error: { message: t("Adresse invalide.") } });
+      try { return send(res, 200, await importerCompetenceLien(corps.adresse, corps.selection as string | undefined)); }
+      catch (e) { return send(res, 400, { error: { message: e instanceof Error ? e.message : t("Ce dépôt n'a pas pu être lu.") } }); }
+    }
     if (req.method === "GET" && path === "/helix/moteur-lmstudio") return handleMoteurLmStudioEtat(req, res, url);
     if (req.method === "POST" && path === "/helix/moteur-lmstudio") return handleMoteurLmStudioChoix(req, res, url);
     if (req.method === "POST" && path === "/helix/auth/create")
@@ -6316,6 +6378,7 @@ const traiter = (
     if (req.method === "POST" && path === "/helix/atelier/verifier")
       return handleAtelierVerifier(res);
 
+    if ((req.method === "GET" || req.method === "POST") && path === "/helix/voix" || req.method === "POST" && path === "/helix/voix/installer") return handleVoix(req,res,url);
     if (req.method === "GET" && path === "/helix/dictee") return handleDicteeEtat(res);
     if (req.method === "POST" && path === "/helix/dictee/installer")
       return handleDicteeInstaller(req, res, url);
@@ -6716,6 +6779,7 @@ async function preparerMagasin(): Promise<void> {
   // Le moteur de LM Studio que Helix peut démarrer (23/10/2026) : connu avant la première découverte, qui lancerait `lms`.
   await chargerChoixMoteur();
   await optimisation.chargerOptimisation();
+  await chargerContextesModeles();
   // Mode « machine de l'agent » choisi : elle démarre avec l'instance, sans attendre la première demande.
   if (configEcran().mode === "sandbox") void demarrerMachine().catch(() => undefined);
   // Les clés de modèles cloud doivent être des backends dès la première requête.

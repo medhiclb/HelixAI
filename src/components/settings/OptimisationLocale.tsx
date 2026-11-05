@@ -1,3 +1,4 @@
+import { ContexteModele } from "./ContexteModele";
 import { useEffect, useState } from "react";
 import { Cpu, Loader2 } from "lucide-react";
 import { apiFetch } from "@/lib/endpoint";
@@ -43,6 +44,7 @@ export function OptimisationLocale() {
       <p className="text-xs text-muted-foreground">{tf("Conseil produit par {0} sur cette machine.", conseil.modele)}</p>
       {conseil.debitGlobal !== undefined && <p className="text-xs text-muted-foreground">{tf("Débit global de cette demande : {0} jetons/s, lecture initiale comprise.", conseil.debitGlobal)}</p>}
     </div>}
+    <ContexteModele />
     {erreur && <p role="alert" className="text-sm text-destructive">{erreur}</p>}
   </section>;
 }

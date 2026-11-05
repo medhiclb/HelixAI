@@ -1,3 +1,4 @@
+import { ErreurCode } from "@/components/code/ErreurCode";
 import { ProjetVpsChip, type ProjetVps } from "@/components/code/ProjetVpsChip";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -11,7 +12,6 @@ import { Composer } from "@/components/chat/Composer";
 import { DossierTravailChip } from "@/components/chat/DossierTravailChip";
 import { ApprovalSelector } from "@/components/chat/CoworkSelectors";
 import { MessageList } from "@/components/chat/MessageList";
-import { InfoBox } from "@/components/ui/InfoBox";
 import { InstallerOpencode } from "@/components/code/InstallerOpencode";
 import { useCode } from "@/hooks/useCode";
 import { useCodex } from "@/hooks/useCodex";
@@ -149,6 +149,7 @@ export function CodePage() {
 
   const composer = (
     <Composer
+      commandesCompetences={moteur === "opencode"}
       placeholder={t("Que voulez-vous implémenter ?")}
       value={draft}
       onChange={setDraft}
@@ -246,13 +247,7 @@ export function CodePage() {
             <div className="mx-auto w-full max-w-[760px] px-6 py-8">
               <MessageList messages={vue.messages} />
               {vue.error && (
-                <InfoBox
-                  tone="warning"
-                  className="mt-4"
-                  leading={<TriangleAlert size={15} strokeWidth={1.75} />}
-                >
-                  {vue.error}
-                </InfoBox>
+                <ErreurCode message={vue.error} />
               )}
             </div>
           </div>
@@ -299,13 +294,7 @@ export function CodePage() {
           {avis}
 
           {vue.error && (
-            <InfoBox
-              tone="warning"
-              className="mt-4"
-              leading={<TriangleAlert size={15} strokeWidth={1.75} />}
-            >
-              {vue.error}
-            </InfoBox>
+            <ErreurCode message={vue.error} />
           )}
 
         </div>

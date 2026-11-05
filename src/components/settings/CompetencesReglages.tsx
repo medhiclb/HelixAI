@@ -1,3 +1,4 @@
+import { ImporterCompetenceLien } from "@/components/competences/ImporterCompetenceLien";
 import { useRef, useState } from "react";
 import { Download, FileUp, Pencil, Plus, Sparkles, Users, User as UserIcon } from "lucide-react";
 import { SettingsPage, SettingsRow, Card } from "@/components/settings/SettingsShell";
@@ -118,6 +119,7 @@ export function CompetencesSettings() {
               className="hidden"
               onChange={(e) => void importer(e.target.files)}
             />
+            <ImporterCompetenceLien onImport={lecture => setOuverte({ genre: "import", valeurs: { nom: lecture.nom, quand: lecture.quand, instructions: lecture.instructions, fichiers: lecture.fichiers, visibilite: "personnel" }, avertissements: lecture.avertissements })} />
             <Button variant="secondary" icon={FileUp} onClick={() => choix.current?.click()}>
               {t("Importer")}
             </Button>

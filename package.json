@@ -3,7 +3,7 @@
   "nomAffiche": "Helix",
   "depotMisesAJour": "medhiclb/HelixAI",
   "private": true,
-  "version": "2026.1102.4",
+  "version": "2026.1104.2",
   "license": "AGPL-3.0-only",
   "description": "Plateforme d'IA souveraine, locale et open source",
   "desktopName": "helix-plateforme.desktop",
@@ -22,7 +22,7 @@
     "gateway": "node gateway/src/index.ts",
     "app": "npm run build:gateway && electron .",
     "package": "npm run build && electron-builder --publish never",
-    "build:gateway": "node scripts/modele-application.mjs && esbuild gateway/src/index.ts --bundle --platform=node --target=node20 --format=cjs --outfile=dist-gateway/index.cjs --external:pg-native && esbuild gateway/tools/motdepasse.ts --bundle --platform=node --target=node20 --format=cjs --outfile=dist-gateway/motdepasse.cjs --external:pg-native",
+    "build:gateway": "node scripts/preparer-kokoro.mjs && node scripts/modele-application.mjs && esbuild gateway/src/index.ts --bundle --platform=node --target=node20 --format=cjs --outfile=dist-gateway/index.cjs --external:pg-native && esbuild gateway/tools/motdepasse.ts --bundle --platform=node --target=node20 --format=cjs --outfile=dist-gateway/motdepasse.cjs --external:pg-native",
     "build": "tsc --noEmit && npm run typecheck:gateway && vite build && npm run build:gateway",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit && npm run typecheck:gateway",
@@ -51,7 +51,12 @@
     "essai:modeles-code": "node scripts/essai-modeles-code.mjs",
     "essai:vps": "node scripts/essai-vps.mjs && node scripts/essai-permissions-vps.mjs && node scripts/essai-outils-vps.mjs",
     "essai:studio-interface": "node scripts/essai-studio-interface.mjs",
-    "essai:entretiens": "node scripts/essai-entretiens.mjs && node scripts/essai-voix-entretien.mjs"
+    "essai:rea": "node scripts/essai-rea.mjs && node scripts/essai-outils-rea.mjs && node scripts/essai-regles-rea.mjs",
+    "essai:entretiens": "node scripts/essai-entretiens.mjs && node scripts/essai-voix-entretien.mjs && node scripts/essai-conversation-orale.mjs && node scripts/essai-kokoro.mjs",
+    "essai:modeles-interface": "node scripts/essai-modeles-interface.mjs",
+    "essai:kokoro-ci": "node scripts/essai-kokoro-ci.mjs",
+    "essai:machines": "node scripts/essai-correctifs-machines.mjs",
+    "essai:skills": "node scripts/essai-skills-contexte-solo.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",

@@ -608,7 +608,8 @@ try {
     }
   }
   if (echecs.length && process.env.HELIX_ESSAI_BAVARD) console.log(journal.slice(-4000));
-  rmSync(TMP, { recursive: true, force: true });
+  // Les derniers tubes des moteurs jetables peuvent se fermer après le signal de sortie.
+  rmSync(TMP, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 }
 console.log(`\n${reussis} vérification(s) réussie(s), ${echecs.length} échec(s).`);
 process.exit(echecs.length ? 1 : 0);

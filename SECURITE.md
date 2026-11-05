@@ -7134,3 +7134,34 @@ copie du bilan. Import de 100 000 caractères au plus, requête bornée à 512 K
 contexte réduit par extraits, réponses du modèle validées avant écriture. Aucun
 outil ni fournisseur distant dans ce parcours. Aucun diagnostic psychologique ni
 notation scolaire officielle. Qualité des vrais modèles non essayée ici.
+
+
+### REA dans Code, 02/11/2026
+
+Serveur local installé au branchement administrateur, version 6.8.0 et archive
+épinglée par SHA-256, dépendances du verrou source embarqué (révision
+160d821ac9a0310afcb8d1fc427862dd6508add5). Exception de licences autorisée par Medhi.
+`npm ci --ignore-scripts --omit=dev --omit=optional`, registre fixe, configurations
+npm et HOME privés ; ni Frida ni setup d'agents ni moteur externe. Aucun port REA
+exposé : stdio. Deux outils de découverte/appel présentés à Code ; l'appel est
+résolu vers son vrai nom et ses vrais arguments avant attribution, contrôle de
+rôle et carte obligatoire, y compris à niveau tout. Catalogue borné, schéma à la
+demande, nom inconnu refusé, chemins protégés refusés, sortie bornée avec note.
+VPS refusé, ambiguïté de titulaire refusée, découverte réservée à l'administrateur.
+Les outils ne sont pas proposés aux employés/Cowork. Analyse partagée entre les
+administrateurs ; certains outils exécutent des programmes après accord : aucune
+promesse de confinement OS. Tests unitaires de refus, archive fausse, configuration
+sans installation, concurrence ; tests de dispatch (nom réel sur carte, refus,
+rôle, VPS, attribution). Installation et analyse JavaScript réelles sur données
+fictives, autres systèmes et moteurs natifs non essayés.
+
+
+### Entretien oral (03/11/2026)
+
+Le micro requiert le clic de démarrage, puis s'ouvre entre les lectures du coach.
+Les pistes sont libérées avant envoi à Whisper et à chaque pause/départ/changement
+de compte. Une acquisition asynchrone achevée après départ libère ses pistes.
+L'annulation de transcription empêche son résultat tardif d'être envoyé au coach.
+Seules les voix TTS déclarées locales par le système sont sélectionnables. Aucun
+nouveau téléchargement de modèle TTS. La simulation évalue le contenu transcrit,
+jamais l'accent ou une caractéristique acoustique. Limite audio inchangée : 5 min.

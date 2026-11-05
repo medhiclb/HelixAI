@@ -662,6 +662,12 @@ export function PersonnalisationSettings() {
 
   return (
     <SettingsPage title={t("Personnalisation de l'IA")}>
+      <SettingsRow title={t("Votre façon de travailler")} desc={t("Ce choix adapte les réponses de l’assistant à votre situation. Vous pouvez le changer à tout moment.")}>
+        <Card><label className="block space-y-2 text-sm"><span>{t("Mode de travail")}</span>
+          <select className="w-full rounded-lg border border-border bg-background p-3 text-foreground" value={profile.modeTravail ?? ""} onChange={e => update({ modeTravail: e.target.value === "solo" ? "solo" : e.target.value === "equipe" ? "equipe" : undefined })}>
+            <option value="">{t("Sans préférence")}</option><option value="solo">{t("Je travaille seul")}</option><option value="equipe">{t("Je travaille en équipe")}</option>
+          </select></label></Card>
+      </SettingsRow>
       <InfoBox tone="muted" className="mb-2" leading={<UserIcon size={15} strokeWidth={1.75} />}>
         {t("Ces réglages sont")}{" "}<strong className="font-medium text-foreground">{t("personnels")}</strong>{" "}{t("et s'appliquent à votre compte (")}{user.email}{t("). Ils ne sont jamais partagés avec les autres utilisateurs de cette installation, même lorsque vous partagez une conversation.")}
       </InfoBox>

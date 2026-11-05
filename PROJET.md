@@ -10,9 +10,9 @@ refaite à l'envers.
 
 | | |
 |---|---|
-| Version | 2026.1102.4 (`package.json`) |
-| Dernière mise à jour | 30 septembre 2026 |
-| Vérifié | `npm run securite` : 2290 contrôles, 0 échec (30/09/2026, sur le code fusionné avec les vrais catalogues) ; `npm run typecheck` ; relevés à 100 % dans les six catalogues (interface 3 893 phrases, passerelle 1 503) ; essai Windows sur GitHub Actions ; `essai:cli`, `essai:vscode`, `essai:palmier` |
+| Version | 2026.1104.2 (`package.json`) |
+| Dernière mise à jour | 4 novembre 2026 |
+| Vérifié | 2026.1104.2 : `npm run typecheck`, build, 2 731 contrôles de sécurité sans échec, catalogues complets (4 513 clés interface, 1 719 passerelle), CLI (33), extension VS Code (16), parcours Windows avec rechargement réel du contexte et TTL, réflexion Linux et session Code Linux (41915718431) |
 | Reste à essayer | sur les vraies machines : § 5, « Ce qui reste à essayer sur les postes de Medhi » |
 | Documents liés | [ARCHITECTURE.md](ARCHITECTURE.md), [SECURITE.md](SECURITE.md), [SCREENS.md](SCREENS.md), [SIGNATURE.md](SIGNATURE.md), [README.md](README.md), [docs/GUIDE.md](docs/GUIDE.md) |
 
@@ -7835,3 +7835,387 @@ création, réponse, progression de 0 à 1, retour avec historique conservé ; i
 visuelle claire et sombre. Pas de nouvel essai avec un vrai modèle dans cette refonte.
 La première batterie pendant les modifications a trouvé le catalogue en cours de
 traduction (2721/2722) ; les six catalogues sont remplis puis la batterie relancée.
+
+
+### 02/11/2026 : REA pour Code (accord de licences explicite)
+
+Medhi demande morluto/rea comme outil de Code. Ce n'est pas un condenseur de
+sorties comme RTK : c'est un serveur MCP d'analyse de logiciels. Il autorise
+explicitement ses dépendances nécessaires hors MIT/Apache (LGPL-3.0+, BSD, ISC,
+BlueOak, Zlib), notices conservées ; aucun Frida ni moteur externe installé
+automatiquement. Licence de REA : MIT. Version 6.8.0, archive npm SHA-256
+8d542ec76a9cb350584b60a6c9c088706ff812d5bb5b094c20c95b6dc25698bb,
+verrou de la révision 160d821ac9a0310afcb8d1fc427862dd6508add5 conservé et embarqué.
+Installation explicite au branchement du connecteur : Node privé 24.22.1 déjà
+épinglé, tarball vérifié, npm ci sans scripts, sans développement ni modules
+facultatifs, HOME/config/cache privés. Aucun `rea setup`, aucun réglage des
+agents du poste modifié. La mise à niveau du Node privé passe par un paramètre
+optionnel du helper existant, dont les appels antérieurs gardent le comportement.
+
+229 outils reçus lors de l'essai du vrai MCP. Code n'en reçoit pas 229 schémas à
+chaque tour : deux outils découvrent le catalogue borné et appellent l'outil
+choisi. L'identifiant et les arguments réels sont remis à la barrière avant la
+carte ; toute action REA se confirme, y compris en « Tout approuver ». La recherche
+locale de métadonnées reste une lecture. Administrateur seul, pas dans les outils
+Cowork/employés, refus sur les sessions VPS pour ne pas agir sur la mauvaise machine.
+Les arguments de chemins passent aussi par les zones protégées. REA peut lancer
+des programmes via certains outils : la carte, avec tous les arguments, reste la
+frontière de confiance, comme pour les scripts Blender ; ce n'est pas une cage OS.
+Le serveur REA partage son état d'analyse entre les administrateurs de l'instance.
+Résultat transmis au modèle borné à 64 000 caractères avec annonce d'abrègement.
+
+Essai réel isolé sous /private/tmp : installation et version de REA, MCP stdio,
+229 outils, analyse du répertoire JavaScript fictif et fonction addition retrouvée.
+Une première requête sur le seul fichier .js a été refusée par REA : il attend
+un répertoire ou un .asar. Budget de réponse minimal réel 10 Mio ; un budget de
+64 Kio empêche le démarrage, donc 10 Mio côté serveur et 64 000 caractères côté
+passerelle. Frida absent de node_modules. Windows/Linux et moteurs natifs non
+exécutés dans cette session. Les tests de contexte passent en exécution isolée
+(16/16) après un échec sous charge ; un nettoyage de répertoire d'essai désormais
+réessaie les dernières suppressions, sans changer les assertions de l'application.
+Le fond de l'atelier reçoit une trame de points liée à sa caméra et un éclairage
+léger ; les liaisons utilisent l'accent. Les formulaires de coaching reviennent
+en haut lors d'un changement de vue.
+
+Reprise du 03/11/2026 : les premiers contrôles ont détecté un repli de REA sur
+process.execPath, inadapté dans Electron ; supprimé, moteur privé obligatoire et
+refus explicite couvert par essai-rea. Deux contrôles textuels anciens dépendaient
+de la place des prédicats ; leur ordre initial est conservé, sans retirer les
+protections REA. CLI 33/33 et extension VS Code 16/16 après intégration. Les copies
+de compilation et l’installation d’essai REA ont été effacées lors du manque de
+place ; la nouvelle construction utilise une copie isolée avec clonage APFS.
+
+Batterie reprise : 2724/2725. Le seul échec restant est le contrôle textuel
+Unreal qui exigeait son prédicat en dernier, avant le point-virgule. Il accepte
+désormais un autre prédicat relié par OU ; le contrôle du droit administrateur
+et de la carte reste identique. Les essais exécutés des règles REA sont verts.
+
+Essais GitHub du code applicatif c528e1e : OpenClaw Windows x64, ARM64 et
+compte à espaces/accents réussis (41609940431). Session Code Linux réussie
+(41609940312). Les deux parcours avec modèle continuent à cet instant.
+Les 21 fichiers du brouillon .4 sont comparés aux originaux en taille/SHA-256 ;
+les signatures Mac et Windows sont relues avec la clé de l’application du poste.
+Nettoyage de disque : 70 installateurs locaux anciens, déjà publiés et identiques
+en taille/SHA-256, supprimés (9,02 Gio). Journal de leurs liens conservé sous
+release/journaux/doublons-supprimes-2026-11-03.json, hors Git ; aucune donnée,
+aucun modèle ni application installée retiré.
+
+Bilan local final du 03/11/2026 : build et typecheck réussis, 2725 contrôles de
+sécurité sans échec ; 4442/4442 traductions interface et 1681/1681 passerelle
+dans les six langues. CLI 33/33, VS Code 16/16. Paquets finaux comparés au
+JavaScript et à la passerelle compilés pour Mac ARM64/Intel, Windows x64 et
+Linux x64. Démarrage du Mac ARM64 en profil jetable : passerelle HTTP 200.
+Le paquet Debian reçoit explicitement l’adresse du dépôt dans ses métadonnées,
+car la copie isolée ne porte pas le .git dont le constructeur la déduisait.
+Journaux conservés sous release/journaux/2026.1102.4-*.log, hors Git.
+
+Validation de publication .4 : les trois parcours du run 41609940312 sont
+réussis (application Windows avec modèle, réflexion Linux avec modèle, Code
+Linux). Les trois installations OpenClaw du run 41609940431 sont réussies.
+Analyse GitHub 41612153147 réussie. Ces parcours portent sur c528e1e ; les
+commits suivants ne changent que le contrôle textuel Unreal et ce document.
+REA lui-même reste essayé réellement sur Mac seulement, comme indiqué plus haut.
+
+### 03/11/2026 : entretien réellement oral et chargement des modèles borné
+
+Medhi précise que l'entretien doit être parlé. Le mode oral devient le parcours
+initial des entretiens ; il peut aussi s'activer dans les cours. Recruteur au
+centre, transcription repliable, réglages de voix locale et de débit. Un clic
+explicite demande le micro ; la lecture finit avant sa réouverture. Whisper de
+l'instance transcrit dans la langue de la séance, puis la réponse est envoyée au
+même service local de coach. Détection de parole puis 1,8 s de silence, bouton
+Terminer et limite de cinq minutes. Pause, navigation, compte changé et fenêtre
+masquée coupent capture et lecture ; une permission tardive relâche ses pistes.
+Le bilan peut être écouté sans demander le micro. Le mode écrit reste disponible.
+
+Le TTS utilisé ici est la voix locale annoncée par le système, pas un nouveau
+modèle neural distribué par Helix. La qualité et les langues dépendent donc des
+voix installées. Kokoro, Pocket TTS et Qwen TTS ont été examinés ; aucun poids ni
+nouveau runtime TTS téléchargé dans cette modification. Aucun service de voix
+cloud et aucune reconnaissance WebSpeech ne servent de repli. La voix réelle et
+le vrai micro Windows/Linux restent à essayer ; les tests de séquencement sont
+simulés, et ne constituent pas une mesure de naturel de la voix.
+
+La capture d'un chargement de modèles infini correspond à un défaut reproductible :
+useModels invalidait chaque résultat dès la relecture de 15 secondes, même si
+l'appel précédent travaillait encore. Les relectures automatiques sont désormais
+fusionnées ; un rechargement explicite annule l'appel courant. La requête et son
+corps JSON sont bornés à 20 s, même si un transport ignore l'annulation. Une erreur
+persistante et Réessayer remplacent l'attente infinie. Cache existant conservé sur
+échec, réponse du compte précédent ignorée après changement d'identité. La cause
+précise du PC photographié ne peut pas être confirmée sans son journal.
+
+Parcours d’interface isolé : création, démarrage oral, alternance lecture/micro
+fictifs, réponse enregistrée, progression 0→1, seconde question, bilan puis mode
+écrit avec transcription conservée. Portrait et commandes visibles en 1280×720.
+Aucune voix ni capture réelle utilisée pour ce parcours de navigateur.
+
+Bilan local .1103.1 : build/typecheck réussis, 2727 contrôles de sécurité sans
+échec, 4471 clés interface et 1681 passerelle traduites à 100 % dans les six
+langues. Les essais couvrent aussi une transcription qui revient après Pause
+et la lecture d’un bilan sans demander le micro. Un exemple WAV de 7,72 s est
+généré avec la voix système Thomas du Mac, depuis un texte fictif, sans micro ;
+il ne constitue pas un essai de la voix Windows ou du lecteur WebSpeech.
+
+Reproduction visuelle du sélecteur réel dans un banc où apiFetch ne répond
+jamais : Chargement puis Hors ligne, erreur de délai et Réessayer visibles ;
+un clic relance proprement la recherche. Aucun moteur réel utilisé. Les
+clients repassent sur cette version : CLI 33/33, extension VS Code 16/16.
+
+Validation de publication 2026.1103.1 : les trois parcours du run 41626912798
+sont réussis (application Windows avec modèle, réflexion Linux avec modèle,
+Code Linux), sur f6c1d4c. Les commits suivants ne changent que les essais et ce
+document ; analyse 41628456915 réussie. Les 21 fichiers du brouillon ont leurs
+tailles/SHA-256 comparés aux originaux et leurs signatures relues avec la clé
+de l’application installée. Kokoro dédié reste une proposition en attente de
+l’accord de licences demandé à Medhi ; aucun moteur ni poids Kokoro installé.
+
+
+### 03/11/2026 : voix Kokoro française pour les séances orales
+
+Medhi autorise explicitement Kokoro et ses dépendances (« fais tkt fais »),
+y compris eSpeak NG GPL-3.0 et dépendances BSD/ISC. Exception inscrite dans
+AGENTS.md. Poids ONNX int8 et voix ff_siwis Apache-2.0 épinglés à
+1939ad2a8e416c0acfeecc08a694d14ef25f2231, SHA-256 vérifiés. Runtime séparé
+ONNX Runtime Web 1.24.3 WASM, eSpeak NG Emscripten 0.3.5, verrou npm
+SHA-512 sans scripts de cycle de vie, licences/notices conservées. Le paquet
+phonemizer initialement examiné est écarté : sa distribution filtre l’anglais.
+Le port eSpeak complet reçoit « fr » (fr-fr retourne un refus et laisse
+l’anglais courant), et les séparateurs de phonèmes sont retirés avant Kokoro.
+
+Téléchargement volontaire depuis Voix et rythme, réservé à l’administrateur,
+700 Mo libres avant installation ; environ 93 Mo pour les poids/voix et un
+runtime séparé. Pas de téléchargement à l’ouverture. Le mode neuronal est
+proposé en français seulement ; les autres langues gardent les voix système.
+Disponible dans le même composant pour entretien et cours. Préparation
+annoncée avant lecture, Pause annule requête/lecture et tue le processus de
+calcul. Aucun texte dans les arguments, les journaux ou des fichiers audio.
+Calcul isolé, un seul à la fois, entrée 3000 caractères, durée/son bornés,
+aucun téléchargement pendant synthèse. Segments longs divisés sans troncature.
+L’ancien dossier n’est déplacé qu’après installation et génération d’un WAV
+réussies ; restauration si la mise en place échoue.
+
+Essai réel sur instance temporaire Mac : installation npm verrouillée, poids
+issus du téléchargement officiel vérifié, phrase française fictive produisant
+5,65 s de WAV en 8,83 s. Le banc intercepte fetch dans le parent ; cela
+ne constitue pas une barrière réseau du processus de calcul. Les poids,
+la voix et le runtime de calcul sont ouverts par chemins locaux. Whisper small
+local retranscrit la phrase mot pour mot. Annulation tue le calcul, second
+calcul concurrent refusé, voix modifiée refusée. Aucun micro réel utilisé.
+Ces mesures ne garantissent ni le naturel perçu ni la vitesse Windows/Linux ;
+les vrais moteurs de voix sur ces deux plateformes restent à essayer.
+
+Essai Kokoro GitHub 41635643835 réussi sur Windows x64 et Linux x64 :
+installation réelle des moteurs/poids, WAV 24 kHz, annulation, refus concurrent
+et refus d’une voix altérée. Le WAV produit est identique octet par octet
+sur les trois machines Mac/Windows/Linux (SHA-256
+fbbdcc9291f0de105af9ddb5402e461e17baba801113dd6516ee685f208eeb21).
+Calcul mesuré : 13,465 s sur le runner Windows, 8,067 s sur Linux, 8,833 s
+sur ce Mac, pour 5,65 s de parole. Aucune promesse de temps réel.
+CLI 33/33 et extension VS Code 16/16 ; essais oraux simulés sans voix système
+aussi : lecture neuronale finie avant micro, génération tardive ignorée après
+Pause. Contrôle visuel isolé : voix française sélectionnable, préparation
+affichée, commandes Pause et réglages accessibles, aucun micro réel capturé.
+Les vrais périphériques micro et haut-parleurs Windows/Linux restent à essayer.
+
+Bilan local 2026.1103.2 : build/typecheck réussis, 2728 contrôles de sécurité
+sans échec ; 4477/4477 traductions interface et 1696/1696 passerelle dans les
+six langues. Les quatre applications empaquetées ont leur interface complète,
+passerelle, CLI et notices comparées aux fichiers compilés. Les signatures
+Mac et le manifeste de mise à jour Windows utilisent la clé d’éditeur déjà
+installée ; pas de nouveau certificat Apple ni de notarisation ajoutée.
+
+La lecture côté interface divise les cours/bilans longs en passages d’au plus
+300 caractères sans retirer de mots, puis lit chaque WAV successivement.
+Le micro ne se rouvre qu’après le dernier passage. Chaque passage reste sous
+la borne serveur de 3000 caractères et peut être annulé pendant sa préparation
+ou sa lecture. Cela évite de refuser un bilan ou un cours légitime plus long
+que la limite d’une requête vocale.
+
+Mesure complémentaire sur 1190 caractères de cours fictif : 74,75 s de parole
+calculées en 111,03 s avec un fil WASM, 64,80 s avec quatre fils (sur ce Mac).
+Le moteur utilise désormais au plus quatre fils, bornés par availableParallelism.
+L’interface prépare un seul passage suivant pendant le son courant ; les
+passages sont bornés à 300 caractères pour commencer plus tôt et ne pas
+attendre tout le cours. La fin de tous les passages précède l’ouverture du
+micro. Pause annule aussi cette génération anticipée ; aucune file infinie.
+
+Essai final du moteur borné à quatre fils : GitHub 41659177672 réussi
+sous Windows et Linux, sortie identique au WAV français initial (même SHA-256).
+Sur cet exemple court, les runners mesurent 14,112 s Windows et 12,405 s Linux :
+le gain du passage long sur Mac ne se généralise pas aux phrases courtes ni
+aux machines virtuelles. Le chargement anticipé reste limité à un passage.
+Le contrôle client couvre la lecture de plusieurs passages jusqu’au dernier
+et Pause pendant une génération anticipée encore en attente, sans rejet
+non traité ni ouverture du micro.
+
+Une reprise complète de sécurité sous charge a échoué sur la reconnexion
+du faux serveur MCP SSE (délai dépassé). Le même essai isolé repasse 89/89 ;
+une dernière batterie complète est relancée sans benchmark de voix simultané.
+
+La dernière batterie complète du moteur optimisé repasse 2728/2728 sans
+benchmark simultané ; typecheck et catalogues à 100 %. Lecture du vrai WAV
+Kokoro par le vrai lecteur Audio du navigateur isolé, volume à zéro :
+événement de lecture, fin du WAV puis micro fictif, Pause contrôlée. Le banc
+accepte HELIX_ESSAI_VOIX_FICHIER pour reproduire ce parcours sans périphérique
+réel. Aucune capture du micro personnel et aucune sortie sonore réelle.
+
+Parcours applicatif 41659177784 : Code Linux et réflexion Linux réussis.
+Windows échoue sur le téléchargement Qwen3 1.7B par LM Studio : environ
+118 Ko/s, 40,76 Mo sur 1,67 Go puis quatre reprises et délais dépassés.
+L’essai Kokoro Windows est réussi séparément. Une reprise du seul job Windows
+est demandée ; la release reste en brouillon tant que ce parcours n’est pas vert.
+
+
+### 04/11/2026 : Radeon, téléchargements automatiques et outils Roblox
+
+Medhi rapporte une Radeon RX 16 Go non reconnue, des installations de modèles
+qui échouent et le message récurrent d’outils Roblox écartés. Défaut confirmé
+dans le code : seule NVIDIA était interrogée et son absence forçait --gpu off.
+La détection Windows lit maintenant les contrôleurs actifs et la mémoire
+QWORD du pilote, sans traiter le DWORD tronqué comme une mémoire fiable de
+plus de 4 Go. Radeon RX/Pro et Intel Arc dédiées reconnues laissent LM Studio
+choisir son accélération ; iGPU inconnus restent au processeur et la variable
+HELIX_DECHARGEMENT_GPU garde priorité. Sous Linux, la VRAM DRM/sysfs identifie
+les cartes AMD/Intel avec au moins 4 Go dédiés. Détection mise en cache.
+Aucun pilote installé ou modifié. Le vrai PC de la capture n’a pas été essayé ;
+la compatibilité de chaque pilote/ROCm/Vulkan doit être confirmée sur place.
+
+Les descriptions des outils connectés sont raccourcies avant sélection :
+contraintes, propriétés, enum, required, défauts et exemples restent entiers.
+Le service explicitement demandé passe avant les outils d’un ancien service
+utilisé dans le Chat. Un outil utile réellement retiré reste annoncé. Banc
+avec 28 outils Roblox, descriptions longues et place de 18 000 jetons : tous
+sont conservés après allègement. Aucun vrai Studio sur le poste du signalement
+ni ses définitions exactes lus : la capture seule ne prouve pas le budget réel.
+
+Quand lms get échoue, les quatre modèles Qwen GGUF déjà épinglés ont désormais
+un secours direct depuis leur révision Apache-2.0 officielle, via le même
+téléchargeur reprenable et SHA-256 que llama.cpp. Aucun moteur llama.cpp
+installé ou lancé pour ce secours. Import lms import --yes --user-repo, sans
+copie supplémentaire, puis catalogue relu avant chargement. Le dossier des
+modèles choisi par l’utilisateur est respecté. Après un arrêt du catalogue
+LM Studio, un modèle de secours épinglé plus léger peut encore être essayé ;
+un secours réseau raté arrête les nouveaux téléchargements directs. Le Qwen3
+1.7B est annoncé à 1,9 Go conformément au fichier Q8_0 épinglé (1 834 426 016
+octets), au lieu de 1,2 Go. Les fichiers existants différents sont conservés.
+
+Le contrôle Windows du précédent candidat Kokoro 41659177784 est finalement
+réussi à sa seconde tentative, comme les deux parcours Linux. La .1103.2 est
+publique depuis le 04/11, avec ses 21 fichiers et son manifeste signé contrôlés après publication ; les corrections présentes se préparent en .1104.1.
+
+Validation locale du correctif 2026.1104.1 : compilation et contrôles TypeScript
+réussis, 2 730 contrôles de sécurité réussis sans échec. Les catalogues couvrent
+4 477 clés interface et 1 700 clés passerelle dans les six langues. Les 56 essais
+Roblox/Blender passent ; un schéma à contraintes volumineuses conserve aussi
+l’avertissement quand des outils doivent réellement être écartés. Arc A/B dédiée
+et Arc intégrée sont distinguées dans les essais. Les quatre applications
+empaquetées correspondent aux fichiers construits ; les notes se relisent dans
+les sept langues. Publication .1104.1 encore suspendue au parcours Windows
+GitHub 41857025573, sur da3d4239e324fa58ec46e8798d09d3d8dfb4f272.
+
+Complément du 04/11, capture GPT-OSS 20B avec 70 outils : le dernier service
+ayant réellement été appelé garde la priorité de sa famille entière au tour
+suivant, et pas seulement celle de l’outil de détection déjà appelé. Une demande
+explicite d’un autre service garde priorité ; « crée un dossier » pendant un
+travail Studio ne fait plus passer les fichiers du poste avant les outils du
+jeu. Le banc avec 42 outils de fichiers et 28 outils Roblox, sur un budget
+contraint de 8 000 jetons d’outils, conserve les 28 outils Roblox après une
+relance longue sans répéter le nom du service. Pas d’alerte sur les outils de
+fichiers écartés dans ce cas. Essai ciblé et 56 vérifications Roblox/Blender
+réussis ; pas de vrai GPT-OSS 20B ni de Studio du poste signalé essayés.
+Ce complément doit remplacer les paquets du brouillon .1104.1 avant publication.
+
+Validation finale du complément Roblox : build et typecheck réussis, 2 730
+contrôles de sécurité sans échec, 16 essais de contexte et 56 essais
+Roblox/Blender réussis. Catalogues inchangés complets à 100 %. Paquets des
+quatre plateformes reconstruits et comparés au code construit ; 21 fichiers
+du brouillon remplacés, tailles/SHA-256 et signatures relus. Dernière révision
+embarquée : c56d0171256c677d62d60cf405cf2528ab1fa79a. Le parcours GitHub
+41901615274 est encore en cours ; la .1104.1 reste en brouillon à cette étape.
+
+
+04/11/2026, suite : la 2026.1104.1 corrective est publique après réussite de
+41901615274. Ses 21 fichiers ont été relus en taille/SHA-256 et le manifeste
+public relu avec la clé de l’application installée. Les ajouts demandés ensuite
+(import de skills par lien, contexte par modèle, mode solo/équipe) préparent
+la 2026.1104.2 séparément.
+
+### 04/11/2026 : skills par lien et commandes, contexte, solo et veille (2026.1104.2)
+
+Demandes successives de Medhi : importer les skills GitHub et d’autres sources,
+régler le contexte depuis le logiciel, choisir entre travail seul ou en équipe,
+rendre la veille des modèles réglable et appeler les skills avec une commande `/`.
+
+- Import dans Réglages, Compétences : dépôt public GitHub, dossier, SKILL.md ou
+  lien HTTPS direct vers Markdown/ZIP. Plusieurs SKILL.md : choix avant lecture.
+  La branche est résolue en commit, les blobs téléchargés sont comparés à leurs
+  empreintes Git ; les liens et la révision restent dans SOURCE.txt. Licences et
+  notices du dossier ou de la racine passent avant les autres pièces jointes.
+  Quatre pièces plus la provenance, bornes existantes et avertissements conservés.
+  Prévisualisation dans l’éditeur avant ajout personnel. Aucun clone, sous-module,
+  dépendance, script ni commande exécuté. Import ponctuel, pas de synchronisation.
+  HTTPS public seulement, toutes les adresses DNS contrôlées puis fixées à la
+  connexion, sans identifiants ni redirection, 45 s et tailles bornées. Les dépôts
+  privés passent par l’import local existant. Les branches avec `/` dans leur nom
+  ne sont pas résolues par ce lecteur de liens ; utiliser un commit ou le ZIP local.
+- Commandes de compétences dans Chat, Cowork et Code OpenCode : `/` propose les
+  compétences visibles et activées, filtrables, avec navigation au clavier.
+  Une commande précise prime sur la sélection par mots, sans ouvrir une compétence
+  personnelle d’autrui ni rallumer une compétence éteinte. Noms identiques : suffixe
+  d’identifiant pour choisir sans ambiguïté. Un appel explicite réserve jusqu’à
+  16 000 caractères, dans la moitié du contexte estimé pour un petit modèle ; une
+  procédure trop grande n’est pas tronquée. Code Codex direct et réponses
+  d’entretien n’affichent pas ce sélecteur, leurs appels ne passent pas par ce chemin.
+- Réglages des modèles locaux : choix du modèle chargé, taille actuelle et limite
+  publiée, saisie de 2 048 à 262 144 jetons dans la limite du modèle. Administrateur
+  seul ; moteur LM Studio local seulement ; modèle au repos sans requête en file,
+  une seule copie, pas d’alias distinct. Rechargement avec les réglages de l’instance,
+  taille relue avant succès. Retour à l’ancienne taille tenté si le chargement rate.
+  Taille retenue par modèle dans les réglages pour les chargements suivants.
+  Écritures contexte/veille sérialisées et données existantes conservées.
+- Délai d’inactivité réglable de 5 à 120 minutes, 20 par défaut : appliqué aux
+  prochains chargements LMS, sans arrêter une réponse. Le moteur sans fenêtre
+  existait déjà. Auto ne reste plus sur un Coder chargé quand un généraliste du
+  même moteur est disponible pour le Chat ; modèle explicite et profil imposé
+  gardent la priorité. Aucun modèle supplémentaire téléchargé par ce réglage.
+- Personnalisation privée : sans préférence, solo ou équipe. Base neutre, sans
+  entreprise supposée. Solo demande de ne pas inventer collègues ou services
+  internes. Chat, Cowork et tâches utilisent le profil ; Code lit seulement le
+  choix solo/équipe de son auteur, sans lui ajouter les mémoires privées du profil.
+- Signalement Code sans détail : cause inconnue. Ajout d’un bouton de copie du
+  message d’erreur. Essais CLI (33), extension VS Code (16) et choix des modèles
+  de Code réussis. Pas de reproduction du PC de ce commentaire, ni de son erreur.
+
+Essais ciblés : liens privés/internes refusés, DNS fixé, redirection refusée,
+fichier trop grand, choix entre skills, empreinte de blob et fichier joint traité
+comme texte ; vrai skill public frontend-design de anthropics/skills lu à la
+révision ca45fc496a3436251f191354091d557da31c15b5, licence et provenance incluses,
+sans enregistrement dans le profil. Persistance, écritures concurrentes, refus
+modèle occupé/en file/alias, restauration après échec, taille relue et préférences
+personnelles isolées essayés avec doublures. UI vue dans un navigateur isolé :
+choix et prévisualisation avant ajout, mode solo, délai et contexte confirmés par
+une API fictive, sélection de `/relecture-d-un-texte` par Entrée. Captures temporaires
+/private/tmp/helix-reglages-modeles.jpg et /private/tmp/helix-commandes-skills.jpg.
+Pas de rechargement du moteur du poste de Medhi. Le parcours Windows est étendu
+pour réellement changer le contexte et le TTL puis restaurer les valeurs initiales
+sur la machine CI jetable, avant publication. Contrôle complet final en cours.
+
+Validation ciblée finale : typecheck et compilation réussis ; 41 essais
+compétences, 33 CLI, 16 extension VS Code et essais de routage réussis. Catalogues
+complets : 4 513 clés interface et 1 719 passerelle, six langues à 100 %.
+Le banc Roblox reproduit aussi 33 outils conservés sur 70, dont les 28 de Roblox.
+Les anciennes assertions textuelles des essais compétences ont été adaptées au
+préambule neutre, sans retirer les contrôles d’injection, de visibilité ni de taille.
+Les métadonnées du dernier vrai Windows réussi ont été relues (lms ps : modèle
+canonique, idle, queued 0, TTL 1 200 000 ms) pour préparer l’étape de rechargement.
+Contrôle complet et parcours Windows de ce nouveau candidat restent à terminer.
+
+Publication finale 2026.1104.2 : les trois jobs de 41915718431 sont réussis,
+ainsi que l’analyse GitHub 41915717006. Windows a confirmé le changement de
+contexte, une seule copie en mémoire et TTL 600 000 ms par `lms ps`, puis le
+retour à la taille initiale. Les 21 fichiers publics correspondent aux originaux,
+et le manifeste public a été téléchargé anonymement et relu avec la clé de
+l’application installée. La copie temporaire de fabrication est supprimée après
+ces preuves ; journaux et notes traduites conservés. Les vrais PC des signalements
+AMD, GPT-OSS 20B et Code sans erreur précise restent à essayer comme noté plus haut.

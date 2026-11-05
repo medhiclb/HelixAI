@@ -9933,7 +9933,7 @@ console.log("\n47. Blender muet, Unreal Editor, serveurs MCP ajoutés par l'admi
   );
   verifier(
     "Unreal Editor : `call_tool` et tout outil non reconnu sur carte à chaque appel, administrateur (ou employé d'une administratrice) au moment d'agir, retiré de la liste des autres employés",
-    /\|\| estEcritureUnreal\(outil\);/.test(approSrc) && /estLectureUnreal\(outil\)\) return false;/.test(approSrc) && /if \(estEcritureUnreal\(nom\) && !\(\(await administre\(pour\?\.userId\)\) \|\| \(await administre\(pour\?\.proprietaire\)\)\)\)/.test(outilsSrc),
+    /\|\| estEcritureUnreal\(outil\)(?= \|\||;)/.test(approSrc) && /estLectureUnreal\(outil\)\) return false;/.test(approSrc) && /if \(estEcritureUnreal\(nom\) && !\(\(await administre\(pour\?\.userId\)\) \|\| \(await administre\(pour\?\.proprietaire\)\)\)\)/.test(outilsSrc),
     "approbation.ts, outils.ts",
   );
   verifier(
@@ -10590,7 +10590,7 @@ console.log("\n54. Mot de passe oublié : administrateur, machine de l'instance,
 }
 
 console.log("\n55. Imports de code et conseiller local (02/11/2026)");
-for (const script of ["essai-import-code.mjs", "essai-optimisation.mjs", "essai-scenario-video.mjs", "essai-ajouts-http.mjs", "essai-demarrage-moteur.mjs"]) {
+for (const script of ["essai-import-code.mjs", "essai-optimisation.mjs", "essai-scenario-video.mjs", "essai-ajouts-http.mjs", "essai-demarrage-moteur.mjs", "essai-rea.mjs", "essai-outils-rea.mjs", "essai-regles-rea.mjs", "essai-modeles-interface.mjs", "essai-conversation-orale.mjs", "essai-kokoro.mjs", "essai-correctifs-machines.mjs", "essai-skills-contexte-solo.mjs"]) {
   try {
     execFileSync(process.execPath, [join(RACINE, "scripts", script)], { cwd: RACINE, timeout: 120_000, stdio: "pipe" });
     verifier(script, true, "");

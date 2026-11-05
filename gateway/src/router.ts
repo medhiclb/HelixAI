@@ -128,6 +128,14 @@ export async function resolve(opts: {
         }
         return { error: tf("Aucun modèle disponible pour le rôle « {0} ».", role) };
       }
+      // 04/11/2026 : revenir au Chat après Code ne doit pas garder le Coder
+      // uniquement parce qu’il est déjà chargé. On reste sur le même moteur,
+      // sans changer de fournisseur ni ignorer un modèle choisi explicitement.
+      if (role === "chat") {
+        const moteur = pickBest(eligible).backendId;
+        const generalistes = eligible.filter(m => m.backendId === moteur && !/coder|codestral|devstral|starcoder/i.test(m.id));
+        if (generalistes.length) eligible = generalistes;
+      }
       candidate = pickBest(eligible);
 
       /*

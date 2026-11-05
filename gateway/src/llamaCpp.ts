@@ -285,6 +285,17 @@ async function telechargerVerifie(
   renommer(partiel, destination);
 }
 
+/** Secours LM Studio : mêmes poids publics épinglés, sans installer ni lancer llama.cpp. */
+export async function telechargerGgufVerifie(cle:string,destination:string,avancer:(percent:number)=>void):Promise<void>{
+ const f=MODELES_GGUF[cle];if(!f)throw Error(tf("{0} n'est pas proposé avec le moteur llama.cpp.",cle));
+ mkdirSync(dirname(destination),{recursive:true,mode:0o700});
+ if(existsSync(destination)){const h=createHash('sha256');await empreinteDe(destination,h);if(statSync(destination).size===f.octets&&h.digest('hex')===f.sha256)return;throw Error(t("Un fichier différent existe déjà à cet emplacement. Il a été conservé."))}
+ const partiel=`${destination}.partiel`;const deja=existsSync(partiel)?statSync(partiel).size:0;const libre=placeLibre(dirname(destination));
+ if(deja!==f.octets&&libre!==null&&libre<Math.max(0,f.octets-deja)+1024**3)throw Error(t("Pas assez de place sur le disque pour télécharger le modèle."));
+
+ await telechargerVerifie(`https://huggingface.co/${f.depot}/resolve/${f.revision}/${f.fichier}`,destination,f,avancer);
+}
+
 /* ── Le moteur ─────────────────────────────────────────────────────────── */
 
 let installationEnCours: Promise<string> | null = null;

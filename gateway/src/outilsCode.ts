@@ -1,3 +1,5 @@
+import { t } from "./langue.ts";
+import { outilsReaCode, chercherRea, resoudreRea } from "./reaOutils.ts";
 import { outilsVps, executerVps, projetsVps } from "./vps.ts";
 import type http from "node:http";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -166,10 +168,11 @@ const contenus = { bibliotheque: false, reunions: false };
 export function outilsPourCode(): DefinitionOutil[] {
   return [
     ...outilsVps(),
+    ...outilsReaCode(),
     // Ni les écritures de Trello, Monday, ClickUp, Todoist, Calendly et Zoom : réservées au Chat de l'administrateur (SECURITE.md § 48).
     // Ni celles de Palmier Pro (29/09/2026) : modifier un montage ou générer n'a rien à faire dans un projet de code.
     // Celles de Roblox Studio et de Blender restent (12/10/2026, demande de Medhi) : un script Luau ou Python est du code ; carte à chaque appel, administrateur seul (outils.ts).
-    ...outilsMcp().filter((o) => !o.function.name.startsWith("fichiers__") && !estEcritureMcpProjet(o.function.name) && !estEcriturePalmier(o.function.name)),
+    ...outilsMcp().filter((o) => !o.function.name.startsWith("rea__") && !o.function.name.startsWith("fichiers__") && !estEcritureMcpProjet(o.function.name) && !estEcriturePalmier(o.function.name)),
     ...courrier.toolsForModel(),
     ...agenda.toolsForModel(),
     ...drive.toolsForModel(),
@@ -272,7 +275,7 @@ export async function servirOutilsCode(
   });
 
   serveur.setRequestHandler(CallToolRequestSchema, async (demande) => {
-    const nom = demande.params.name;
+    let nom = demande.params.name;
     let args = (demande.params.arguments ?? {}) as Record<string, unknown>;
     const texte = (t: string, erreur = false) => ({ content: [{ type: "text" as const, text: t }], isError: erreur });
 
@@ -292,8 +295,10 @@ export async function servirOutilsCode(
       );
     }
 
+    if(nom.startsWith("rea__")&&cibleCode?.vps)return texte(t("REA analyse les fichiers de cette machine. Pour un projet VPS, utilisez les commandes SSH de la session."),true);
     if (nom === "vps__executer" && (!cibleCode?.vps || args.serveur !== cibleCode.vps)) return texte("Ce serveur ne correspond pas à la session distante active.",true);
     if (nom === "vps__executer") { const projet=(await projetsVps(qui)).find(p=>p.id===args.serveur);if(!projet)return texte("Serveur introuvable.",true);args={...args,serveur_nom:projet.nom,hote:projet.hote,dossier:projet.dossier}; }
+    if(nom==='rea__appeler'){try{const cible=resoudreRea(args);nom=cible.nom;args=cible.args}catch(e){return texte(e instanceof Error?e.message:String(e),true)}}
     // Roblox Studio, Blender : le droit d'agir avant la carte (12/10/2026), refait par executerOutil.
     const refusAppli = await refusApplication(nom, args, { userId: qui });
     if (refusAppli) return texte(refusAppli, true);
@@ -304,6 +309,7 @@ export async function servirOutilsCode(
       return texte("Appel abandonné avant l'accord : l'action n'a pas été faite.", true);
     }
 
+    if(nom==='rea__chercher'){try{return texte(chercherRea(args))}catch(e){return texte(e instanceof Error?e.message:String(e),true)}}
     const pour = { userId: qui, groupes: await groupesDe(qui) };
     const r = nom === "vps__executer" ? await executerVps(qui,args,controle.signal) : nom.startsWith("reunions__") ? await reunions.callTool(nom, args, pour) : await executerOutil(nom, args, pour);
     journaliser("outil.appele", qui, { outil: nom, cible: cibleDe(args), ok: r.ok, surface: "code" });

@@ -1169,6 +1169,7 @@ function guideUnreal(): GuideAppli {
 
 /** Le pas à pas d'une application ouverte sur la machine de l'instance (`local` ou `lanceur` au catalogue), ou `null`. */
 export function guideApplicationLocale(id: string): GuideAppli | null {
+  if(id === "rea")return{nom:"REA",sansConsole:true,introduction:t("REA est un outil local d'analyse de logiciels. Son installation se prépare ici, sans modifier les réglages de vos autres agents."),consoles:[{libelle:t("la documentation officielle de REA"),url:"https://github.com/morluto/rea"}],etapes:[{texte:t("Cliquez « Brancher ». Le moteur Node privé, REA et ses dépendances verrouillées sont installés au premier branchement.")},{texte:t("Dans Code, ouvrez votre projet local et demandez une analyse avec REA. L'agent cherche l'outil utile et vous présente l'action à valider.")},{texte:t("L'analyse JavaScript accepte un dossier d'application ou une archive .asar. Les outils natifs peuvent demander un moteur externe déjà installé.")}],aEviter:[t("Frida et les moteurs externes ne sont pas installés automatiquement. Les analyses REA sont réservées à l'administrateur et s'exécutent sur la machine de l'instance.")]};
   if (id === "palmier") return guidePalmier();
   if (id === "roblox") return guideRoblox();
   if (id === "blender") return guideBlender();

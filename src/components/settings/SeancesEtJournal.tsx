@@ -81,6 +81,7 @@ const LIBELLES: Record<string, string> = {
   "moteur.emplacement": t("Emplacement des modèles changé"),
   "moteur.choix_lmstudio": t("Moteur des modèles locaux choisi"),
   "moteur.optimisation": t("Réglages du moteur modifiés"),
+  "moteur.contexte": t("Taille du contexte modifiée"),
   "code.opencode_installe": t("OpenCode installé (écran Code)"),
   "donnees.exportees": t("Données exportées"),
   "ecran.mode_modifie": t("Contrôle de l'écran activé ou désactivé"),

@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode, type KeyboardEvent, type ClipboardEvent } from "react";
+import { useCompetences } from "@/hooks/useCompetences";
+import { identifiantDe } from "@/lib/competencesFichier";
+import { useCallback, useEffect, useRef, useState, useId, type ReactNode, type KeyboardEvent, type ClipboardEvent } from "react";
 import { Film,
   Plus,
   Mic,
@@ -76,6 +78,7 @@ interface ComposerProps {
   sansModele?: boolean;
   /** Les services à réponse textuelle peuvent masquer les pièces jointes. */
   sansPiecesJointes?: boolean;
+  commandesCompetences?: boolean;
 }
 
 /**
@@ -84,6 +87,7 @@ interface ComposerProps {
  */
 export function Composer({
   placeholder,
+  commandesCompetences = true,
   contextBar,
   className,
   value,
@@ -111,6 +115,22 @@ export function Composer({
   const [menuPlus, setMenuPlus] = useState(false);
   const areaRef = useRef<HTMLTextAreaElement>(null);
   const fichierRef = useRef<HTMLInputElement>(null);
+  const { competences, allumee } = useCompetences();
+  const menuCompetencesId = useId();
+  const [commandeFermee, setCommandeFermee] = useState(false);
+  const [commandeIndex, setCommandeIndex] = useState(0);
+  const rechercheCommande = commandesCompetences && !commandeFermee ? /^\/([a-z0-9-]*)$/i.exec(value ?? "")?.[1]?.toLowerCase() : undefined;
+  const commandes = rechercheCommande === undefined ? [] : competences.filter(c => allumee(c) && identifiantDe(c.nom).includes(rechercheCommande)).slice(0, 8);
+  const commandePour = (c: (typeof competences)[number]) => {
+    const slug = identifiantDe(c.nom);
+    return competences.some(autre => autre.id !== c.id && allumee(autre) && identifiantDe(autre.nom) === slug) ? `${slug}:${c.id}` : slug;
+  };
+  const choisirCommande = (index: number) => {
+    const c = commandes[index]; if (!c) return;
+    onChange?.(`/${commandePour(c)} `);
+    setCommandeFermee(true);
+    requestAnimationFrame(() => areaRef.current?.focus());
+  };
   const controlled = value !== undefined;
   // Un document joint se suffit à lui-même : « résume ça » peut rester implicite.
   /*
@@ -235,6 +255,12 @@ export function Composer({
   }, []);
 
   const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (rechercheCommande !== undefined) {
+      if (e.key === "Escape") { e.preventDefault(); setCommandeFermee(true); return; }
+      if (commandes.length && (e.key === "ArrowDown" || e.key === "ArrowUp")) { e.preventDefault(); setCommandeIndex(i => (i + (e.key === "ArrowDown" ? 1 : commandes.length - 1)) % commandes.length); return; }
+      if (commandes.length && (e.key === "Enter" || e.key === "Tab")) { e.preventDefault(); choisirCommande(Math.min(commandeIndex, commandes.length - 1)); return; }
+    }
+
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       if (canSend) onSubmit?.();
@@ -339,15 +365,28 @@ export function Composer({
               ))}
             </ul>
           )}
+          {rechercheCommande !== undefined && <div className="mx-3 mt-3 rounded-xl border border-border bg-background p-2">
+            <p className="px-2 pb-2 text-xs text-muted-foreground">{t("Compétences activées")}</p>
+            <div id={menuCompetencesId} role="listbox" aria-label={t("Compétences")} className="max-h-60 overflow-y-auto">
+              {commandes.map((c, i) => <button key={c.id} id={`${menuCompetencesId}-${i}`} role="option" aria-selected={i === commandeIndex} type="button" onMouseDown={e => e.preventDefault()} onClick={() => choisirCommande(i)} className={cn("block w-full rounded-lg p-3 text-start text-sm hover:bg-muted", i === commandeIndex && "bg-muted")}>
+                <span className="block font-medium">/{commandePour(c)}</span><span className="block truncate text-xs text-muted-foreground">{c.quand || c.nom}</span>
+              </button>)}
+              {commandes.length === 0 && <p className="p-2 text-sm text-muted-foreground">{t("Aucune compétence activée ne correspond. Ouvrez Réglages, Compétences.")}</p>}
+            </div>
+          </div>}
           <textarea
             className="block max-h-52 w-full resize-none bg-transparent px-4 pb-2 pt-3.5 text-[15px] leading-relaxed text-foreground placeholder:overflow-hidden placeholder:text-ellipsis placeholder:whitespace-nowrap placeholder:text-muted-foreground focus:outline-none"
             ref={areaRef}
             rows={1}
             placeholder={placeholder}
             aria-label={placeholder}
+            aria-controls={rechercheCommande !== undefined ? menuCompetencesId : undefined}
+            aria-autocomplete={commandesCompetences ? "list" : undefined}
+            aria-activedescendant={commandes.length ? `${menuCompetencesId}-${Math.min(commandeIndex, commandes.length - 1)}` : undefined}
             value={value}
             onChange={(e) => {
               onChange?.(e.target.value);
+              setCommandeFermee(false); setCommandeIndex(0);
               autoGrow(e.target);
             }}
             onPaste={collerImages}

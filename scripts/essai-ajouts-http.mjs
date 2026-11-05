@@ -55,6 +55,13 @@ try {
   assert.equal((await q("/helix/studio/medias/"+media.id,admin,{action:"supprimer"})).status,404);
   for(const action of ["corbeille","restaurer","corbeille","supprimer"]) assert.equal((await q("/helix/studio/medias/"+media.id,admin,{action})).status,200);
   assert.equal((await q("/helix/images/fichier/"+media.id,admin)).status,404);
+  for(const [route,corps]of [["/helix/voix",undefined],["/helix/voix",{texte:"Bonjour",langue:"fr",vitesse:1}],["/helix/voix/installer",{accord:true}]])assert.equal((await q(route,h,corps)).status,401);
+  assert.equal((await q('/helix/voix/installer',autre,{accord:true})).status,403);
+  assert.equal((await q('/helix/voix/installer',admin,{})).status,400);
+  assert.equal((await q('/helix/voix/installer',admin,{accord:true})).status,409);
+  assert.equal((await q('/helix/voix',admin,{texte:'Bonjour',langue:'en',vitesse:1})).status,400);
+  assert.equal((await q('/helix/voix',admin,{texte:'Bonjour',langue:'fr',vitesse:1})).status,409);
+  assert.equal((await (await q('/helix/voix',autre)).json()).installable,false);
   assert.equal((await q("/helix/code/vps",h)).status,401);
   assert.equal((await q("/helix/code/vps",autre)).status,403);
   assert.equal((await q("/helix/code/vps",admin,{nom:"Projet distant",hote:"-oProxyCommand=commande",dossier:"/srv/projet"})).status,400);

@@ -10,15 +10,15 @@ import { jetonsEstimes } from "./documentsJoints.ts";
  * (fichiers, Roblox, bureautique, bibliothèque…) ne tenaient pas dans la place,
  * et chat.ts les retirait **tous** : le modèle répondait qu'il n'avait pas
  * accès à Roblox Studio. Désormais, quand la place manque, on garde d'abord :
- *  1. les outils déjà appelés dans cette conversation ;
- *  2. ceux du service nommé dans la demande (« Roblox », « Studio »,
+ *  1. ceux du service nommé dans la demande (« Roblox », « Studio »,
  *     « Blender », « Unreal », le nom d'un connecteur) ;
+ *  2. les outils déjà appelés dans cette conversation ;
  *  3. les plus courants (fichiers, bibliothèque, bureautique, réunions,
  *     tâches) ;
  *  4. le reste, dans l'ordre où il arrive ;
  * chacun gardé s'il tient encore dans la place réservée aux outils. Seuls les
- * deux premiers rangs comptent comme « vraiment utiles » : l'écran ne prévient
- * que si l'un d'eux a dû être retiré.
+ * outils du service nommé comptent comme utiles ; sans service nommé, ce sont
+ * les outils déjà appelés. L’écran prévient seulement si l’un d’eux est retiré.
  *
  * Module sans dépendance (sauf l'estimation des jetons), pour être essayé
  * seul (securite.mjs, section 50).
@@ -45,8 +45,7 @@ const plat = (s: string) =>
  * Mots qui désignent un service sans porter son identifiant. Des noms propres
  * surtout, les mêmes dans toutes les langues ; quelques noms communs pour les
  * familles de l'instance. « studio » seul vaut Roblox Studio (demande de
- * Medhi) : « LM Studio » dans une question ne fait que garder ces outils en
- * tête, rien de plus.
+ * Medhi), sauf les noms explicites des autres logiciels Studio.
  */
 const ALIAS: Record<string, string[]> = {
   roblox: ["roblox", "studio", "luau"],
@@ -76,7 +75,9 @@ export function servicesNommes(texte: string, services: Iterable<string>, libell
     const mots = [s, ...(ALIAS[s] ?? []), ...(libelles[s] ? [libelles[s]] : [])]
       .map((m) => plat(m).replace(/[^\p{L}\p{N}-]+/gu, " ").trim())
       .filter((m) => m.length >= 3);
-    if (mots.some((m) => t.includes(` ${m} `))) trouve.add(s);
+    // « Studio » reste un raccourci Roblox, sauf dans le nom explicite d’un autre logiciel.
+    const domaine=s==='roblox'?t.replace(/\b(?:lm studio|visual studio(?: code)?|android studio|studio video|video studio|ai studio)\b/g,' '):t;
+    if (mots.some((m) => domaine.includes(` ${m} `))) trouve.add(s);
   }
   return trouve;
 }
@@ -124,7 +125,7 @@ function texte(m: unknown): string {
 export interface ChoixOutils<T> {
   gardes: T[];
   retires: T[];
-  /** Outils des rangs 1 et 2 (déjà appelés, service nommé) qui n'ont pas tenu. */
+  /** Outils utiles au service demandé ou poursuivi, qui n’ont pas tenu. */
   utilesRetires: string[];
   /** Services nommés dans la demande. */
   nommes: string[];
@@ -150,12 +151,36 @@ export function choisirOutils<T extends OutilNomme>(
   const cherche = derniere.trim().length < 25 && questions.length > 1 ? `${questions[questions.length - 2]}\n${derniere}` : derniere;
   const nommes = servicesNommes(cherche, services, libelles);
   const appeles = outilsDejaAppeles(messages);
+  // 04/11/2026 : repérer Studio ne suffit pas. Au tour suivant, ses outils de
+  // lecture et d’écriture restent prioritaires même s’ils n’ont pas encore servi.
+  // Un service explicitement demandé garde toujours la première place.
+  let serviceActif: string | undefined;
+  for (const message of messages) {
+    if ((message as { role?: string })?.role !== "assistant") continue;
+    const appels = (message as { tool_calls?: unknown })?.tool_calls;
+    if (!Array.isArray(appels)) continue;
+    for (const appel of appels) {
+      const nom = appel?.function?.name;
+      if (typeof nom === "string" && noms.includes(nom)) {
+        const service = serviceDe(nom);
+        // Lire un fichier intermédiaire ne termine pas le travail dans Studio.
+        if (!COURANTS.includes(service) || serviceActif === undefined || COURANTS.includes(serviceActif)) serviceActif = service;
+      }
+    }
+  }
 
+  const serviceSpecialiseNomme = [...nommes].some((s) => !COURANTS.includes(s));
+  const continuerService = serviceActif !== undefined && !COURANTS.includes(serviceActif) && !serviceSpecialiseNomme;
+  const servicesUtiles = continuerService ? new Set([serviceActif]) : nommes;
   const rang = (i: number): number => {
     const n = noms[i]!;
-    if (appeles.has(n)) return 0;
     const s = serviceDe(n);
-    if (nommes.has(s)) return 1;
+    // « Crée un dossier » dans le travail Studio ne doit pas faire passer
+    // les fichiers du poste devant les dossiers du jeu.
+    if (continuerService && s === serviceActif) return 0;
+    if (nommes.has(s)) return continuerService ? 1 : 0;
+    if (appeles.has(n)) return 1;
+    if (s === serviceActif) return 1.5;
     const c = COURANTS.indexOf(s);
     return c >= 0 ? 2 + c / 10 : 3;
   };
@@ -180,7 +205,7 @@ export function choisirOutils<T extends OutilNomme>(
   return {
     gardes,
     retires,
-    utilesRetires: outils.map((_, i) => i).filter((i) => !garde.has(i) && rang(i) < 2).map((i) => noms[i]!),
+    utilesRetires: outils.map((_, i) => i).filter((i) => !garde.has(i) && (servicesUtiles.size>0?servicesUtiles.has(serviceDe(noms[i]!)):appeles.has(noms[i]!))).map((i) => noms[i]!),
     nommes: [...nommes],
     jetonsAvant,
     jetonsApres: [...garde].reduce((a, i) => a + couts[i]!, 0),
@@ -196,4 +221,17 @@ export function choisirOutils<T extends OutilNomme>(
  */
 export function placeDesOutils(placeSansOutils: number, essentiel: number): number {
   return Math.max(0, placeSansOutils - Math.max(essentiel + 1_024, Math.floor(placeSansOutils * 0.25)));
+}
+
+/** Allège seulement la documentation du schéma, jamais ses contraintes ni les valeurs d'exemple. */
+export function allegerOutilsConnectes<T extends OutilNomme>(outils:T[]):T[]{
+ const court=(s:string,max:number)=>s.length<=max?s:s.slice(0,max).trimEnd()+'...';
+ const schema=(v:unknown):unknown=>{
+  if(!v||typeof v!=='object'||Array.isArray(v))return v;
+  const r={...v as Record<string,unknown>};if(typeof r.description==='string')r.description=court(r.description,192);
+  for(const k of ['properties','patternProperties','$defs','definitions','dependentSchemas'])if(r[k]&&typeof r[k]==='object'&&!Array.isArray(r[k]))r[k]=Object.fromEntries(Object.entries(r[k] as Record<string,unknown>).map(([n,x])=>[n,schema(x)]));
+  for(const k of ['items','prefixItems','allOf','anyOf','oneOf','not','if','then','else','additionalProperties','unevaluatedProperties','contains','propertyNames'])if(r[k]&&typeof r[k]==='object')r[k]=Array.isArray(r[k])?(r[k] as unknown[]).map(schema):schema(r[k]);
+  return r;
+ };
+ return outils.map(o=>{const copie=JSON.parse(JSON.stringify(o));if(copie.function){if(typeof copie.function.description==='string')copie.function.description=court(copie.function.description,640);if(copie.function.parameters)copie.function.parameters=schema(copie.function.parameters)}return copie as T});
 }

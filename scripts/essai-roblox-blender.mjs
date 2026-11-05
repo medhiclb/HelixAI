@@ -276,8 +276,9 @@ createInterface({ input: process.stdin }).on("line", async (ligne) => {
   if (m.id === undefined) return;
   if (m.method === "initialize") return envoyer({ jsonrpc: "2.0", id: m.id, result: { protocolVersion: m.params?.protocolVersion ?? "2025-06-18", capabilities: { tools: {} }, serverInfo: { name: ${JSON.stringify(nom)}, version: "1.0.0" } } });
   const long = ${drapeauLong ? `existsSync(${JSON.stringify(drapeauLong)}) ? Number(readFileSync(${JSON.stringify(drapeauLong)}, "utf8")) : 0` : "0"};
+  const contrainte = long < 0 ? { enum: Array.from({ length: 100 }, (_, i) => "valeur-" + i + "x".repeat(Math.abs(long))) } : {};
   const decrire = (name) => { const d = "Outil " + name + " (faux)."; return long > d.length ? (d + " Détail de l'outil, de ses arguments et de ses limites.".repeat(Math.ceil(long / 50))).slice(0, long) : d; };
-  if (m.method === "tools/list") return envoyer({ jsonrpc: "2.0", id: m.id, result: { tools: OUTILS.map((name) => ({ name, description: decrire(name), inputSchema: { type: "object", properties: { code: { type: "string" }, prompt: { type: "string" }, image: { type: "string" }, studio_id: { type: "string" } } } })) } });
+  if (m.method === "tools/list") return envoyer({ jsonrpc: "2.0", id: m.id, result: { tools: OUTILS.map((name) => ({ name, description: decrire(name), inputSchema: { type: "object", properties: { code: { type: "string", ...contrainte }, prompt: { type: "string" }, image: { type: "string" }, studio_id: { type: "string" } } } })) } });
   if (m.method === "tools/call") {
     const n = m.params?.name, a = m.params?.arguments ?? {};
     noter({ appel: n, args: a });
@@ -649,14 +650,20 @@ try {
   // a. Roblox seul plus grand que la place des outils : avant, tous retirés ; maintenant, les siens d'abord, et c'est dit, sans conseiller 32 768 à un modèle déjà à 32 768.
   const solA = await demanderSol(3000);
   verifier(
-    "place limitée, Roblox plus grand que la place des outils : ses outils passent d'abord (execute_luau compris), l'appel part à Studio (pas « OUTIL-ABSENT »)",
-    solA.roblox > solA.outils.length / 2 && solA.outils.includes("roblox__execute_luau") && solA.fins[0]?.ok === true && !/OUTIL-ABSENT/.test(solA.texte),
+    "descriptions longues : tous les outils Roblox tiennent après allègement et l’appel part à Studio",
+    solA.roblox === nbRobloxTous && solA.outils.includes("roblox__execute_luau") && solA.fins[0]?.ok === true && !/OUTIL-ABSENT/.test(solA.texte),
     `${solA.outils.length} outils reçus (${solA.roblox} de Roblox) ; ${solA.texte.slice(0, 300)}`,
   );
   verifier(
-    "et l'écran le dit juste : outils de Roblox Studio qui n'ont pas tenu, conseil de retirer des connecteurs ; jamais « 32 768 » à un modèle déjà à 32 768",
-    /trop peu pour tous les outils branchés/.test(solA.texte) && /certains outils de Roblox Studio n'ont pas tenu/.test(solA.texte) && /retirez dans Connecteurs/.test(solA.texte) && !/32 768/.test(solA.texte),
+    "descriptions allégées : aucun avertissement sur des outils Roblox conservés",
+    !/certains outils de Roblox Studio n'ont pas tenu/.test(solA.texte),
     solA.texte.slice(0, 500),
+  );
+  const solContraintes = await demanderSol(-30);
+  verifier(
+    "contraintes incompressibles : les outils Roblox retirés sont signalés sans conseiller le contexte déjà chargé",
+    solContraintes.roblox < nbRobloxTous && /certains outils de Roblox Studio n'ont pas tenu/.test(solContraintes.texte) && /retirez dans Connecteurs/.test(solContraintes.texte) && !/32 768/.test(solContraintes.texte),
+    solContraintes.texte.slice(0, 500),
   );
   // b. Roblox tient seul : tous ses outils gardés, d'autres retirés, sans rien dire à l'écran ; le modèle sait ce qui lui manque.
   const solB = await demanderSol(1800);

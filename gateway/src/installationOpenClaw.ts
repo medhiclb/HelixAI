@@ -180,8 +180,9 @@ export function nodePriveInstallable(): string | null {
 }
 
 /** Installe le Node privé seul (sans OpenClaw), pour l'atelier. Rend le chemin de son npm. */
-export async function assurerNodePrive(): Promise<string> {
-  const deja = npmPrive();
+export async function assurerNodePrive(actualiser = false): Promise<string> {
+  // REA exige la version récente déjà épinglée ; les appels existants gardent leur réutilisation habituelle.
+  const deja = actualiser ? null : npmPrive();
   if (deja) return deja;
   await installerNode();
   const npm = npmPrive();

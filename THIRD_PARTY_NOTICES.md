@@ -1805,3 +1805,34 @@ SOFTWARE.
 | zod-to-json-schema | 3.25.2 | ISC |
 
 <!-- fin de la partie générée -->
+
+
+## REA (optional local Code connector)
+
+REA 6.8.0, copyright (c) 2026 morluto, MIT, https://github.com/morluto/rea.
+The upstream package and its notices are retained in the private installation.
+Its dependency lock is taken from revision 160d821ac9a0310afcb8d1fc427862dd6508add5.
+Runtime dependencies include MIT, Apache-2.0, BSD, ISC, BlueOak-1.0.0, Zlib and
+OpenPGP under LGPL-3.0+. Frida and external analysis engines are not automatically
+installed. See REA's THIRD_PARTY_NOTICES.md and licenses/ in the installed package
+for the complete copyright and license texts.
+
+
+## Voix locale optionnelle Kokoro (03/11/2026)
+
+Kokoro-82M v1.0 ONNX et voix française ff_siwis : Apache-2.0.
+Révision : 1939ad2a8e416c0acfeecc08a694d14ef25f2231.
+https://huggingface.co/onnx-community/Kokoro-82M-v1.0-ONNX
+
+Runtime optionnel : ONNX Runtime Web/Common 1.24.3 (MIT), Microsoft ;
+@echogarden/espeak-ng-emscripten 0.3.5 (GPL-3.0), auteurs eSpeak NG et Echogarden.
+flatbuffers et long (Apache-2.0), platform, undici-types et @types/node (MIT),
+protobufjs et @protobufjs/* (BSD-3-Clause), guid-typescript (ISC).
+Versions et intégrités : gateway/ressources/kokoro/package-lock.json.
+Chaque paquet conserve ses licences dans le dossier de voix installé, avec NOTICES.md.
+Aucun script d’installation npm n’est exécuté.
+
+Sources et instructions de construction du port eSpeak non modifié :
+https://github.com/echogarden-project/espeak-ng-emscripten
+https://github.com/echogarden-project/espeak-ng/tree/fork
+ONNX Runtime : https://github.com/microsoft/onnxruntime/tree/v1.24.3

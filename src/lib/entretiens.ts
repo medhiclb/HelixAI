@@ -8,4 +8,11 @@ export async function listerEntretiens():Promise<Entretien[]>{const r=await apiF
 export async function actionEntretien(b:Record<string,unknown>):Promise<Entretien|null>{const r=await apiFetch('/helix/services/entretiens',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});const d=await r.json();if(!r.ok)throw Error(d?.error?.message??t("L'instance n'a pas répondu."));return d}
 /** La voix doit être annoncée locale par le système. Aucun repli sur une voix distante. */
 export function voixLocale(langue:string):SpeechSynthesisVoice|undefined{return typeof speechSynthesis==='undefined'?undefined:speechSynthesis.getVoices().find(v=>v.localService&&v.lang.toLowerCase().startsWith(langue.toLowerCase()))}
-export function lireQuestion(texte:string,langue:string){const voix=voixLocale(langue);if(!voix)throw Error(t("Aucune voix locale disponible pour cette langue."));speechSynthesis.cancel();const phrase=new SpeechSynthesisUtterance(texte);phrase.voice=voix;phrase.lang=voix.lang;phrase.rate=0.95;speechSynthesis.speak(phrase)}
+export interface OptionsLecture {voix?:string;vitesse?:number;debut?:()=>void;fin?:()=>void;erreur?:(message:string)=>void}
+export function lireQuestion(texte:string,langue:string,options:OptionsLecture={}){
+ const liste=typeof speechSynthesis==='undefined'?[]:speechSynthesis.getVoices();
+ const voix=liste.find(v=>v.localService&&v.lang.toLowerCase().startsWith(langue.toLowerCase())&&v.voiceURI===options.voix)??voixLocale(langue);
+ if(!voix)throw Error(t("Aucune voix locale disponible pour cette langue."));
+ speechSynthesis.cancel();const phrase=new SpeechSynthesisUtterance(texte);phrase.voice=voix;phrase.lang=voix.lang;phrase.rate=Math.min(1.2,Math.max(0.8,options.vitesse??0.95));
+ phrase.onstart=()=>options.debut?.();phrase.onend=()=>options.fin?.();phrase.onerror=()=>options.erreur?.(t("La lecture vocale s'est interrompue. Réessayez."));speechSynthesis.speak(phrase);
+}

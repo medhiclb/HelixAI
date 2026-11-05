@@ -137,6 +137,7 @@ export type AuditAction =
   | "moteur.emplacement"
   | "moteur.choix_lmstudio"
   | "moteur.optimisation"
+  | "moteur.contexte"
   | "code.opencode_installe"
   /*
    * Codex avec le compte ChatGPT du propriétaire (codex.ts, 27/09/2026) : qui

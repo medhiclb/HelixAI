@@ -155,9 +155,11 @@ export function ModelesPage() {
         tf("{0} Go de mémoire", nombre(machine.totalMemoryGb)),
         machine.appleSilicon
           ? t("puce Apple (mémoire partagée avec la carte graphique)")
+          : machine.gpuNom
+            ? `${machine.gpuNom}${machine.gpuVramGb !== undefined ? ` (${tf("carte graphique de {0} Go", nombre(machine.gpuVramGb))})` : ""}`
           : machine.gpuVramGb !== undefined
             ? tf("carte graphique de {0} Go", nombre(machine.gpuVramGb))
-            : t("sans carte graphique NVIDIA"),
+            : t("calcul au processeur"),
       ])
     : "";
 

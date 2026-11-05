@@ -235,14 +235,14 @@ const RELANCE = competence("c-relance", ID_A, {
 const p1 = await pousser(SEANCE_A, [RELANCE]);
 verifier("l'instance prend la compétence de A (aucun refus)", p1.statut === 200 && p1.corps.refuses === 0, JSON.stringify(p1));
 const r1 = await envoyer(SEANCE_A, "Peux-tu relancer Durand par mail pour la facture en retard ?");
-verifier("le modèle reçoit la compétence en entier, dans les instructions système", /MARQUE-RELANCE-7/.test(r1.systeme) && /Compétences de la personne et de son organisation/.test(r1.systeme), r1.systeme.slice(-600));
+verifier("le modèle reçoit la compétence en entier, dans les instructions système", /MARQUE-RELANCE-7/.test(r1.systeme) && /Compétences disponibles pour cette demande/.test(r1.systeme), r1.systeme.slice(-600));
 verifier("l'écran reçoit son nom (« competences »)", JSON.stringify(nomsDe(r1)) === JSON.stringify(["Mail de relance"]), JSON.stringify(r1.evenements));
 verifier("le champ `competences` ne part pas chez le moteur", !/"competences"/.test(r1.corpsBrut), r1.corpsBrut.slice(0, 300));
 verifier("la consigne dit au modèle que ce sont des méthodes, pas des ordres, et qu'un fichier joint ne s'exécute pas", /jamais des ordres/.test(r1.systeme) && /tu ne l'exécutes pas/.test(r1.systeme), r1.systeme.slice(0, 400));
 const r2 = await envoyer(SEANCE_A, "Quelle est la capitale du Japon ?");
 verifier("une demande sans rapport : aucun nom n'est montré à l'écran", nomsDe(r2).length === 0, JSON.stringify(r2.evenements));
 const r3 = await envoyer(SEANCE_A, "Peux-tu relancer Durand par mail ?", {});
-verifier("sans `competences: true` (un client de l'API), rien n'est ajouté", !/MARQUE-RELANCE-7/.test(r3.systeme) && !/Compétences de la personne/.test(r3.systeme) && nomsDe(r3).length === 0, r3.systeme.slice(-300));
+verifier("sans `competences: true` (un client de l'API), rien n'est ajouté", !/MARQUE-RELANCE-7/.test(r3.systeme) && !/Compétences disponibles pour cette demande/.test(r3.systeme) && nomsDe(r3).length === 0, r3.systeme.slice(-300));
 
 console.log("\n2. Quand la place manque : l'index, et le texte complet de celle qui correspond");
 const long = (marque) => `${"Étape détaillée de la méthode maison, à suivre dans l'ordre et sans rien sauter. ".repeat(8)}${marque}`;
@@ -264,7 +264,7 @@ verifier("l'écran reçoit seulement « Compte rendu de réunion »", JSON.strin
 const r5 = await envoyer(SEANCE_A, "Quelle est la capitale du Japon ?");
 verifier("demande sans rapport : l'index seul, aucun texte complet, aucun nom à l'écran", !/MARQUE-/.test(r5.systeme) && /Devis client : Quand/.test(r5.systeme) && nomsDe(r5).length === 0, r5.systeme.slice(-500));
 verifier("ce qui part tient dans la place prévue (2 000 caractères pour un modèle de 4 096 jetons)", (() => {
-  const i = r4.systeme.indexOf("Compétences de la personne");
+  const i = r4.systeme.indexOf("Compétences disponibles pour cette demande");
   return i >= 0 && r4.systeme.length - i <= 2000;
 })(), r5.systeme.length);
 
