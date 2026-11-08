@@ -8219,3 +8219,35 @@ et le manifeste public a été téléchargé anonymement et relu avec la clé de
 l’application installée. La copie temporaire de fabrication est supprimée après
 ces preuves ; journaux et notes traduites conservés. Les vrais PC des signalements
 AMD, GPT-OSS 20B et Code sans erreur précise restent à essayer comme noté plus haut.
+
+### Correctifs du 08/11/2026 : reprises Code et emplacement à la mise en route
+
+Signalements de Medhi : sous Windows, Code refuse parfois Qwen3.5 9B, ou démarre
+puis ne montre plus de réponse ; autre capture `unable to allocate Vulkan0 buffer` ;
+l'installation propose un autre disque mais masque la marche à suivre si LM Studio
+est déjà posé.
+
+- `assurerModele` vérifie le registre réellement lu par OpenCode et tente une seule
+  reconfiguration si le modèle en est absent. Aucun changement de modèle ni fournisseur.
+- `ensureServer` libère sa promesse de démarrage même après un rejet de préparation ;
+  l'évènement `error` du processus est traité, sans laisser tomber la passerelle.
+- Les refus explicites d'allocation Vulkan/CUDA/Metal et de mémoire GPU rejoignent
+  la gestion du manque de mémoire existante, au lieu de rendre la commande brute.
+  Pas de bascule automatique sur le processeur : un modèle peut aussi dépasser la RAM.
+- La marche à suivre LM Studio est accessible à l'administrateur dès la mise en route,
+  même si le moteur est posé mais arrêté. Avant installation, le choix natif de dossier
+  existant reste disponible. Pas de déplacement automatique d'une installation existante.
+
+Régression isolée `node scripts/essai-reprise-code.mjs` : registre périmé, refus
+persistant, préparation réessayable, refus de création de processus, messages
+mémoire reconnus et pannes sans rapport préservées. Le blocage après démarrage
+sur les PC signalés n'est pas reproduit : ces corrections ne prouvent pas sa résolution.
+
+Vérifications locales de cette correction : typecheck interface et passerelle,
+build, catalogues complets, régressions reprise Code, routage des modèles et
+démarrage moteur, CLI (33) et extension VS Code (16) réussis. Aucun moteur ni
+modèle du compte de Medhi n'a été lancé ou déplacé pour ces essais.
+Batterie complète locale : 2 731 vérifications réussies, 0 échec
+(`/private/tmp/helix-1108-securite.log`), plus la nouvelle régression reprise Code
+exécutée séparément et ajoutée aux prochaines exécutions de la batterie.
+Le bouton d'emplacement n'a pas été parcouru dans Electron sur un PC Windows.

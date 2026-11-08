@@ -945,7 +945,7 @@ export function echantillonnageLocal(modele: string, raisonner: boolean): Record
 
 /** Le refus vient-il d'un manque de mémoire plutôt que d'une panne ? */
 const manqueDeMemoire = (texte: string) =>
-  /insufficient system resources|not enough memory|overload/i.test(texte);
+  /insufficient system resources|not enough memory|out of (?:device |host )?memory|unable to allocate (?:Vulkan|CUDA|Metal).*buffer|VK_ERROR_OUT_OF_(?:DEVICE|HOST)_MEMORY|overload/i.test(texte);
 
 /**
  * Décharge les modèles résidents autres que celui demandé.
@@ -1192,7 +1192,9 @@ async function chargerModele(modelKey: string): Promise<{ ok: boolean; message: 
         } catch (second) {
           return {
             ok: false,
-            message: second instanceof Error ? second.message : String(second),
+            message: manqueDeMemoire(second instanceof Error ? second.message : String(second))
+              ? tf("Mémoire insuffisante pour {0} sur cette machine, même après libération. Choisissez un modèle plus léger.", modelKey)
+              : second instanceof Error ? second.message : String(second),
           };
         }
       }

@@ -43,6 +43,7 @@ export function EmplacementModeles({
   const [etat, setEtat] = useState<EtatEmplacement | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [saisie, setSaisie] = useState(false);
+  const [marcheVisible, setMarcheVisible] = useState(false);
   const [chemin, setChemin] = useState("");
   const [occupe, setOccupe] = useState(false);
   /** Un déplacement à confirmer : la destination (le sous-dossier qui sera créé) et sa place libre. */
@@ -286,7 +287,18 @@ export function EmplacementModeles({
           {t("Changer d'emplacement déplace aussi les modèles déjà posés.")}
         </p>
       )}
-      {reglages && etat.changement === "manuel" && etat.manuel && <MarcheLmStudio etat={etat} windows={windows} occupe={occupe} revenir={() => void appliquer(null)} />}
+      {etat.admin && !reglages && etat.changement === "manuel" && etat.manuel && (
+        <Button className="mt-3" size="sm" variant="secondary" icon={FolderOpen}
+          aria-expanded={marcheVisible} aria-controls="emplacement-modeles-marche"
+          onClick={() => setMarcheVisible(v => !v)}>
+          {t("Changer")}
+        </Button>
+      )}
+      {etat.admin && (reglages || marcheVisible) && etat.changement === "manuel" && etat.manuel && (
+        <div id="emplacement-modeles-marche">
+          <MarcheLmStudio etat={etat} windows={windows} occupe={occupe} revenir={() => void appliquer(null)} />
+        </div>
+      )}
     </div>
   );
 }

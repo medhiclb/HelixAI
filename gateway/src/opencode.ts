@@ -352,7 +352,8 @@ async function writeConfig(dir: string): Promise<void> {
     /* illisible ou non supprimable : on n'insiste pas, la nouvelle prime */
   }
 
-  const available = await models();
+  // Une reconfiguration doit relire les modèles, pas recycler le cache du sélecteur.
+  const available = await models(true);
   const usable = available.filter(
     (m) => m.roles.includes("code") || m.roles.includes("chat"),
   );
@@ -893,6 +894,16 @@ export async function ensureServer(): Promise<number | null> {
       if (text) console.error("[opencode]", text);
     });
     let sorti = false;
+    // 08/11/2026 : un refus de création du processus (Windows compris) émet
+    // « error », pas forcément « exit ». Ne pas laisser la passerelle tomber.
+    proc.on("error", (erreur) => {
+      sorti = true;
+      console.error("[opencode] lancement refusé :", erreur.message);
+      if (child === proc) {
+        child = null;
+        port = null;
+      }
+    });
     proc.on("exit", (code) => {
       sorti = true;
       console.log(`[opencode] serveur arrêté (code ${code})`);
@@ -935,9 +946,13 @@ export async function ensureServer(): Promise<number | null> {
     return null;
   })();
 
-  const result = await starting;
-  starting = null;
-  return result;
+  try {
+    return await starting;
+  } finally {
+    // Une préparation refusée ne doit pas condamner les tentatives suivantes
+    // à réutiliser indéfiniment la même promesse rejetée.
+    starting = null;
+  }
 }
 
 /**
@@ -1039,6 +1054,7 @@ export async function assurerModele(id: string): Promise<boolean> {
    * « je demande mais rien ne se passe » de l'écran Code. Mieux vaut refuser
    * la session avec une raison que l'ouvrir sur un silence.
    */
+  let absenceConfirmee = false;
   try {
     const reponse = await api("/config/providers");
     if (!reponse.ok) return true; // on ne sait pas vérifier : on ne bloque pas
@@ -1046,9 +1062,19 @@ export async function assurerModele(id: string): Promise<boolean> {
       providers?: { id: string; models?: Record<string, unknown> }[];
     };
     const helix = corps.providers?.find((p) => p.id === "helix");
-    return Boolean(helix?.models && id in helix.models);
+    if (helix?.models && Object.hasOwn(helix.models, id)) return true;
+    // 08/11/2026 : le registre écrit ne prouve pas que le processus l'a lu.
+    // Un seul redémarrage correctif, puis vérification effective, sans changer de modèle.
+    absenceConfirmee = true;
+    stopServer();
+    if (!(await ensureServer())) return false;
+    const relue = await api("/config/providers");
+    if (!relue.ok) return false;
+    const nouveau = await relue.json() as { providers?: { id: string; models?: Record<string, unknown> }[] };
+    const fournisseur = nouveau.providers?.find((p) => p.id === "helix");
+    return Boolean(fournisseur?.models && Object.hasOwn(fournisseur.models, id));
   } catch {
-    return true;
+    return !absenceConfirmee;
   }
 }
 
