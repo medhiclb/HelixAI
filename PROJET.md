@@ -10,9 +10,9 @@ refaite à l'envers.
 
 | | |
 |---|---|
-| Version | 2026.1104.2 (`package.json`) |
-| Dernière mise à jour | 4 novembre 2026 |
-| Vérifié | 2026.1104.2 : `npm run typecheck`, build, 2 731 contrôles de sécurité sans échec, catalogues complets (4 513 clés interface, 1 719 passerelle), CLI (33), extension VS Code (16), parcours Windows avec rechargement réel du contexte et TTL, réflexion Linux et session Code Linux (41915718431) |
+| Version | 2026.1108.1 (`package.json`) |
+| Dernière mise à jour | 8 novembre 2026 |
+| Vérifié | 2026.1108.1 : typecheck, build, 2 732 contrôles sans échec, catalogues complets (4 513 clés interface, 1 719 passerelle), CLI (33), VS Code (16), signatures et 21 fichiers publiés contrôlés ; Windows, réflexion Linux et session Code Linux réussis sur le code identique avant changement du seul numéro de version (42524378871) |
 | Reste à essayer | sur les vraies machines : § 5, « Ce qui reste à essayer sur les postes de Medhi » |
 | Documents liés | [ARCHITECTURE.md](ARCHITECTURE.md), [SECURITE.md](SECURITE.md), [SCREENS.md](SCREENS.md), [SIGNATURE.md](SIGNATURE.md), [README.md](README.md), [docs/GUIDE.md](docs/GUIDE.md) |
 
@@ -8251,3 +8251,36 @@ Batterie complète locale : 2 731 vérifications réussies, 0 échec
 (`/private/tmp/helix-1108-securite.log`), plus la nouvelle régression reprise Code
 exécutée séparément et ajoutée aux prochaines exécutions de la batterie.
 Le bouton d'emplacement n'a pas été parcouru dans Electron sur un PC Windows.
+
+
+### Publication 2026.1108.1 du 08/11/2026
+
+Release stable publique, marquée latest, cible `46e79e2162ac7ad4cc748eb1d5977fca7c160ff9`.
+Les trois jobs de `42524378871` sont réussis sur `505738d` : parcours Windows
+(application empaquetée), réflexion du modèle sous Linux, session Code sous Linux.
+Comparaison JSON et chemins Git avant publication : seules les versions de
+`package.json` et `package-lock.json` changent entre `505738d` et `46e79e2` ;
+aucun code fonctionnel ne diffère. L'exécution supplémentaire `42525554603`,
+déclenchée par ce numéro, est encore en cours à la publication ; son résultat
+n'est pas présenté comme acquis.
+
+Batterie locale finale de la version : 2 732 contrôles réussis, 0 échec,
+avec `essai-reprise-code.mjs` intégré ; build/typecheck et catalogues complets.
+CLI (33) et extension VS Code (16) réussis sur les mêmes corrections.
+Les ressources des quatre paquets (interface, code Electron, passerelle, CLI,
+notices) correspondent aux fichiers construits ; version relue dans les ASAR.
+Les deux Mac ont une signature de code ad hoc et la signature d'éditeur habituelle
+`5efb-aa74-00fe-cdd7`, contrôlées ; les ZIP contiennent les mêmes ASAR et signatures,
+les images DMG ont passé `hdiutil verify`. Pas de nouvelle notarisation Apple ni
+de certificat Authenticode Windows : la mise à jour Windows repose sur son
+manifeste signé comme précédemment.
+
+Les 21 fichiers GitHub (7 installateurs/archives, 5 blockmaps, 7 notes traduites,
+manifeste, SHA256SUMS) sont identiques en taille et SHA-256 aux originaux.
+Après publication : API latest publique et manifeste téléchargé anonymement,
+empreinte et signature Windows relues avec la clé de l'application installée.
+Preuves conservées dans `release/journaux/2026.1108.1-*`, notes sous
+`release/notes-traduites/1108.1`. Copie temporaire de fabrication supprimée après
+ces contrôles ; environ 13 Gio disponibles. Application, modèles et données du
+poste inchangés. Le signalement intermittent Code sur les PC concernés reste
+à reproduire : les contrôles réussis ne prouvent pas toutes ses causes résolues.
