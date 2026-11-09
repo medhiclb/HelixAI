@@ -11,8 +11,8 @@ refaite à l'envers.
 | | |
 |---|---|
 | Version | 2026.1108.1 (`package.json`) |
-| Dernière mise à jour | 8 novembre 2026 |
-| Vérifié | 2026.1108.1 : typecheck, build, 2 732 contrôles sans échec, catalogues complets (4 513 clés interface, 1 719 passerelle), CLI (33), VS Code (16), signatures et 21 fichiers publiés contrôlés ; Windows, réflexion Linux et session Code Linux réussis sur le code identique avant changement du seul numéro de version (42524378871) |
+| Dernière mise à jour | 9 novembre 2026 |
+| Vérifié | 2026.1108.1 : typecheck, build, 2 732 contrôles sans échec, catalogues complets (4 513 clés interface, 1 719 passerelle), CLI (33), VS Code (16), signatures et 21 fichiers publiés contrôlés ; Windows, réflexion Linux et session Code Linux réussis sur la version exacte publiée (42525554603) |
 | Reste à essayer | sur les vraies machines : § 5, « Ce qui reste à essayer sur les postes de Medhi » |
 | Documents liés | [ARCHITECTURE.md](ARCHITECTURE.md), [SECURITE.md](SECURITE.md), [SCREENS.md](SCREENS.md), [SIGNATURE.md](SIGNATURE.md), [README.md](README.md), [docs/GUIDE.md](docs/GUIDE.md) |
 
@@ -8284,3 +8284,12 @@ Preuves conservées dans `release/journaux/2026.1108.1-*`, notes sous
 ces contrôles ; environ 13 Gio disponibles. Application, modèles et données du
 poste inchangés. Le signalement intermittent Code sur les PC concernés reste
 à reproduire : les contrôles réussis ne prouvent pas toutes ses causes résolues.
+
+
+**09/11/2026, clôture des vérifications de publication** : l'exécution
+`42525554603` est entièrement réussie sur `46e79e2`, cible exacte de la
+2026.1108.1 : parcours Windows avec application empaquetée, réflexion du modèle
+sous Linux et session Code sous Linux. Ce résultat complète les essais du code
+identique mentionnés ci-dessus et lève l'attente de cette exécution supplémentaire.
+Release stable publique confirmée, sans nouvelle modification du logiciel.
+Les limites concernant les PC des signalements restent celles documentées ci-dessus.
