@@ -49,5 +49,22 @@ try{
  assert.equal(lire('long').messages[0].content.length,20004);assert.ok(!JSON.stringify(contenu).includes('secret'));assert.ok(!JSON.stringify(contenu).includes('Raisonnement privé'));
  assert.deepEqual((await m.contenuLogiciel('codex',['../../secret'])).chats,[]);
  assert.deepEqual(empreintes(),avant,'les fichiers d’origine et leurs instructions restent inchangés');
- console.log('Import Codex : 33 sessions récentes proposées, anciens journaux et archives, formats mixtes sans miroirs, répétitions conservées, instructions/outils/raisonnement exclus, contenu borné, fichiers source inchangés.');
+ const dossierClaude=join(maison,'.claude/projects/projet-fictif');mkdirSync(dossierClaude,{recursive:true});
+ writeFileSync(join(maison,'.claude/CLAUDE.md'),'Instructions personnelles Claude fictives.');
+ const ligneClaude=(type,content,autres={})=>({type,cwd:projet,timestamp:date,message:{content},...autres});
+ writeFileSync(join(dossierClaude,'session-fictive.jsonl'),[
+  {type:'custom-title',customTitle:'Cours Claude Code'},
+  ligneClaude('user','Question visible.'),
+  ligneClaude('assistant',[{type:'thinking',thinking:'Privé'},{type:'text',text:'Réponse visible.'},{type:'tool_use',name:'outil'}]),
+  ligneClaude('user',[{type:'tool_result',content:'Résultat technique'}]),
+  ligneClaude('user','Résumé technique',{isCompactSummary:true}),
+  ligneClaude('assistant','Branche secondaire',{isSidechain:true}),
+  ligneClaude('user','<system-reminder>Rappel technique</system-reminder>'),
+  ligneClaude('user','Métadonnée',{isMeta:true}),
+  '{ligne interrompue',ligneClaude('user',[{type:'text',text:'Suite visible.'}]),
+ ].map(x=>typeof x==='string'?x:JSON.stringify(x)).join('\n'));
+ const avantClaude=empreintes();const detectionClaude=(await m.logicielsTrouves()).find(x=>x.id==='claude-code');assert.equal(detectionClaude.conversations,1);
+ const pageClaude=await m.pageLogiciel('claude-code',0);assert.equal(pageClaude.chats.length,1);assert.equal(pageClaude.chats[0].titre,'Cours Claude Code');assert.equal(pageClaude.chats[0].nbMessages,3);assert.equal(pageClaude.projets.length,1);assert.equal(pageClaude.instructions,'Instructions personnelles Claude fictives.');
+ const contenuClaude=await m.contenuLogiciel('claude-code',[pageClaude.chats[0].cle]);assert.deepEqual(contenuClaude.chats[0].messages.map(x=>x.content),['Question visible.','Réponse visible.','Suite visible.']);assert.deepEqual(empreintes(),avantClaude);
+ console.log('Imports Codex et Claude Code : détection, aperçu, contenu public, projets et instructions, sources inchangées ; anciens journaux et archives Codex, formats mixtes sans miroirs et répétitions conservées.');
 }finally{rmSync(temporaire,{recursive:true,force:true})}

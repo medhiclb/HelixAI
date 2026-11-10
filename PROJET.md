@@ -10,9 +10,9 @@ refaite à l'envers.
 
 | | |
 |---|---|
-| Version | 2026.1108.1 (`package.json`) |
-| Dernière mise à jour | 9 novembre 2026 |
-| Vérifié | 2026.1108.1 : typecheck, build, 2 732 contrôles sans échec, catalogues complets (4 513 clés interface, 1 719 passerelle), CLI (33), VS Code (16), signatures et 21 fichiers publiés contrôlés ; Windows, réflexion Linux et session Code Linux réussis sur la version exacte publiée (42525554603) |
+| Version | 2026.1110.1 (`package.json`), release encore en brouillon |
+| Dernière mise à jour | 10 novembre 2026 |
+| Vérifié | 2026.1110.1 : typecheck, build, 2 733 contrôles sans échec, catalogues complets (4 514 clés interface, 1 719 passerelle), imports Codex/Claude Code/Cursor/OpenCode/Zcode et exports Claude/ChatGPT/Gemini sur fixtures ; signatures et 21 fichiers du brouillon contrôlés ; installation locale réussie. Linux réussi sur 53df151 (42885242871), Windows en seconde tentative avant publication |
 | Reste à essayer | sur les vraies machines : § 5, « Ce qui reste à essayer sur les postes de Medhi » |
 | Documents liés | [ARCHITECTURE.md](ARCHITECTURE.md), [SECURITE.md](SECURITE.md), [SCREENS.md](SCREENS.md), [SIGNATURE.md](SIGNATURE.md), [README.md](README.md), [docs/GUIDE.md](docs/GUIDE.md) |
 
@@ -8328,3 +8328,38 @@ peuvent changer pendant l'utilisation de Codex.
 Le retrait des enveloppes de contexte se fait par parcours linéaire en tête du
 message : une suite de balises techniques non fermées est écartée sans recherche
 répétée sur tout le texte. Cas de régression ajouté avec 5 000 balises non fermées.
+
+
+Complément du 10/11/2026, demandé par Medhi (« claude etc ça doit fonctionner ») :
+les essais utilisent aussi le lecteur réel de Claude Code (détection, aperçu,
+contenu, projet et instructions), des exports Claude JSON et ZIP (pièces jointes
+textuelles, projet, instructions et documents), et des exports ChatGPT JSON et ZIP
+(branche active, exclusion des messages système et cachés). Données fictives,
+aucune conversation personnelle importée. Les journaux Claude Code restent
+inchangés ; les blocs de raisonnement, outils et résumés techniques sont exclus.
+Les 71 vérifications du lecteur d'exports passent, ainsi que les essais locaux
+Codex/Claude Code et OpenCode/Zcode. Claude et ChatGPT nécessitent leur export ;
+leur application installée ne rend pas leurs conversations locales accessibles.
+
+Application locale remplacée dans `/Applications/Helix.app` par 2026.1110.1,
+signatures et droits contrôlés ; ancienne version 2026.1108.1 placée dans la
+Corbeille, données personnelles et modèles conservés. Journal d'installation dans
+`release/journaux/2026.1110.1-installation-locale.json` (ignoré du dépôt).
+
+Cursor couvert également par `essai-import-code.mjs` : base SQLite fictive en
+lecture seule, anciennes conversations intégrées et bulles récentes séparées,
+ordre des messages, texte Lexical, instructions, identifiants interdits et bases
+inchangées. Essai réussi sur ce Mac avec sqlite3 ; en son absence, cet essai est
+explicitement sauté et l'application demande une autre source, sans installer un
+outil système. Les variables de dossiers personnels de ce test visent uniquement
+son répertoire jetable, y compris APPDATA sous Windows.
+
+Vérification complète après ces ajouts : typecheck réussi, 2 733 contrôles sans
+échec, catalogues interface 4 514/4 514 et passerelle 1 719/1 719 dans les six
+langues. Le code applicatif reste celui de 53df151 ; seuls les tests et cette
+mémoire ont été complétés. Première tentative Windows 42885242871 : téléchargement
+du Qwen3 1.7B trop lent, reprise puis bascule au modèle de secours Qwen3.5 2B,
+prêt et reconnu par le sélecteur ; deux assertions exigeaient le modèle initial,
+la suite Chat n'a donc pas été exécutée. Les contrôles CLI réussissent. Seconde
+tentative du seul job Windows lancée ; release non publiée tant qu'elle n'est pas
+réussie. Linux Code et réflexion ont réussi sur cette même révision.

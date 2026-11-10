@@ -453,6 +453,32 @@ if (iArchive > 0) {
   }
 }
 
+// 10/11/2026 : les autres exports passent par le même lecteur que Gemini.
+// Des données fictives protègent aussi la branche active et les projets repris.
+{
+  const claude = [{ uuid: "claude-fictif", name: "Cours fictif", created_at: "2026-11-10T12:00:00Z", project_uuid: "projet-fictif", chat_messages: [
+    { sender: "human", created_at: "2026-11-10T12:00:00Z", text: "Question ancienne", attachments: [{ file_name: "cours.txt", extracted_content: "Le cours joint" }] },
+    { sender: "assistant", created_at: "2026-11-10T12:00:00Z", content: [{ type: "thinking", text: "Privé" }, { type: "text", text: "Réponse visible" }, { type: "tool_use", text: "Outil" }] },
+    { sender: "human", created_at: "2026-11-10T12:00:00Z", content: [{ type: "text", text: "Suite" }] },
+  ] }];
+  const projets = [{ uuid: "projet-fictif", name: "Formation", prompt_template: "Instructions fictives", docs: [{ filename: "fiche.md", content: "Fiche de cours" }] }];
+  const json = await L.lireExport(fichier(JSON.stringify(claude), "conversations.json"));
+  const archive = await L.lireExport(fichier(zip([{ nom: "export/conversations.json", contenu: JSON.stringify(claude) }, { nom: "export/projects.json", contenu: JSON.stringify(projets) }]), "claude.zip"));
+  verifier("Claude JSON et ZIP : mêmes Chats et messages publics", JSON.stringify(json.chats) === JSON.stringify(archive.chats) && json.source === "claude" && json.chats[0].messages.length === 3);
+  verifier("Claude : pièces jointes textuelles conservées, raisonnement et outils exclus", json.chats[0].messages[0].content.includes("Le cours joint") && json.chats[0].messages[1].content === "Réponse visible");
+  verifier("Claude ZIP : projet, instructions et documents reliés", archive.chats[0].projet === archive.projets[0].cle && archive.projets[0].instructions === "Instructions fictives" && archive.projets[0].documents[0].contenu === "Fiche de cours");
+  const noeud = (parent, role, texte, masque = false) => ({ parent, message: { author: { role }, content: { parts: [texte] }, metadata: { is_visually_hidden_from_conversation: masque } } });
+  const gpt = [{ id: "gpt-fictif", title: "Branche choisie", current_node: "final", gizmo_id: "g-p-fictif", mapping: {
+    racine: noeud(null, "system", "Consigne"), question: noeud("racine", "user", "Question"),
+    autre: noeud("question", "assistant", "Ancienne réponse abandonnée"),
+    cache: noeud("question", "assistant", "Caché", true), final: noeud("cache", "assistant", "Réponse choisie"),
+  } }];
+  for (const f of [fichier(JSON.stringify(gpt), "conversations.json"), fichier(zip([{ nom: "conversations.json", contenu: JSON.stringify(gpt) }]), "chatgpt.zip")]) {
+    const lu = await L.lireExport(f);
+    verifier(`ChatGPT ${f.name} : branche choisie, sans système ni messages cachés`, lu.source === "chatgpt" && JSON.stringify(lu.chats[0].messages.map(m => m.content)) === JSON.stringify(["Question", "Réponse choisie"]) && lu.chats[0].projet === lu.projets[0].cle);
+  }
+}
+
 rmSync(TMP, { recursive: true, force: true });
 console.log(`\n${reussis} vérification(s) réussie(s), ${echecs.length} échec(s).`);
 if (echecs.length) {
