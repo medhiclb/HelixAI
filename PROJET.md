@@ -10,9 +10,9 @@ refaite à l'envers.
 
 | | |
 |---|---|
-| Version | 2026.1110.1 (`package.json`), release encore en brouillon |
+| Version | 2026.1110.1 (`package.json`), publiée |
 | Dernière mise à jour | 10 novembre 2026 |
-| Vérifié | 2026.1110.1 : typecheck, build, 2 733 contrôles sans échec, catalogues complets (4 514 clés interface, 1 719 passerelle), imports Codex/Claude Code/Cursor/OpenCode/Zcode et exports Claude/ChatGPT/Gemini sur fixtures ; signatures et 21 fichiers du brouillon contrôlés ; installation locale réussie. Linux réussi sur 53df151 (42885242871), Windows en seconde tentative avant publication |
+| Vérifié | 2026.1110.1 : typecheck, build, 2 733 contrôles sans échec, catalogues complets (4 514 clés interface, 1 719 passerelle), imports Codex/Claude Code/Cursor/OpenCode/Zcode et exports Claude/ChatGPT/Gemini sur fixtures ; signatures et 21 fichiers publiés contrôlés ; installation locale réussie. Windows, réflexion Linux et session Code Linux réussis sur la version exacte publiée, 53df151 (42885242871, tentative 2) |
 | Reste à essayer | sur les vraies machines : § 5, « Ce qui reste à essayer sur les postes de Medhi » |
 | Documents liés | [ARCHITECTURE.md](ARCHITECTURE.md), [SECURITE.md](SECURITE.md), [SCREENS.md](SCREENS.md), [SIGNATURE.md](SIGNATURE.md), [README.md](README.md), [docs/GUIDE.md](docs/GUIDE.md) |
 
@@ -8363,3 +8363,14 @@ prêt et reconnu par le sélecteur ; deux assertions exigeaient le modèle initi
 la suite Chat n'a donc pas été exécutée. Les contrôles CLI réussissent. Seconde
 tentative du seul job Windows lancée ; release non publiée tant qu'elle n'est pas
 réussie. Linux Code et réflexion ont réussi sur cette même révision.
+
+
+Publication finalisée le 10/11/2026 : Windows a réussi à la seconde tentative,
+ainsi que Code Linux et réflexion Linux, workflow 42885242871 sur 53df151.
+Release v2026.1110.1 publique et marquée dernière version ; 21 fichiers contrôlés
+par tailles et empreintes SHA-256 retournées par GitHub. Téléchargement anonyme
+du manifeste de mise à jour réussi, empreinte identique et signature Windows
+validée avec la clé de l'application installée. Liens des trois README actualisés.
+Preuves conservées dans `release/journaux/2026.1110.1-publication-api.json` et
+`2026.1110.1-manifeste.json` (ignorés du dépôt). Le dossier temporaire de fabrication
+a été retiré après les contrôles et l'installation, environ 3 Go récupérés.
