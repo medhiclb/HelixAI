@@ -744,6 +744,7 @@
   "Aucun fichier conversations.json ni activité Gemini dans cette archive : ce n'est pas un export ChatGPT, Claude ou Gemini.": "Keine Datei conversations.json und keine Gemini-Aktivität in diesem Archiv: Es ist kein Export aus ChatGPT, Claude oder Gemini.",
   "Aucun groupe": "Keine Gruppe",
   "Aucun groupe ne correspond à votre recherche.": "Keine Gruppe entspricht Ihrer Suche.",
+  "Aucun message de Chat n'a pu être lu dans cette source. Vous pouvez choisir un autre fichier ou réessayer.": "Aus dieser Quelle konnten keine Chat-Nachrichten gelesen werden. Sie können eine andere Datei auswählen oder es erneut versuchen.",
   "Aucun micro n'a été détecté sur ce poste.": "Auf diesem Gerät wurde kein Mikrofon erkannt.",
   "Aucun modèle": "Kein Modell",
   "Aucun modèle à installer": "Kein Modell zu installieren",

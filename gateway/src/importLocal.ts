@@ -301,30 +301,71 @@ async function lireClaudeCode(chemin: string, c: Collecte): Promise<Entete> {
 /* Codex                                                               */
 /* ------------------------------------------------------------------ */
 
-async function lireCodex(chemin: string, c: Collecte): Promise<Entete> {
-  let dossier: string | undefined;
+interface EnregistrementCodex {
+  type?: string;
+  timestamp?: unknown;
+  payload?: Record<string, unknown>;
+}
+
+/** Même lecture bornée pour le repérage du format et pour les messages. */
+async function* enregistrementsCodex(chemin: string): AsyncGenerator<EnregistrementCodex> {
   for await (const ligne of lignesDe(chemin)) {
     if (!ligne.trim()) continue;
-    let d: { type?: string; timestamp?: string; payload?: Record<string, unknown> };
     try {
-      d = JSON.parse(ligne);
-    } catch {
-      continue;
-    }
-    const p = d.payload ?? {};
-    if (d.type === "session_meta") dossier ??= typeof p.cwd === "string" ? p.cwd : undefined;
-    if (d.type !== "event_msg") continue;
-    const role = p.type === "user_message" ? "user" : p.type === "agent_message" ? "assistant" : null;
-    let texte = typeof p.message === "string" ? p.message.trim() : "";
-    /*
-     * Codex place devant la demande la liste des fichiers ouverts et le
-     * contexte de l'éditeur, puis « ## My request for Codex: ». On ne garde
-     * que la demande.
-     */
-    const demande = /##\s*My request for Codex:?\s*([\s\S]*)$/i.exec(texte);
+      const d: unknown = JSON.parse(ligne);
+      if (d && typeof d === "object" && !Array.isArray(d)) yield d as EnregistrementCodex;
+    } catch { /* Une ligne interrompue ne condamne pas le reste de la session. */ }
+  }
+}
+
+/** Le texte public seulement : ni raisonnement privé, ni appels d'outils. */
+function messageCodex(d: EnregistrementCodex, moderne: boolean): MessageLu | null {
+  const p = d.payload;
+  if (!p || typeof p !== "object" || Array.isArray(p)) return null;
+  let role: "user" | "assistant";
+  let texte = "";
+  if (moderne) {
+    if (d.type !== "response_item" || p.type !== "message" || (p.role !== "user" && p.role !== "assistant")) return null;
+    role = p.role;
+    if (role === "assistant" && p.channel != null && p.channel !== "final" && p.channel !== "commentary") return null;
+    if (typeof p.content === "string") texte = p.content;
+    else if (Array.isArray(p.content)) texte = p.content.flatMap((bloc: unknown) => {
+      if (!bloc || typeof bloc !== "object" || Array.isArray(bloc)) return [];
+      const b = bloc as Record<string, unknown>;
+      return (b.type === "input_text" || b.type === "output_text" || b.type === "text") && typeof b.text === "string" ? [b.text] : [];
+    }).join("\n");
+  } else {
+    if (d.type !== "event_msg" || (p.type !== "user_message" && p.type !== "agent_message")) return null;
+    role = p.type === "user_message" ? "user" : "assistant";
+    texte = typeof p.message === "string" ? p.message : "";
+  }
+  texte = texte.trim();
+  if (role === "user") {
+    // Les deux en-têtes de l'application (ancien et actuel), sans les fichiers et le contexte qui précèdent.
+    const demande = /^##\s*My request(?: for Codex)?:[ \t]*\s*([\s\S]*)$/im.exec(texte);
     if (demande) texte = demande[1]!.trim();
-    else if (/^(# Files mentioned by the user|<environment_context>)/.test(texte)) texte = "";
-    if (role && texte) c.ajouter({ role, content: couper(texte), createdAt: iso(d.timestamp) });
+    else if (/^# Files mentioned by the user/.test(texte) || (texte.startsWith("# AGENTS.md instructions for ") && texte.includes("<INSTRUCTIONS>"))) texte = "";
+    else texte = texte.replace(/<(environment_context|in-app-browser-context|external_codex_apps_open_page|external_codex_apps_selected_page_part_\d+_of_\d+)\b[^>]*>[\s\S]*?<\/\1>/g, "").trim();
+  }
+  return texte ? { role, content: couper(texte), createdAt: iso(d.timestamp) } : null;
+}
+
+async function lireCodex(chemin: string, c: Collecte): Promise<Entete> {
+  // 10/11/2026 : les sessions récentes n'émettent plus user_message/agent_message.
+  // Choisir le format par rôle évite leurs copies quand les deux sont présents,
+  // tout en conservant un rôle qui ne serait disponible que dans l'ancien format.
+  const modernes = new Set<"user" | "assistant">();
+  for await (const d of enregistrementsCodex(chemin)) {
+    const m = messageCodex(d, true);
+    if (m) modernes.add(m.role);
+    if (modernes.size === 2) break;
+  }
+  let dossier: string | undefined;
+  for await (const d of enregistrementsCodex(chemin)) {
+    if (d.type === "session_meta" && typeof d.payload?.cwd === "string") dossier ??= d.payload.cwd;
+    const moderne = d.type === "response_item";
+    const m = messageCodex(d, moderne);
+    if (m && moderne === modernes.has(m.role)) c.ajouter(m);
   }
   return { titre: "", dossier };
 }

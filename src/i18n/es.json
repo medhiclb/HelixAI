@@ -744,6 +744,7 @@
   "Aucun fichier conversations.json ni activité Gemini dans cette archive : ce n'est pas un export ChatGPT, Claude ou Gemini.": "Ningún archivo conversations.json ni actividad de Gemini en este archivo comprimido: no es una exportación de ChatGPT, Claude o Gemini.",
   "Aucun groupe": "Ningún grupo",
   "Aucun groupe ne correspond à votre recherche.": "Ningún grupo coincide con tu búsqueda.",
+  "Aucun message de Chat n'a pu être lu dans cette source. Vous pouvez choisir un autre fichier ou réessayer.": "No se ha podido leer ningún mensaje de Chat de esta fuente. Puedes elegir otro archivo o volver a intentarlo.",
   "Aucun micro n'a été détecté sur ce poste.": "No se ha detectado ningún micrófono en este ordenador.",
   "Aucun modèle": "Ningún modelo",
   "Aucun modèle à installer": "Ningún modelo que instalar",

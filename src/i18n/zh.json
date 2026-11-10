@@ -744,6 +744,7 @@
   "Aucun fichier conversations.json ni activité Gemini dans cette archive : ce n'est pas un export ChatGPT, Claude ou Gemini.": "此压缩包中既没有 conversations.json 文件，也没有 Gemini 活动：它不是 ChatGPT、Claude 或 Gemini 的导出。",
   "Aucun groupe": "暂无群组",
   "Aucun groupe ne correspond à votre recherche.": "没有符合搜索条件的群组。",
+  "Aucun message de Chat n'a pu être lu dans cette source. Vous pouvez choisir un autre fichier ou réessayer.": "无法从此来源读取任何聊天消息。您可以选择其他文件或重试。",
   "Aucun micro n'a été détecté sur ce poste.": "在此设备上未检测到麦克风。",
   "Aucun modèle": "没有模型",
   "Aucun modèle à installer": "无需安装模型",

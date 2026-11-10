@@ -10557,7 +10557,7 @@ console.log("\n54. Mot de passe oublié : administrateur, machine de l'instance,
 }
 
 console.log("\n55. Imports de code et conseiller local (02/11/2026)");
-for (const script of ["essai-import-code.mjs", "essai-optimisation.mjs", "essai-scenario-video.mjs", "essai-ajouts-http.mjs", "essai-demarrage-moteur.mjs", "essai-reprise-code.mjs", "essai-rea.mjs", "essai-outils-rea.mjs", "essai-regles-rea.mjs", "essai-modeles-interface.mjs", "essai-conversation-orale.mjs", "essai-kokoro.mjs", "essai-correctifs-machines.mjs", "essai-skills-contexte-solo.mjs"]) {
+for (const script of ["essai-import-code.mjs", "essai-import-codex.mjs", "essai-optimisation.mjs", "essai-scenario-video.mjs", "essai-ajouts-http.mjs", "essai-demarrage-moteur.mjs", "essai-reprise-code.mjs", "essai-rea.mjs", "essai-outils-rea.mjs", "essai-regles-rea.mjs", "essai-modeles-interface.mjs", "essai-conversation-orale.mjs", "essai-kokoro.mjs", "essai-correctifs-machines.mjs", "essai-skills-contexte-solo.mjs"]) {
   try {
     execFileSync(process.execPath, [join(RACINE, "scripts", script)], { cwd: RACINE, timeout: 120_000, stdio: "pipe" });
     verifier(script, true, "");

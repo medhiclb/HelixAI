@@ -518,6 +518,12 @@ export function ImporterChats() {
             </ul>
           </div>
 
+          {donnees.chats.length === 0 && (
+            <InfoBox tone="muted" leading={<Info size={15} strokeWidth={1.75} />}>
+              {t("Aucun message de Chat n'a pu être lu dans cette source. Vous pouvez choisir un autre fichier ou réessayer.")}
+            </InfoBox>
+          )}
+
           {donnees.chats.length > 0 && donnees.chats.every(bloque) && (
             <InfoBox tone="muted" leading={<CircleCheck size={15} strokeWidth={1.75} />}>
               {t("Tous les Chats de cet export sont déjà importés : rien de nouveau à reprendre.")}

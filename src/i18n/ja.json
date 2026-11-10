@@ -744,6 +744,7 @@
   "Aucun fichier conversations.json ni activité Gemini dans cette archive : ce n'est pas un export ChatGPT, Claude ou Gemini.": "このアーカイブには conversations.json も Gemini のアクティビティもありません。ChatGPT、Claude、Gemini のエクスポートではありません。",
   "Aucun groupe": "グループはありません",
   "Aucun groupe ne correspond à votre recherche.": "検索に一致するグループはありません。",
+  "Aucun message de Chat n'a pu être lu dans cette source. Vous pouvez choisir un autre fichier ou réessayer.": "このソースから Chat メッセージを読み取れませんでした。別のファイルを選択するか、再試行してください。",
   "Aucun micro n'a été détecté sur ce poste.": "この端末でマイクが検出されませんでした。",
   "Aucun modèle": "モデルがありません",
   "Aucun modèle à installer": "インストールするモデルはありません",

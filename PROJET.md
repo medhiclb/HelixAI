@@ -8293,3 +8293,34 @@ sous Linux et session Code sous Linux. Ce résultat complète les essais du code
 identique mentionnés ci-dessus et lève l'attente de cette exécution supplémentaire.
 Release stable publique confirmée, sans nouvelle modification du logiciel.
 Les limites concernant les PC des signalements restent celles documentées ci-dessus.
+
+
+### 10/11/2026 : import Codex récent qui affichait zéro Chat
+
+Capture de Medhi : 33 conversations annoncées, puis « Codex : 0 Chat(s),
+0 projet(s) » après Reprendre. Cause reproduite sur les types d'enregistrements
+locaux, sans afficher leur texte : les journaux récents stockent les messages
+dans `response_item` de type `message`, tandis que le lecteur ne retenait que
+les anciens `event_msg.user_message` et `event_msg.agent_message`.
+
+Le lecteur prend maintenant les blocs textuels publics des rôles user et
+assistant (canaux final/commentary ou sans canal). Les messages developer/system,
+le raisonnement privé, appels d'outils, résultats d'outils et images ne sont pas
+importés. Les deux en-têtes « My request » sont reconnus ; les messages de contexte
+technique seuls sont écartés. Repérage du format par rôle avant la lecture : les
+messages canoniques priment sur leurs miroirs anciens, sans dédoublonner les vraies
+demandes répétées. Le rôle ancien reste lu s'il manque dans le format récent.
+Lecture bornée ligne par ligne et pagination conservées ; aucune modification des
+journaux d'origine ni des barrières d'accès de l'import local.
+
+Une source sans message lisible affiche désormais une explication et propose de
+réessayer ou de choisir un autre fichier, au lieu d'une liste vide seule.
+
+Régression `scripts/essai-import-codex.mjs`, intégrée à la batterie : 33 sessions
+récentes détectées et toutes proposées, format ancien et archives, miroirs mixtes,
+demandes répétées, rôle disponible seulement dans l'ancien format, blocs de texte,
+ligne JSON interrompue, exclusion des instructions et du raisonnement, taille
+bornée et fichiers d'origine inchangés. Lecture réelle du poste en lecture seule :
+31 fichiers de sessions, 28 Chats proposés, 4 projets, sur 3 pages. Aucun import
+dans les données de Medhi. Ces nombres sont un relevé ponctuel, les sessions
+peuvent changer pendant l'utilisation de Codex.
