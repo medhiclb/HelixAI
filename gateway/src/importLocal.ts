@@ -345,7 +345,18 @@ function messageCodex(d: EnregistrementCodex, moderne: boolean): MessageLu | nul
     const demande = /^##\s*My request(?: for Codex)?:[ \t]*\s*([\s\S]*)$/im.exec(texte);
     if (demande) texte = demande[1]!.trim();
     else if (/^# Files mentioned by the user/.test(texte) || (texte.startsWith("# AGENTS.md instructions for ") && texte.includes("<INSTRUCTIONS>"))) texte = "";
-    else texte = texte.replace(/<(environment_context|in-app-browser-context|external_codex_apps_open_page|external_codex_apps_selected_page_part_\d+_of_\d+)\b[^>]*>[\s\S]*?<\/\1>/g, "").trim();
+    else {
+      // Retrait linéaire des enveloppes techniques en tête : une longue suite
+      // de balises non fermées ne doit pas bloquer la lecture du poste.
+      for (;;) {
+        const contexte = /^<(environment_context|in-app-browser-context|external_codex_apps_open_page|external_codex_apps_selected_page_part_\d+_of_\d+)\b[^>]*>/.exec(texte);
+        if (!contexte) break;
+        const fermeture = `</${contexte[1]}>`;
+        const fin = texte.indexOf(fermeture, contexte[0].length);
+        if (fin < 0) { texte = ""; break; }
+        texte = texte.slice(fin + fermeture.length).trimStart();
+      }
+    }
   }
   return texte ? { role, content: couper(texte), createdAt: iso(d.timestamp) } : null;
 }

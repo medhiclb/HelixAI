@@ -8324,3 +8324,7 @@ bornée et fichiers d'origine inchangés. Lecture réelle du poste en lecture se
 31 fichiers de sessions, 28 Chats proposés, 4 projets, sur 3 pages. Aucun import
 dans les données de Medhi. Ces nombres sont un relevé ponctuel, les sessions
 peuvent changer pendant l'utilisation de Codex.
+
+Le retrait des enveloppes de contexte se fait par parcours linéaire en tête du
+message : une suite de balises techniques non fermées est écartée sans recherche
+répétée sur tout le texte. Cas de régression ajouté avec 5 000 balises non fermées.
