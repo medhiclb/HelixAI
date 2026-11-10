@@ -35,11 +35,13 @@ try{
  ecrire('contexte',[entete,message('user','<environment_context>contexte</environment_context>'),message('user','# AGENTS.md instructions for /projet\n<INSTRUCTIONS>consigne</INSTRUCTIONS>'),message('developer','autre consigne'),message('assistant','pensée','analysis')]);
  ecrire('blocs',[entete,'{interrompu',entree('response_item',{type:'message',role:'user',content:[{type:'input_text',text:'Question publique.'},{type:'input_image',image_url:'data:image/png;base64,secret'}]}),entree('response_item',{type:'message',role:'assistant',channel:'final',content:[{type:'output_text',text:'Première ligne.'},{type:'output_text',text:'Deuxième ligne.'}]}),message('user','<external_codex_apps_open_page>contexte</external_codex_apps_open_page>'),message('user','<environment_context>machine</environment_context>\nMa vraie demande.')]);
  ecrire('long',[entete,message('user','x'.repeat(25000))]);
+ ecrire('ancien-sans-deux-points',[entete,ancien('user','# Files mentioned by the user\nimage.png\n## My request for Codex\nDemande ancienne sans ponctuation.'),ancien('assistant','Réponse ancienne.')]);
  ecrire('balises',[entete,message('user','<environment_context>'.repeat(5000)),message('assistant','Réponse visible.','final')]);
- const avant=empreintes();page=await m.pageLogiciel('codex',0);assert.equal(page.total,40);assert.equal(page.chats.length,39,'les sessions purement techniques restent exclues');
+ const avant=empreintes();page=await m.pageLogiciel('codex',0);assert.equal(page.total,41);assert.equal(page.chats.length,40,'les sessions purement techniques restent exclues');
  const contenu=await m.contenuLogiciel('codex',page.chats.map(c=>c.cle));
  const lire=nom=>contenu.chats.find(c=>c.cle==='codex:'+nom);
  assert.deepEqual(lire('ancien').messages.map(x=>x.content),['Ancienne demande.','Ancienne réponse.']);
+ assert.equal(lire('ancien-sans-deux-points').messages[0].content,'Demande ancienne sans ponctuation.');
  assert.deepEqual(lire('double').messages.map(x=>x.content),['continue','Fini.','continue','continue'],'les miroirs ne doublent pas les messages, les demandes réellement répétées restent');
  assert.deepEqual(lire('mixte').messages.map(x=>x.content),['Demande moderne.','Réponse ancienne.']);
  assert.deepEqual(lire('blocs').messages.map(x=>x.content),['Question publique.','Première ligne.\nDeuxième ligne.','Ma vraie demande.']);

@@ -342,7 +342,7 @@ function messageCodex(d: EnregistrementCodex, moderne: boolean): MessageLu | nul
   texte = texte.trim();
   if (role === "user") {
     // Les deux en-têtes de l'application (ancien et actuel), sans les fichiers et le contexte qui précèdent.
-    const demande = /^##\s*My request(?: for Codex)?:[ \t]*\s*([\s\S]*)$/im.exec(texte);
+    const demande = /^##\s*My request(?: for Codex)?\b:?[ \t]*\s*([\s\S]*)$/im.exec(texte);
     if (demande) texte = demande[1]!.trim();
     else if (/^# Files mentioned by the user/.test(texte) || (texte.startsWith("# AGENTS.md instructions for ") && texte.includes("<INSTRUCTIONS>"))) texte = "";
     else {
