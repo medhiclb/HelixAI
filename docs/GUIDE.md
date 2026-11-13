@@ -1407,6 +1407,34 @@ Copiez une image ou une capture, placez le curseur dans le champ de Chat et util
 **Ctrl+V** ou **⌘V**. La photo apparaît dans les pièces jointes ; retirez-la avant
 l'envoi si nécessaire. La lecture de son contenu dépend du modèle de vision choisi.
 
+## Ouvrir un dossier de projet
+
+Dans **Projets**, choisissez **Importer un projet**, puis le dossier existant.
+Le projet s'ouvre dans **Code**. Vous pouvez aussi utiliser **Ouvrir un projet**
+directement dans Code ; le nom du dossier retenu reste affiché dans la saisie.
+Le dossier reste à son emplacement. L'agent explore ses sous-dossiers et lit les
+fichiers utiles à votre demande au fur et à mesure. Pour des documents et des
+opérations de classement, choisissez le dossier accessible dans **Cowork**.
+
+Le sélecteur de pièces jointes permet également de choisir un texte dont
+l'extension est inhabituelle, ou un fichier sans extension comme `Dockerfile`.
+Les formats binaires sans lecteur adapté restent refusés avec une explication.
+Un projet complet se travaille depuis son dossier plutôt qu'en joignant tous ses
+fichiers dans un seul message, qui serait limité par la place du modèle.
+
+## Authentifier un serveur MCP personnalisé
+
+Dans **Réglages, Connecteurs, Vos propres serveurs MCP**, ajoutez le serveur en
+mode **Adresse**. Renseignez son adresse HTTPS, puis sa clé dans **Jeton Bearer
+(facultatif)** si le service demande `Authorization: Bearer …`. Pour un autre
+nom d'en-tête, utilisez **Ajouter un en-tête**, par exemple `X-Api-Key` et sa valeur.
+Laissez ces champs vides pour OAuth ou un serveur sans clé. Les valeurs sont
+chiffrées sur l'instance et envoyées uniquement au serveur choisi.
+
+Pour un serveur déjà enregistré sans clé, retirez-le puis ajoutez-le avec ses
+identifiants. Marquez à nouveau ses outils de lecture seule si nécessaire.
+N'insérez pas la clé dans l'adresse du serveur.
+
 ## Coder sur un VPS
 
 Dans **Code**, choisissez le moteur **OpenCode**, puis **Local ou VPS** sur la ligne

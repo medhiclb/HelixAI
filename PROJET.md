@@ -10,9 +10,9 @@ refaite à l'envers.
 
 | | |
 |---|---|
-| Version | 2026.1113.1 (`package.json`), en préparation |
+| Version | 2026.1113.1 (`package.json`), publiée |
 | Dernière mise à jour | 13 novembre 2026 |
-| Vérifié | 2026.1110.1 : typecheck, build, 2 733 contrôles sans échec, catalogues complets (4 514 clés interface, 1 719 passerelle), imports Codex/Claude Code/Cursor/OpenCode/Zcode et exports Claude/ChatGPT/Gemini sur fixtures ; signatures et 21 fichiers publiés contrôlés ; installation locale réussie. Windows, réflexion Linux et session Code Linux réussis sur la version exacte publiée, 53df151 (42885242871, tentative 2) |
+| Vérifié | 2026.1113.1 : typecheck, build, 2 736 contrôles sans échec ; catalogues 4 525 interface et 1 724 passerelle complets dans six langues ; session Code réelle Mac (9), connecteurs natifs (166), interface isolée Projets/MCP parcourue dans Chrome ; quatre paquets conformes aux ressources construites, signatures et 21 fichiers du brouillon contrôlés. Windows, Code Linux et réflexion Linux réussis sur la révision publiée ab17b57 (43507619090) |
 | Reste à essayer | sur les vraies machines : § 5, « Ce qui reste à essayer sur les postes de Medhi » |
 | Documents liés | [ARCHITECTURE.md](ARCHITECTURE.md), [SECURITE.md](SECURITE.md), [SCREENS.md](SCREENS.md), [SIGNATURE.md](SIGNATURE.md), [README.md](README.md), [docs/GUIDE.md](docs/GUIDE.md) |
 
@@ -8419,3 +8419,45 @@ clair, masquage des erreurs, injections et redirections refusées), ouvertures
 Code, extensions inconnues et fichiers sans extension. Ni clé réelle OnlyChat
 ni compte utilisateur touché. Interface à contrôler visuellement sur les postes.
 Version préparée : 2026.1113.1, publication conditionnée aux contrôles complets.
+
+
+Complément des essais du 13/11 : l'import du dossier depuis Projets (chemin
+retenu, lien vers Code) et le formulaire MCP ont été parcourus dans Chrome sur
+une interface isolée, données fictives : Bearer masqué, en-tête privé masqué,
+envoi confirmé et formulaire vidé. Aucun compte, clé ou dossier personnel du
+poste utilisé. Session Code Linux réussie sur GitHub (43507619090, ab17b57).
+Première batterie complète : deux régressions de la PR #33 et un contrôle
+structurel à adapter au nouveau wrapper HTTP ; corrigés. Les 166 contrôles natifs
+rejoués passent ; batterie complète finale en cours. Le diagnostic du poste
+Ubuntu de #34 reste à confirmer chez son auteur, même si les parcours Mac et
+Linux réussissent.
+
+
+Contrôles finaux sur ab17b57 : typecheck/build réussis, 2 736 contrôles sans échec,
+i18n interface 4 525/4 525 et passerelle 1 724/1 724 dans les six langues. Les
+ressources des quatre paquets correspondent octet pour octet à la construction ;
+archives de mise à jour Mac identiques aux ASAR et signatures des applications,
+DMG valides, manifeste Windows signé par la clé existante 5efb-aa74-00fe-cdd7.
+Brouillon v2026.1113.1 : 21 tailles et empreintes GitHub conformes. Les dix PR
+retenues sont fusionnées sur GitHub, #16 fermée avec motif ; aucune PR ouverte
+au relevé. Analyse Push on main 43507616004 réussie. Publication en attente de
+43507619090 (Windows et réflexion Linux), Code Linux déjà réussi.
+
+
+Publication finalisée le 13/11/2026 : workflow 43507619090 réussi (Windows complet,
+réflexion Linux et session Code Linux) sur ab17b570b58e4614d4491c16b4f14749cc502f4d.
+2026.1113.1 installée dans Applications, ancienne 2026.1110.1 en Corbeille,
+signatures et droits contrôlés, aucune donnée utilisateur ni modèle modifié.
+Fichiers temporaires de fabrication supprimés après installation et contrôle des
+21 fichiers du brouillon ; onglet et serveur de l'interface fictive fermés.
+Toutes les PR du relevé ont reçu une réponse et sont fusionnées (#14, #17, #18,
+#24, #28, #29, #30, #33, #36, #37) ou fermée avec motif (#16, migration Tailwind).
+Liens de téléchargement des trois README et guide d'utilisation actualisés.
+
+Vérification après publication : version publique marquée latest, 21 tailles et
+empreintes conformes via l'API GitHub ; manifeste téléchargé anonymement, empreinte
+et signature validées avec la clé de l'application installée. Preuves dans
+`release/journaux/2026.1113.1-publication-api.json` et `2026.1113.1-manifeste.json`.
+#35 fermé avec réponse et mode d'emploi, #20 déjà fermé par la PR et complété par
+la release ; #34 reçoit le lien et les essais Linux, laissé ouvert pour confirmer
+le résultat chez son auteur. Aucun engagement sur son poste sans retour concret.
