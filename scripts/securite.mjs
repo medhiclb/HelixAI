@@ -8824,7 +8824,7 @@ console.log("\n39. Palmier Pro : application locale reconnue avant de lui parler
   const ecran = src("src", "components", "settings", "Connecteurs.tsx");
   verifier(
     "mcp.ts : toute adresse passe par adresseServeurPermise avant la connexion ; une application locale n'est jointe que par fetchLocal (écouteur reconnu avant chaque requête, aucune redirection)",
-    /const refus = adresseServeurPermise\(entry\.config\);/.test(mcpSrc) && /const refus = await local\.reconnaitre\(\);\s*if \(refus\) throw new Error\(refus\);\s*return fetch\(entree, \{ \.\.\.init, redirect: "error" \}\);/.test(mcpSrc) && /entry\.config\.local\s*\? \{ fetch: fetchLocal\(entry\.config\.local\) \}/.test(mcpSrc) && !/const locale = adresse\.hostname === "127\.0\.0\.1" \|\| adresse\.hostname === "localhost";/.test(mcpSrc),
+    /const refus = adresseServeurPermise\(entry\.config\);/.test(mcpSrc) && /const refus = await local\.reconnaitre\(\);\s*if \(refus\) throw new Error\(refus\);\s*return fetch\(entree, \{ \.\.\.init, redirect: "error" \}\);/.test(mcpSrc) && /const fetchBase = entry\.config\.local \? fetchLocal\(entry\.config\.local\)/.test(mcpSrc) && /return fetchBase\(entree, \{ \.\.\.init, redirect: "error" \}\)/.test(mcpSrc) && !/const locale = adresse\.hostname === "127\.0\.0\.1" \|\| adresse\.hostname === "localhost";/.test(mcpSrc),
     "mcp.ts",
   );
   verifier(
@@ -10590,7 +10590,8 @@ console.log("\n54. Mot de passe oublié : administrateur, machine de l'instance,
 }
 
 console.log("\n55. Imports de code et conseiller local (02/11/2026)");
-for (const script of ["essai-import-code.mjs", "essai-import-codex.mjs", "essai-optimisation.mjs", "essai-scenario-video.mjs", "essai-ajouts-http.mjs", "essai-demarrage-moteur.mjs", "essai-reprise-code.mjs", "essai-rea.mjs", "essai-outils-rea.mjs", "essai-regles-rea.mjs", "essai-modeles-interface.mjs", "essai-conversation-orale.mjs", "essai-kokoro.mjs", "essai-correctifs-machines.mjs", "essai-skills-contexte-solo.mjs"]) {
+for (const script of ["essai-import-code.mjs", "essai-import-codex.mjs",
+    "essai-correctifs-1113.mjs", "essai-optimisation.mjs", "essai-scenario-video.mjs", "essai-ajouts-http.mjs", "essai-demarrage-moteur.mjs", "essai-reprise-code.mjs", "essai-rea.mjs", "essai-outils-rea.mjs", "essai-regles-rea.mjs", "essai-modeles-interface.mjs", "essai-conversation-orale.mjs", "essai-kokoro.mjs", "essai-correctifs-machines.mjs", "essai-skills-contexte-solo.mjs"]) {
   try {
     execFileSync(process.execPath, [join(RACINE, "scripts", script)], { cwd: RACINE, timeout: 120_000, stdio: "pipe" });
     verifier(script, true, "");

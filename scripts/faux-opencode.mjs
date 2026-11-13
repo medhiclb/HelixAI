@@ -106,6 +106,7 @@ const serveur = http.createServer((req, res) => {
     }
     if (req.headers.authorization !== attendu) return json({ error: "unauthorized" }, 401);
 
+    if (chemin === "/global/health") return json({ healthy: true, version: "fictif" });
     if (chemin === "/api/session") return json([]);
     if (chemin === "/event") {
       res.writeHead(200, { "Content-Type": "text/event-stream" });

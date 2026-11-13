@@ -10,8 +10,8 @@ refaite à l'envers.
 
 | | |
 |---|---|
-| Version | 2026.1110.1 (`package.json`), publiée |
-| Dernière mise à jour | 10 novembre 2026 |
+| Version | 2026.1113.1 (`package.json`), en préparation |
+| Dernière mise à jour | 13 novembre 2026 |
 | Vérifié | 2026.1110.1 : typecheck, build, 2 733 contrôles sans échec, catalogues complets (4 514 clés interface, 1 719 passerelle), imports Codex/Claude Code/Cursor/OpenCode/Zcode et exports Claude/ChatGPT/Gemini sur fixtures ; signatures et 21 fichiers publiés contrôlés ; installation locale réussie. Windows, réflexion Linux et session Code Linux réussis sur la version exacte publiée, 53df151 (42885242871, tentative 2) |
 | Reste à essayer | sur les vraies machines : § 5, « Ce qui reste à essayer sur les postes de Medhi » |
 | Documents liés | [ARCHITECTURE.md](ARCHITECTURE.md), [SECURITE.md](SECURITE.md), [SCREENS.md](SCREENS.md), [SIGNATURE.md](SIGNATURE.md), [README.md](README.md), [docs/GUIDE.md](docs/GUIDE.md) |
@@ -8374,3 +8374,48 @@ validée avec la clé de l'application installée. Liens des trois README actual
 Preuves conservées dans `release/journaux/2026.1110.1-publication-api.json` et
 `2026.1110.1-manifeste.json` (ignorés du dépôt). Le dossier temporaire de fabrication
 a été retiré après les contrôles et l'installation, environ 3 Go récupérés.
+
+
+### 13/11/2026 : dossiers de projet, authentification MCP et PR
+
+Demandes de Medhi : travailler sur un gros dossier, choisir les fichiers dont
+l'extension n'est pas dans une liste, traiter #34/#35 et les PR ouvertes.
+
+- Projets propose « Importer un projet » : lien vers le dossier existant,
+  enregistré pour le propriétaire, puis ouverture dans Code. Pas de copie ni
+  d'envoi massif des fichiers. Code propose « Ouvrir un projet », le dossier
+  sélectionné reste visible ; Cowork conserve son choix de périmètre. Les
+  validations du dossier, liens et zones protégées restent dans la passerelle.
+- Le sélecteur des pièces jointes ne filtre plus les extensions : le lecteur
+  existant décide, par format document/image ou inspection des octets pour les
+  textes inconnus. Un binaire reste refusé avec une explication. Aucun nouveau
+  parseur de format ni dépendance ; lecture de texte bornée inchangée.
+- #35 : champs Bearer et en-têtes privés pour un MCP à une adresse. Noms HTTP
+  et valeurs jugés côté instance (16, 8 000 caractères, pas de CR/LF ni d'en-têtes
+  de transport). Scellés dans la spécification du serveur, jamais dans l'URL,
+  le journal ni l'état exposé. Pas de changement d'origine ni de redirection
+  avec des clés privées ; OAuth reste le mode quand les champs sont vides.
+- PR #33 : retire les schémas d'outils inutiles d'une question conversationnelle
+  courte pour préserver la place de l'historique. La batterie a détecté deux régressions dans la version initiale de la PR :
+  demandes implicites de pages et reprise Agenda. La règle est resserrée aux
+  références explicites à la mémoire du Chat ; les questions ambiguës gardent
+  leurs outils. Service nommé, appel d'outil existant, agent et web les conservent. Ce n'est pas une promesse de
+  mémoire illimitée : une conversation trop longue peut encore être abrégée.
+- #34 : sonde de disponibilité OpenCode sur /global/health, JSON healthy=true,
+  au lieu d'un simple HTTP 200 qui pouvait être une page HTML. Ouverture bornée
+  à 15 s ; reprise seulement sur un refus explicite 429/503, jamais après une
+  réponse perdue. Diagnostics disque plein, droits, base occupée ; pas de base
+  supprimée ni de serveur redémarré sous les autres sessions. Le défaut exact du
+  poste Ubuntu signalé (ancienne 2026.1103.1) n'est pas reproduit sur ce Mac.
+- PR #33 et neuf PR compatibles intégrées localement : #14, #17, #18, #24, #28,
+  #29, #30, #36, #37. Plusieurs sont déjà équivalentes à l'état du verrouillage ;
+  les fusions préservent leur historique. PR #16 fermée avec explication : passage
+  Tailwind 3 → 4 sans migration PostCSS ni styles. Notices tiers régénérées.
+
+Essais ciblés : vraie session OpenCode sur projet jetable et modèle fictif,
+9 vérifications réussies sur ce Mac ; régression 13/11 sur serveur MCP fictif
+(authentification connexion/liste/appel, stockage chiffré, absence de clés en
+clair, masquage des erreurs, injections et redirections refusées), ouvertures
+Code, extensions inconnues et fichiers sans extension. Ni clé réelle OnlyChat
+ni compte utilisateur touché. Interface à contrôler visuellement sur les postes.
+Version préparée : 2026.1113.1, publication conditionnée aux contrôles complets.

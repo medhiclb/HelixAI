@@ -111,7 +111,14 @@ export function outilsNecessairesPourQuestion(
   if (outilsDejaAppeles(messages).size > 0) return true;
   const services = new Set<string>();
   for (const outil of outils) services.add(serviceDe(outil.function?.name ?? ""));
-  return servicesNommes(texte, services, libelles).size > 0;
+  if (servicesNommes(texte, services, libelles).size > 0 || servicesNommes(texte.replace(/-/g, " "), services, libelles).size > 0) return true;
+  // 13/11/2026 : « quelles pages gère-t-on ? » et « et maintenant ? »
+  // peuvent nécessiter un connecteur sans le nommer. L'absence d'un nom de
+  // service ne prouve pas qu'une question est purement conversationnelle.
+  // Alléger seulement une référence explicite à la mémoire du Chat ; dans le
+  // doute garder les outils, comme avant cette optimisation.
+  const memoire = /\b(mot secret|mon prenom|mon nom|notre conversation|cet echange|mes messages|je t['’]ai dit|t['’]ai-je dit|ai-je demande|my name|secret word|our conversation|my previous message|what did i say|what did i ask|mein name|unser gesprach|mi nombre|nuestra conversacion)\b|我的名字|暗号|之前的消息|私の名前|合言葉|前のメッセージ|اسمي|كلمتي السرية|رسائلي السابقة/;
+  return !memoire.test(plat(texte));
 }
 
 /** Le texte d'un message, contenu simple ou en parties. */

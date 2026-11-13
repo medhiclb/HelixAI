@@ -163,3 +163,20 @@ export function jugerVariables(brutes: unknown): { ok: true; variables: Record<s
   if (Object.keys(variables).length > 32) return { ok: false, message: t("32 variables au plus.") };
   return { ok: true, variables };
 }
+
+/** 13/11/2026 : clés HTTP scellées avec le serveur, jamais dans son adresse. */
+export function jugerEntetes(brut: unknown): { ok: true; entetes: Record<string, string> } | { ok: false; message: string } {
+  const refus = () => ({ ok: false as const, message: t("En-têtes refusés : 16 au plus, noms HTTP valides, valeurs sans saut de ligne et 8 000 caractères au plus.") });
+  if (brut === undefined) return { ok: true, entetes: {} };
+  if (!brut || typeof brut !== "object" || Array.isArray(brut)) return refus();
+  const liste = Object.entries(brut);
+  if (liste.length > 16) return refus();
+  const entetes: Record<string, string> = Object.create(null);
+  const interdits = /^(host|connection|content-length|transfer-encoding|proxy-.*|cookie|set-cookie|origin|referer|accept|content-type|mcp-.*|sec-.*|upgrade|te|trailer)$/i;
+  for (const [nom, valeur] of liste) {
+    const cle = nom.toLowerCase();
+    if (!/^[!#$%&'*+.^_`|~0-9a-z-]{1,128}$/i.test(nom) || interdits.test(nom) || typeof valeur !== "string" || !valeur.trim() || valeur.length > 8000 || /[^\t\x20-\x7e\x80-\xff]/.test(valeur) || cle in entetes) return refus();
+    entetes[cle] = valeur.trim();
+  }
+  return { ok: true, entetes };
+}

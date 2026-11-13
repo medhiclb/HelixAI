@@ -1,3 +1,4 @@
+import { ouvrirSessionCode } from "./creationSessionCode.ts";
 import { consigneModeTravail } from "./profilTravail.ts";
 import { chargerContextesModeles, contexteSouhaite, enregistrerContexte, tailleValide, delaiVeilleMinutes, enregistrerVeille, veilleValide } from "./contextesModeles.ts";
 import { importerCompetenceLien } from "./importCompetences.ts";
@@ -3330,16 +3331,9 @@ async function creerSessionCode(
   modele: string,
   variante: string | undefined,
 ): Promise<{ id: string } | { erreur: string; statut: number }> {
-  const upstream = await codeApi(`/session?directory=${encodeURIComponent(dossier)}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: "{}",
-  });
-  const corps = (await upstream.json().catch(() => ({}))) as { id?: unknown };
-  const id = typeof corps.id === "string" && SESSION_CODE.test(corps.id) ? corps.id : undefined;
-  if (!upstream.ok || !id) {
-    return { erreur: t("L'agent de code n'a pas ouvert de session."), statut: upstream.ok ? 502 : upstream.status };
-  }
+  const creation = await ouvrirSessionCode(dossier, codeApi);
+  if (!("id" in creation)) return creation;
+  const { id } = creation;
   modeleDeSession.set(id, { modele, variante, dossier });
   suivreSessionCode(id, dossier);
   try {

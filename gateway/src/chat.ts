@@ -1192,8 +1192,9 @@ export async function handleChatRequest(
    * tous les connecteurs. Quand « Outils » est activé, les injecter avant de
    * mesurer l'historique pouvait retirer le premier échange d'un Chat très
    * court (par exemple le mot secret demandé au tour suivant). Les outils
-   * restent actifs pour un service nommé, un appel déjà commencé, un agent ou
-   * une recherche web.
+   * restent actifs pour un service nommé, un appel déjà commencé, un agent,
+   * une recherche web ou une demande ambiguë. Seules les références explicites
+   * à la mémoire du Chat sont allégées (régression natifs du 13/11/2026).
    */
   const questionCourte = petits.texteDuDernierMessage(body.messages);
   if (

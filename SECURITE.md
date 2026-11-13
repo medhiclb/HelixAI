@@ -7165,3 +7165,18 @@ L'annulation de transcription empêche son résultat tardif d'être envoyé au c
 Seules les voix TTS déclarées locales par le système sont sélectionnables. Aucun
 nouveau téléchargement de modèle TTS. La simulation évalue le contenu transcrit,
 jamais l'accent ou une caractéristique acoustique. Limite audio inchangée : 5 min.
+
+
+### Clés HTTP des serveurs MCP personnalisés (13/11/2026)
+
+Les en-têtes fournis sont validés puis scellés avec `specPerso`, liée à l'identité
+et la clé de l'instance. Jamais de valeurs renvoyées par `descriptionPerso` ou
+`status`. Un maximum de 16 noms HTTP de 128 caractères, valeurs de 8 000 caractères,
+sans contrôles, CR/LF, doublons de casse ni en-têtes de transport/session MCP.
+Le transport streamable comme son repli SSE reçoit `requestInit.headers` ; les
+redirections sont refusées et une origine différente ne reçoit aucune requête.
+Les clés et le jeton sans préfixe Bearer sont masqués dans erreurs, journaux et
+résultats d'outils. OAuth existant inchangé quand les champs sont vides. Le retrait
+supprime le serveur enregistré ; changer la clé passe actuellement par retirer
+puis ajouter le serveur. Essais avec serveur et secrets fictifs ; pas de clé
+OnlyChat réelle disponible.

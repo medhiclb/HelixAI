@@ -49,7 +49,7 @@ import { t, tf } from "./langue.ts";
 import { refusLisible } from "./refusOauth.ts";
 import { sansLocalhost } from "./oauthNatif.ts";
 import { definirLecturesPerso, definirNomsConnecteurs } from "./approbation.ts";
-import { jugerAdresse, jugerCommande, jugerVariables } from "./mcpPersoRegles.ts";
+import { jugerAdresse, jugerCommande, jugerVariables, jugerEntetes } from "./mcpPersoRegles.ts";
 import { PORT as PORT_PASSERELLE, surLeReseau } from "./config.ts";
 
 /**
@@ -2173,7 +2173,7 @@ function relancerLocaux(): void {
 
 type SpecPerso =
   | { mode: "programme"; command: string; args: string[]; lectures: string[] }
-  | { mode: "adresse"; url: string; lectures: string[] };
+  | { mode: "adresse"; url: string; lectures: string[]; entetes?: Record<string, string> };
 
 export interface DescriptionPerso {
   mode: "programme" | "adresse";
@@ -2216,7 +2216,11 @@ function specPerso(c: ConnecteurEnregistre): SpecPerso {
   if (v?.mode === "programme" && typeof v.command === "string" && Array.isArray(v.args) && v.args.every((a) => typeof a === "string")) {
     return { mode: "programme", command: v.command, args: v.args as string[], lectures };
   }
-  if (v?.mode === "adresse" && typeof v.url === "string") return { mode: "adresse", url: v.url, lectures };
+  if (v?.mode === "adresse" && typeof v.url === "string") {
+    const e = jugerEntetes(v.entetes);
+    if (!e.ok) throw new Error(e.message);
+    return { mode: "adresse", url: v.url, lectures, entetes: e.entetes };
+  }
   throw new Error(tf("connecteur « {0} » : enregistrement illisible, ignoré", c.id));
 }
 
@@ -2238,9 +2242,9 @@ function configPerso(c: ConnecteurEnregistre): McpServerConfig {
   if (a.locale) {
     if (!commandeLibreAutorisee() && instanceOuverte()) throw new Error(surLaMachine);
     // Le port déclaré, celui-là seul (mcp.ts, `adresseServeurPermise`) ; aucune redirection suivie (`fetchLocal`).
-    return { ...base, url: a.url, local: { port: a.port, reconnaitre: async () => null } };
+    return { ...base, url: a.url, entetes: spec.entetes, local: { port: a.port, reconnaitre: async () => null } };
   }
-  return { ...base, url: a.url, auth: new FournisseurAutorisation(c.id, a.url, retourDe(c.id)) };
+  return { ...base, url: a.url, entetes: spec.entetes, ...(Object.keys(spec.entetes ?? {}).length ? {} : { auth: new FournisseurAutorisation(c.id, a.url, retourDe(c.id)) }) };
 }
 
 /** Ce que l'écran montre d'un serveur ajouté. La commande ou l'adresse, à l'administrateur seulement. */
@@ -2323,7 +2327,9 @@ export async function ajouterPersonnalise(
       if (refus) return { ok: false, message: refus };
       distant = true;
     }
-    spec = { mode: "adresse", url: a.url, lectures: [] };
+    const e = jugerEntetes(b.entetes);
+    if (!e.ok) return e;
+    spec = { mode: "adresse", url: a.url, lectures: [], entetes: e.entetes };
   } else {
     return { ok: false, message: t("Choisissez « Programme de cette machine » ou « Adresse ».") };
   }

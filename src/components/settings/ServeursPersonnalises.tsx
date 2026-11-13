@@ -71,6 +71,8 @@ export function ServeursPersonnalises({
   const [args, setArgs] = useState("");
   const [variables, setVariables] = useState<Variable[]>([]);
   const [adresse, setAdresse] = useState("");
+  const [jeton, setJeton] = useState("");
+  const [entetes, setEntetes] = useState<Variable[]>([]);
   const [enCours, setEnCours] = useState<string | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [succes, setSucces] = useState<string | null>(null);
@@ -94,6 +96,8 @@ export function ServeursPersonnalises({
     setArgs("");
     setVariables([]);
     setAdresse("");
+    setJeton("");
+    setEntetes([]);
   };
 
   /** Une autorisation est demandée dans le navigateur : on relit l'état jusqu'à ce que le serveur réponde. */
@@ -135,7 +139,7 @@ export function ServeursPersonnalises({
             args: args.split("\n").map((a) => a.trim()).filter(Boolean),
             variables: Object.fromEntries(variables.filter((v) => v.nom.trim()).map((v) => [v.nom.trim(), v.valeur])),
           }
-        : { ...commun, mode, url: adresse.trim() };
+        : { ...commun, mode, url: adresse.trim(), entetes: { ...Object.fromEntries(entetes.filter(v => v.nom.trim()).map(v => [v.nom.trim(), v.valeur])), ...(jeton.trim() ? { Authorization: `Bearer ${jeton.trim()}` } : {}) } };
     const r = await ajouterPersonnalise(demande);
     if (r.etat) surEtat(r.etat);
     if (!r.ok) {
@@ -394,6 +398,7 @@ export function ServeursPersonnalises({
               </div>
             </>
           ) : (
+            <>
             <Field
               label={t("Adresse du serveur")}
               required
@@ -405,6 +410,16 @@ export function ServeursPersonnalises({
             >
               <Input dir="ltr" value={adresse} onChange={(e) => setAdresse(e.target.value)} placeholder="https://mcp.exemple.org/mcp" />
             </Field>
+            <Field label={t("Jeton Bearer (facultatif)")} hint={t("La clé est chiffrée sur l'instance et envoyée uniquement à ce serveur. Laissez vide pour une connexion OAuth ou sans clé.")}>
+              <Input aria-label={t("Jeton Bearer (facultatif)")} maxLength={7993} type="password" autoComplete="new-password" value={jeton} onChange={e => setJeton(e.target.value)} />
+            </Field>
+            {entetes.map((v, i) => <div key={i} className="flex items-end gap-2">
+              <Field className="min-w-0 flex-1" label={t("Nom de l'en-tête")}><Input required maxLength={128} aria-label={t("Nom de l'en-tête")} dir="ltr" value={v.nom} onChange={e => setEntetes(l => l.map((x,j) => j===i ? {...x,nom:e.target.value}:x))} /></Field>
+              <Field className="min-w-0 flex-1" label={t("Valeur de l'en-tête")}><Input required maxLength={8000} aria-label={t("Valeur de l'en-tête")} type="password" autoComplete="new-password" value={v.valeur} onChange={e => setEntetes(l => l.map((x,j) => j===i ? {...x,valeur:e.target.value}:x))} /></Field>
+              <Button variant="ghost" size="sm" icon={X} aria-label={t("Retirer cet en-tête")} onClick={() => setEntetes(l => l.filter((_,j) => j!==i))} />
+            </div>)}
+            <Button variant="ghost" size="sm" icon={Plus} disabled={entetes.length >= 16} onClick={() => setEntetes(l => [...l,{nom:"",valeur:""}])}>{t("Ajouter un en-tête")}</Button>
+            </>
           )}
 
           <InfoBox leading={<Info size={15} strokeWidth={1.75} />}>

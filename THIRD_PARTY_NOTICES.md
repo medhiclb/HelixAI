@@ -363,7 +363,7 @@ relire la page de marque, puis `node scripts/gen-marques.cjs --noter` et vérifi
 
 34 paquets, fondus par esbuild dans la passerelle.
 
-#### @hono/node-server 2.1.5 (MIT)
+#### @hono/node-server 2.1.8 (MIT)
 
 `LICENSE` :
 
@@ -654,7 +654,7 @@ The complete list of contributors can be found at:
 - https://github.com/garycourt/uri-js/graphs/contributors
 ```
 
-#### hono 4.13.13 (MIT)
+#### hono 4.13.18 (MIT)
 
 `LICENSE` :
 
@@ -1687,7 +1687,7 @@ SOFTWARE.
 
 | Paquet | Version | Licence |
 |---|---|---|
-| @hono/node-server | 2.1.5 | MIT |
+| @hono/node-server | 2.1.8 | MIT |
 | @modelcontextprotocol/sdk | 1.32.2 | MIT |
 | accepts | 2.0.0 | MIT |
 | ajv | 8.20.0 | MIT |
@@ -1734,7 +1734,7 @@ SOFTWARE.
 | graceful-fs | 4.2.11 | ISC |
 | has-symbols | 1.1.0 | MIT |
 | hasown | 2.0.4 | MIT |
-| hono | 4.13.13 | MIT |
+| hono | 4.13.18 | MIT |
 | http-errors | 2.0.1 | MIT |
 | iconv-lite | 0.7.3 | MIT |
 | inherits | 2.0.4 | ISC |

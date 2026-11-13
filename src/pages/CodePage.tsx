@@ -180,6 +180,9 @@ export function CodePage() {
           {moteur === "opencode" && <ProjetVpsChip valeur={vps} disabled={vue.busy} onChange={p=>{setVps(p);code.nouvelle();if(sessionId || demandee)navigate("/code")}}/>}
           {(!vps || moteur !== "opencode") && <DossierTravailChip
             dossier={dossierAffiche}
+            titre={t("Ouvrir un projet")}
+            libelle={t("Ouvrir un projet")}
+            aide={t("Choisissez le dossier complet du projet. L’agent explore les sous-dossiers et lit les fichiers utiles à votre demande, sans tout charger dans le contexte.")}
             onChange={(chemin) => {
               setDossier(chemin);
               /*

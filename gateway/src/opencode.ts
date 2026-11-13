@@ -922,13 +922,14 @@ export async function ensureServer(): Promise<number | null> {
       // répondrait sur ce port n'est pas lui.
       if (sorti) break;
       try {
-        const res = await fetch(`http://127.0.0.1:${chosen}/api/session`, {
+        const res = await fetch(`http://127.0.0.1:${chosen}/global/health`, {
           // Depuis que le serveur exige un mot de passe, une sonde sans en-tête
           // reçoit 401 : le serveur serait déclaré « jamais prêt ».
           headers: { Authorization: enteteServeur() },
           signal: AbortSignal.timeout(1500),
         });
-        if (res.ok) {
+        const sante = res.ok ? await res.json().catch(() => null) as { healthy?: boolean } | null : null;
+        if (res.ok && sante?.healthy === true) {
           await chauffer(chosen, dir);
           child = proc;
           port = chosen;

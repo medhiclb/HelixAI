@@ -45,6 +45,8 @@ export interface McpServerConfig {
    * d'accès part à chaque appel. En http, seulement avec `local` ci-dessous.
    */
   url?: string;
+  /** En-têtes HTTP privés, déchiffrés en mémoire seulement. */
+  entetes?: Record<string, string>;
   /** Fournisseur d'autorisation OAuth, pour un serveur distant qui en demande. */
   auth?: unknown;
   /**
@@ -366,7 +368,7 @@ function surListeChangee(id: string): (err: Error | null) => void {
         retenirListe(id, entry, liste);
         console.log(`[mcp] ${entry.config.label} : liste d'outils relue (${entry.tools.length} outils)`);
       })
-      .catch((err) => console.error(`[mcp] ${id} : liste d'outils illisible après changement :`, masquer(err instanceof Error ? err.message : String(err), entry.config.env)));
+      .catch((err) => console.error(`[mcp] ${id} : liste d'outils illisible après changement :`, masquer(err instanceof Error ? err.message : String(err), entry.config.env, entry.config.entetes)));
   };
 }
 
@@ -417,13 +419,18 @@ const vivant = (pid: number): boolean => {
  * secret n'a rien à faire ni dans l'une ni dans l'autre : c'est justement au
  * moment où quelque chose échoue qu'on colle une trace dans un ticket.
  */
-function masquer(texte: string, env?: Record<string, string>): string {
+function masquer(texte: string, env?: Record<string, string>, entetes?: Record<string, string>): string {
   let sortie = texte;
   for (const valeur of Object.values(env ?? {})) {
     // Un secret court ou vide produirait un remplacement absurde sur tout le
     // texte : en dessous de huit caractères, ce n'en est pas un.
     if (valeur.length < 8) continue;
     sortie = sortie.split(valeur).join("[secret masqué]");
+  }
+  for (const valeur of Object.values(entetes ?? {})) {
+    for (const secret of [valeur, valeur.replace(/^Bearer\s+/i, "")]) {
+      if (secret) sortie = sortie.split(secret).join("[secret masqué]");
+    }
   }
   return sortie;
 }
@@ -535,11 +542,19 @@ async function demarrerDistant(id: string, entry: Live): Promise<{ ok: boolean; 
   }
   const adresse = new URL(entry.config.url!);
 
-  const autorisation = entry.config.local
-    ? { fetch: fetchLocal(entry.config.local) }
-    : entry.config.auth
-      ? { authProvider: entry.config.auth as never, fetch: fetchAutorisation }
-      : {};
+  const fetchBase = entry.config.local ? fetchLocal(entry.config.local) : entry.config.auth ? fetchAutorisation : fetch;
+  const prives = entry.config.entetes;
+  const fetchPrive: typeof fetch = async (entree, init) => {
+    const cible = new URL(entree instanceof Request ? entree.url : String(entree));
+    // Les clés ne suivent ni un endpoint SSE étranger ni une redirection.
+    if (cible.origin !== adresse.origin) throw new Error(t("Adresse de serveur distant refusée : https est exigé."));
+    return fetchBase(entree, { ...init, redirect: "error" });
+  };
+  const autorisation = {
+    ...(entry.config.auth ? { authProvider: entry.config.auth as never } : {}),
+    fetch: prives && Object.keys(prives).length ? fetchPrive : fetchBase,
+    ...(prives && Object.keys(prives).length ? { requestInit: { headers: prives, redirect: "error" as const } } : {}),
+  };
   let client = nouveauClient(id);
   try {
     await client.connect(new StreamableHTTPClientTransport(adresse, autorisation));
@@ -709,7 +724,7 @@ async function demarrer(id: string, entry: Live): Promise<{ ok: boolean; error?:
     // Avant `connect()`, qui démarre le processus : sinon les premières lignes,
     // justement celles qui disent pourquoi un démarrage échoue, sont perdues.
     transport.stderr?.on("data", (morceau: Buffer) => {
-      const texte = masquer(morceau.toString("utf8"), entry.config.env).trimEnd();
+      const texte = masquer(morceau.toString("utf8"), entry.config.env, entry.config.entetes).trimEnd();
       if (texte) console.error(`[mcp:${id}] ${texte}`);
     });
 
@@ -751,7 +766,7 @@ async function demarrer(id: string, entry: Live): Promise<{ ok: boolean; error?:
       await fermer(clientLocal, entry.pid);
       entry.pid = undefined;
     }
-    entry.error = masquer(err instanceof Error ? err.message : String(err), entry.config.env);
+    entry.error = masquer(err instanceof Error ? err.message : String(err), entry.config.env, entry.config.entetes);
     entry.arret = undefined;
     /*
      * Les outils ne sont pas effacés : un premier démarrage n'en a pas encore
@@ -1104,9 +1119,9 @@ async function appelerOutil(tool: McpTool, entry: Live, args: Record<string, unk
       const brut = rendreResultat(result as ResultatOutil);
       const filtre = fichiers ? filtrerResultat(tool.toolName, args, brut, espaceCourant) : brut;
       const text = tool.serverId === "rea" && filtre.length > 64000 ? filtre.slice(0,64000)+"\n\n"+t("Résultat REA abrégé : affinez la requête ou demandez une vue plus ciblée.") : filtre;
-      return { ok: !result.isError, content: expliquerSi(text) || "(résultat vide)" };
+      return { ok: !result.isError, content: expliquerSi(masquer(text, undefined, entry.config.entetes)) || "(résultat vide)" };
     } catch (err) {
-      const message = masquer(err instanceof Error ? err.message : String(err), entry.config.env);
+      const message = masquer(err instanceof Error ? err.message : String(err), entry.config.env, entry.config.entetes);
       if (err instanceof UnauthorizedError) {
         return { ok: false, content: `L'autorisation donnée à ${entry.config.label} n'est plus valable (${message}). Dis à l'utilisateur de le reconnecter depuis l'écran des connecteurs.` };
       }

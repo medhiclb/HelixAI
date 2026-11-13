@@ -70,10 +70,13 @@ export function DossierTravailChip({
   titre = t("Dossier de travail"),
   aide,
   toutLePoste,
+  libelle,
   surToutLePoste,
 }: {
   /** Dossier retenu, ou `undefined` pour celui de l'instance. */
   dossier?: string;
+  /** Action explicite quand le choix du dossier ouvre un projet. */
+  libelle?: string;
   onChange: (chemin: string) => void;
   titre?: string;
   /** Phrase expliquant ce que le choix implique sur cet écran. */
@@ -143,7 +146,7 @@ export function DossierTravailChip({
                 : titre
           }
         >
-          {toutLePoste ? t("Tout mon poste") : affiche ? etiquette(affiche) : titre}
+          {libelle ? (affiche ? `${libelle} · ${etiquette(affiche)}` : libelle) : (toutLePoste ? t("Tout mon poste") : affiche ? etiquette(affiche) : titre)}
         </Chip>
       )}
     >

@@ -17,7 +17,7 @@ import { Film,
   ListPlus,
 } from "lucide-react";
 import { imagesDuCollage } from "@/lib/pressePapierImages";
-import { ACCEPT, type Attachment } from "@/lib/attachments";
+import { type Attachment } from "@/lib/attachments";
 import type { EtatRechercheWeb } from "@/lib/rechercheWeb";
 import { IconButton } from "@/components/ui/IconButton";
 import { Popover } from "@/components/ui/Popover";
@@ -419,7 +419,6 @@ export function Composer({
               ref={fichierRef}
               type="file"
               multiple
-              accept={ACCEPT}
               className="hidden"
               onChange={(e) => choisir(e.target.files)}
             />

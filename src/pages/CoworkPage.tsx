@@ -609,6 +609,7 @@ export function CoworkPage() {
           <DossierTravailChip
             dossier={workspace}
             titre={t("Dossier accessible")}
+            libelle={workspace ? undefined : t("Ouvrir un dossier")}
             aide={t("L'agent lit et écrit ici, et nulle part ailleurs.")}
             toutLePoste={toutLePoste}
             onChange={(chemin) =>

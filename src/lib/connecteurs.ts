@@ -245,7 +245,7 @@ export async function retirer(id: string): Promise<Resultat> {
  */
 export type DemandePersonnalise =
   | { mode: "programme"; id: string; label: string; description?: string; command: string; args: string[]; variables: Record<string, string> }
-  | { mode: "adresse"; id: string; label: string; description?: string; url: string };
+  | { mode: "adresse"; id: string; label: string; description?: string; url: string; entetes?: Record<string, string> };
 
 export async function ajouterPersonnalise(demande: DemandePersonnalise): Promise<Resultat & { adresse?: string }> {
   const resultat = (await poster("/helix/connecteurs/personnalise", demande)) as Resultat & { adresse?: string };

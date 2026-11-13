@@ -23,6 +23,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Field, Input, Textarea } from "@/components/ui/Field";
 import { InfoBox } from "@/components/ui/InfoBox";
 import { Avatar } from "@/components/ui/Avatar";
+import { DossierTravailChip } from "@/components/chat/DossierTravailChip";
 import { useProjects } from "@/hooks/useProjects";
 import { ChoixBases } from "@/components/bibliotheque/ChoixBases";
 import { features } from "@/config/branding";
@@ -44,7 +45,7 @@ const tabs = [
 /** Page Projets : création, membres, invitation par email (captures 10 et 11). */
 export function ProjetsPage() {
   const ouvrirCode = useNavigate();
-  const { projects, create, remove, invite, revoke } = useProjects();
+  const { projects, create, rename, remove, invite, revoke } = useProjects();
   /*
    * Chats rangés dans chaque projet. On part des conversations que la personne
    * voit déjà (`useSessions` lit `visibleTo`, que la passerelle a filtré) : un
@@ -89,9 +90,20 @@ export function ProjetsPage() {
         title={t("Projets")}
         subtitle={t("Organisez votre travail avec des projets structurés")}
         actions={
-          <Button icon={Plus} onClick={() => setModalOpen(true)}>
-            {t("Nouveau projet")}
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            {features.code && <DossierTravailChip
+              titre={t("Importer un projet")}
+              libelle={t("Importer un projet")}
+              aide={t("Le dossier reste à son emplacement. Les fichiers sont lus au besoin dans Code.")}
+              onChange={chemin => {
+                const nom = chemin.replace(/\\/g, "/").split("/").filter(Boolean).pop() || t("Projet");
+                const projet = create(nom);
+                rename(projet.id, { dossierCode: chemin });
+                ouvrirCode(`/code?projet=${encodeURIComponent(projet.id)}`);
+              }}
+            />}
+            <Button icon={Plus} onClick={() => setModalOpen(true)}>{t("Nouveau projet")}</Button>
+          </div>
         }
       />
 
