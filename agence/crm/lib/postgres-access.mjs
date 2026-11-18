@@ -4,6 +4,7 @@ import { createHash, randomBytes } from "node:crypto";
 import nodemailer from "nodemailer";
 import { AppError, fail, origin } from "./server.mjs";
 
+const ownerEmail = "medhi.clabaut@gmail.com";
 const cookieName = "__Host-helix-session";
 const maxAge = 7 * 24 * 60 * 60;
 const opaqueToken = () => randomBytes(32).toString("base64url");
@@ -40,6 +41,7 @@ export async function postgresAccess(req, res) {
       const nonce = req.headers.cookie?.split(/;\s*/).find(value => value.startsWith(challengeName + "="))?.slice(challengeName.length + 1);
       if (!validToken(nonce)) throw new AppError("Rechargez la page avant de vous connecter.", 401);
       const addr = await googleIdentity(req.body.credential, nonce, clientId);
+      if (addr !== ownerEmail) throw new AppError("Ce compte n’a pas accès au CRM.", 403);
       const linkDigest = digest(opaqueToken());
       const sessionToken = opaqueToken();
       // La limite et la liste d’accès existantes restent communes aux deux modes.
@@ -57,6 +59,7 @@ export async function postgresAccess(req, res) {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address) || address.length > 254) {
         throw new AppError("Adresse e-mail invalide.", 400);
       }
+      if (address !== ownerEmail) return res.json({ ok: true });
       const { CRM_SMTP_URL, CRM_MAIL_FROM } = process.env;
       if (!CRM_SMTP_URL || !CRM_MAIL_FROM) throw new AppError("Service e-mail indisponible.", 503);
       const linkToken = opaqueToken();
@@ -88,7 +91,10 @@ export async function postgresAccess(req, res) {
       if (!validToken(token)) throw new AppError("Lien de connexion invalide.", 401);
       const sessionToken = opaqueToken();
       const [{ user }] = await sql`select public.crm_native_exchange(${digest(token)}, ${digest(sessionToken)}) as "user"`;
-      if (!user) throw new AppError("Lien expiré ou déjà utilisé.", 401);
+      if (user?.email !== ownerEmail) {
+        if (user) await sql`select public.crm_native_signout(${digest(sessionToken)})`;
+        throw new AppError("Lien expiré ou déjà utilisé.", 401);
+      }
       res.setHeader("Set-Cookie", cookie(sessionToken, maxAge));
       return res.json({ user });
     }
@@ -99,12 +105,12 @@ export async function postgresAccess(req, res) {
     }
     if (action === "select" || action === "rpc") {
       if (!validToken(current)) throw new AppError("Session expirée.", 401);
-      return res.json({ data: await postgresData(sql, digest(current), req.body) });
+      return res.json({ data: await postgresData(sql, digest(current), req.body, ownerEmail) });
     }
     if (action === "session") {
       if (!validToken(current)) return res.json({ user: null });
       const [{ user }] = await sql`select public.crm_native_user(${digest(current)}) as "user"`;
-      return res.json({ user });
+      return res.json({ user: user?.email === ownerEmail ? user : null });
     }
     throw new AppError("Action inconnue.", 400);
   } catch (error) {

@@ -1,21 +1,18 @@
 import { createClient } from "@supabase/supabase-js";
 import { blank, entities } from "./domain.mjs";
 import { postgresClient } from "./postgres-client.js";
-import { demoData } from "./demo-data.mjs";
-export const demoMode = /^\/demo\/?$/.test(window.location.pathname);
-export const nativePostgres = !demoMode && import.meta.env.VITE_CRM_BACKEND === "postgres";
-export const db = demoMode ? null : nativePostgres ? postgresClient :
+export const nativePostgres = import.meta.env.VITE_CRM_BACKEND === "postgres";
+export const db = nativePostgres ? postgresClient :
   import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY
     ? createClient(
         import.meta.env.VITE_SUPABASE_URL,
         import.meta.env.VITE_SUPABASE_ANON_KEY
       )
     : null;
-const key = demoMode ? "helix-crm-demo-v1" : "helix-crm-local-v1";
+const key = "helix-crm-local-v1";
 export function localRead() {
   try {
     const stored = localStorage.getItem(key);
-    if (stored === null && demoMode) return demoData();
     return { ...blank(), ...JSON.parse(stored || "{}") };
   } catch {
     return blank();

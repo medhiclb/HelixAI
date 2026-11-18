@@ -70,10 +70,10 @@ export function postgresQuery(body) {
   return { query, params };
 }
 
-export async function postgresData(sql, key, body) {
+export async function postgresData(sql, key, body, ownerEmail) {
   const { query, params } = postgresQuery(body);
   const [{ user }] = await sql`select public.crm_native_user(${key}) as "user"`;
-  if (!user) throw new AppError("Session expirée.", 401);
+  if (user?.email !== ownerEmail) throw new AppError("Session expirée.", 401);
 
   const [, , rows] = await sql.transaction(tx => [
     tx.query("set local role authenticated"),

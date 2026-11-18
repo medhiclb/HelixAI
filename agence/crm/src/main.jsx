@@ -32,7 +32,7 @@ import {
 } from "lucide-react";
 import { branding } from "./branding.mjs";
 import { HelixChat } from "./components/HelixChat";
-import { demoMode, nativePostgres, db, readAll, saveRecord, deleteRecord, saveNoteWithFollowup } from "./store";
+import { nativePostgres, db, readAll, saveRecord, deleteRecord, saveNoteWithFollowup } from "./store";
 import {
   blank,
   stages,
@@ -186,7 +186,7 @@ function App() {
         if(error) setError("Ce lien de connexion est expiré ou déjà utilisé. Demandez un nouveau lien.");
       }).catch(()=>setError("La connexion n’a pas pu être vérifiée. Demandez un nouveau lien."));
     }
-    if (!demoMode) fetch("/api/health")
+    fetch("/api/health")
       .then((r) => (r.ok ? r.json() : null))
       .then(setHealth)
       .catch(() => setHealth(null));
@@ -608,8 +608,8 @@ function App() {
         </section>
       </div>
     );
-  if (!db && import.meta.env.PROD && !demoMode) {
-    return <main className="auth-screen"><section className="panel"><Brand/><h1>Configuration en cours</h1><p>La connexion à l’espace privé est en cours de configuration.</p><a className="primary" href="/demo">Explorer le CRM</a></section></main>;
+  if (!db && import.meta.env.PROD) {
+    return <main className="auth-screen"><section className="panel"><Brand/><h1>Configuration en cours</h1><p>La connexion à l’espace privé est en cours de configuration.</p></section></main>;
   }
 
   if (db && !session)
@@ -651,7 +651,6 @@ function App() {
               {busy ? "Envoi en cours…" : "Recevoir mon lien de connexion"} <ArrowRight size={16} />
             </button>
           </form>}
-          <p><a href="/demo">Explorer la démo</a></p>
           {error && <p role="alert">{error}</p>}
           {notice && <p>{notice}</p>}
         </div>
@@ -678,16 +677,13 @@ function App() {
               ? "Synchronisation…"
               : db
               ? "Espace partagé"
-              : demoMode ? "Démo" : "Mode local"}
+              : "Mode local"}
           </div>
         </header>
         <main>
           {!db && (
             <div className="local-banner">
-              {demoMode
-                ? "Aperçu avec des données fictives. Les modifications restent dans ce navigateur."
-                : "Mode local. Les données restent sur cet appareil."}
-              {demoMode && <> <a href="/">Accès privé</a></>}
+              Mode local. Les données restent sur cet appareil.
             </div>
           )}
           {error && (
