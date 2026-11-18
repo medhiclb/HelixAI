@@ -1,3 +1,5 @@
+import { CrmSidebar } from "./components/CrmSidebar.jsx";
+import { CrmPageHeader } from "./components/CrmPageHeader.jsx";
 import { GoogleLogin } from "./components/GoogleLogin.jsx";
 import React, { useEffect, useState, useRef } from "react";
 import { createRoot } from "react-dom/client";
@@ -39,7 +41,7 @@ import {
   exportCsv,
 } from "./domain.mjs";
 import "./style.css";
-import Brand, {LogoMark} from "./components/Brand";
+import Brand from "./components/Brand";
 import Planning from "./components/Planning";
 import Mailbox, { Compose } from "./components/Mailbox";
 import Connections from "./components/Connections";
@@ -170,6 +172,7 @@ function App() {
     [spaces, setSpaces] = useState([]),
     [syncing, setSyncing] = useState(false);
   const exchangingPostgresLink = useRef(nativePostgres && new URLSearchParams(location.hash.slice(1)).has("crm_access"));
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const activeWorkspace = useRef(workspace);
   activeWorkspace.current = workspace;
   useEffect(() => {
@@ -653,54 +656,15 @@ function App() {
         </div>
       </div>
     );
+  const [, pageTitle, PageIcon] = pages.find(([id]) => id === page) || pages[0];
   return (
-    <div className="app">
-      <aside>
-        <div className="sidebar-heading"><Brand onClick={()=>setPage("dashboard")}/></div>
-        <nav>
-          {pages.map(([id, title, Icon]) => (
-            <button
-              key={id}
-              className={page === id ? "active" : ""}
-              onClick={() => {
-                setPage(id);
-                setQuery("");
-              }}
-            >
-              <Icon size={18} />
-              {title}
-              {id === "tasks" && pending.length > 0 && (
-                <span className="count">{pending.length}</span>
-              )}
-            </button>
-          ))}
-        </nav>
-        <div className="sidebar-bottom">
-          <div className="sidebar-note">
-            <span className="dot" /> Une équipe. Une même vision.
-            <p>Vos relations, au même endroit.</p>
-          </div>
-          <div className="profile">
-            <div className="avatar">
-              {(session?.user.email || "Helix").slice(0, 2).toUpperCase()}
-            </div>
-            <div>
-              <strong>{session?.user.email || "Espace local"}</strong>
-              <small>
-                {db ? "Compte connecté" : "Données sur cet appareil"}
-              </small>
-            </div>
-            {session && (
-              <button
-                aria-label="Déconnexion"
-                onClick={() => db.auth.signOut()}
-              >
-                <LogOut size={16} />
-              </button>
-            )}
-          </div>
-        </div>
-      </aside>
+    <div className={`app crm-shell${sidebarCollapsed ? " sidebar-collapsed" : ""}`}>
+      <CrmSidebar pages={pages} page={page} collapsed={sidebarCollapsed}
+        onToggle={() => setSidebarCollapsed(value => !value)}
+        onNavigate={id => { setPage(id); setQuery(""); }}
+        onCreate={() => setModal({ entity: "cabinets", record: { owner: session?.user.id || "" } })}
+        pending={pending.length} email={session?.user.email}
+        onLogout={session ? () => db.auth.signOut() : undefined}/>
       <div className="main">
         <header>
           <div className="breadcrumb">
@@ -714,7 +678,6 @@ function App() {
               : db
               ? "Espace partagé"
               : "Mode local"}
-            <div className="avatar small-avatar" aria-label={branding.name}><LogoMark/></div>
           </div>
         </header>
         <main>
@@ -741,20 +704,8 @@ function App() {
               </button>
             </div>
           )}
-          <div className="page-heading">
-            <div>
-              <p className="eyebrow">RELATIONS & DÉVELOPPEMENT</p>
-              <h1>
-                {page === "dashboard"
-                  ? "Tableau de bord"
-                  : pages.find((x) => x[0] === page)?.[1]}
-              </h1>
-              <p className="subtitle">
-                {page === "dashboard"
-                  ? "Suivi commercial de l’agence"
-                  : "Un suivi partagé pour faire avancer chaque relation."}
-              </p>
-            </div>
+          <CrmPageHeader icon={PageIcon} title={page === "dashboard" ? "Tableau de bord" : pageTitle}
+            subtitle={page === "dashboard" ? "Suivi commercial de l’agence" : undefined}>
             <button
               hidden={["ai","proposals","documents","history","settings","team"].includes(page)}
               className="primary"
@@ -766,10 +717,10 @@ function App() {
                 : page === "planning"
                 ? "Nouveau rendez-vous"
                 : page === "dashboard"
-                ? "Nouveà l’entreprise"
+                ? "Nouvelle entreprise"
                 : "Ajouter"}
             </button>
-          </div>
+          </CrmPageHeader>
           {page === "ai" ? <HelixChat api={api} data={data}/> : page === "proposals" ? <SalesWorkspace workspace={workspace} data={data} userId={session?.user.id} onSaved={refresh}/> : page === "documents" ? <Documents workspace={workspace} api={api} data={data}/> : page === "history" ? <Activity workspace={workspace} members={members}/> : page === "planning" ? (
             <Planning
               data={data}
@@ -804,7 +755,7 @@ function App() {
               <div className="stats">
                 {[
                   [
-                    "Entreprises suivis",
+                    "Entreprises suivies",
                     data.cabinets.length,
                     "Votre portefeuille de relations",
                     Building2,
