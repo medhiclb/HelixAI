@@ -10,9 +10,9 @@ refaite à l'envers.
 
 | | |
 |---|---|
-| Version | 2026.1118.1 (`package.json`), en préparation |
+| Version | 2026.1118.1 (`package.json`), publiée sur GitHub |
 | Dernière mise à jour | 18 novembre 2026 |
-| Vérifié | 2026.1113.1 : typecheck, build, 2 736 contrôles sans échec ; catalogues 4 525 interface et 1 724 passerelle complets dans six langues ; session Code réelle Mac (9), connecteurs natifs (166), interface isolée Projets/MCP parcourue dans Chrome ; quatre paquets conformes aux ressources construites, signatures et 21 fichiers du brouillon contrôlés. Windows, Code Linux et réflexion Linux réussis sur la révision publiée ab17b57 (43507619090) |
+| Vérifié | 2026.1118.1 : typecheck, build, 2 737 contrôles sans échec ; catalogues 4 527 interface et 1 729 passerelle complets dans six langues ; session Code avec vrai OpenCode et fournisseur fictif (9), diagnostic de refus de démarrage (5), Roblox/Blender (56) ; quatre paquets conformes, signatures et 21 fichiers GitHub contrôlés. Windows, Code Linux et réflexion Linux réussis sur le code b25f2e5 (44313437044) ; notes et test VM seuls ajoutés jusqu’à la révision publiée 095c417. |
 | Reste à essayer | sur les vraies machines : § 5, « Ce qui reste à essayer sur les postes de Medhi » |
 | Documents liés | [ARCHITECTURE.md](ARCHITECTURE.md), [SECURITE.md](SECURITE.md), [SCREENS.md](SCREENS.md), [SIGNATURE.md](SIGNATURE.md), [README.md](README.md), [docs/GUIDE.md](docs/GUIDE.md) |
 
@@ -8499,4 +8499,4 @@ Le timeout exact du Studio de cet utilisateur et l'échec de démarrage de l'Ubu
 ne sont pas reproduits sur leurs machines : ni leur système ni leurs journaux
 complets ne sont disponibles. Ne pas prétendre que tout timeout est éliminé.
 Build/typecheck et catalogues 4 527 / 1 729 complets dans les six langues ; 56
-contrôles Roblox/Blender réussis. Batterie complète finale en cours.
+contrôles Roblox/Blender réussis. Batterie complète finale : 2 737 contrôles réussis, aucun échec. Le premier passage avait un faux échec dans essai-reprise-code.mjs : le contexte VM ne simulait pas tf(), désormais ajouté ; le scénario de refus de lancement passe. Paquets Mac ARM/Intel, Windows et Linux comparés aux ressources construites, signatures Mac et manifeste Windows valides ; 21 tailles et empreintes du brouillon GitHub conformes. Version 2026.1118.1 installée sur le Mac, ancienne application conservée en Corbeille, données inchangées. Les trois essais natifs sont réussis : Windows, session Code Linux et réflexion Linux (44313437044, source b25f2e5). Le tag publié vise 095c417, qui ajoute seulement les notes et la simulation tf() du test VM, sans changer les ressources empaquetées. Version publiée comme latest avec les 21 fichiers contrôlés ; liens des trois README mis à jour. Les signalements #34 et #19 restent ouverts pour le retour des utilisateurs ; aucune PR ouverte à traiter le 18 novembre.
