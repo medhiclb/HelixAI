@@ -27,3 +27,15 @@ L’API accepte les champs actuels `nom`, `entreprise`, `email`, `message`, avec
 Renseigner `HELIX_AI_URL` avec l’URL de base de la passerelle de l’agence, `HELIX_AI_KEY` avec une clé d’instance dédiée et `HELIX_AI_MODEL` avec l’identifiant d’un modèle local ou européen sélectionné dans cette instance. Le serveur CRM doit pouvoir atteindre cette passerelle en HTTPS. Une instance qui écoute seulement sur le Mac ne sera pas joignable depuis Vercel. Sur un déploiement CRM sur le même hôte, une adresse loopback HTTP est acceptée.
 
 L’onglet HelixAI génère des brouillons de relance, de synthèse de compte ou de proposition. La demande peut inclure les derniers débriefs et opportunités d’une entreprise choisie, dans la limite de six fiches. Les réponses sont des brouillons à relire et aucun email n’est envoyé automatiquement.
+
+## PostgreSQL dédié pour la réception du site
+
+Sur une instance PostgreSQL vierge dédiée à Helix, `node scripts/postgres-bootstrap.mjs` produit le SQL transactionnel du schéma. Créer un compte de connexion dédié, membre uniquement du rôle `crm_intake`, puis configurer sa chaîne Neon dans `CRM_INTAKE_DATABASE_URL` et renseigner `SITE_CONTACT_SECRET`. Le compte de réception peut uniquement appeler la fonction de collecte et ne dispose pas d’accès direct aux fiches. La collecte requiert un administrateur dans l’espace CRM pour attribuer les demandes.
+
+Ce chemin couvre la réception HTTP. La connexion des utilisateurs et le tableau de bord continuent de dépendre de Supabase. N’activez pas la réception PostgreSQL en production tant que cet espace ne peut pas traiter les demandes collectées.
+
+### Mode PostgreSQL du tableau de bord
+
+Pour un environnement de validation Neon, le même script de bootstrap crée les fonctions de connexion, les sessions privées et le rôle `crm_app`. Configurer un utilisateur de connexion dédié au CRM, membre de `crm_app`, puis renseigner son URL avec `CRM_APP_DATABASE_URL`. Les variables `CRM_SMTP_URL` et `CRM_MAIL_FROM` servent à envoyer le lien de connexion et `APP_URL` en fixe l’origine. Compiler avec `VITE_CRM_BACKEND=postgres`.
+
+Ce mode couvre l’authentification par lien e-mail et les fiches du tableau de bord. Les documents, la synchronisation de messagerie et d’agenda, ainsi que les actions HelixAI dépendent encore du mode Supabase. Les formulaires utilisent le rôle séparé `crm_intake`. La première connexion d’un administrateur initialise le membre qui recevra les demandes.

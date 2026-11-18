@@ -8,6 +8,10 @@
       "destination": "/api/team?crm_route=health"
     },
     {
+      "source": "/api/postgres-access",
+      "destination": "/api/team?crm_route=postgres_access"
+    },
+    {
       "source": "/api/site-contact",
       "destination": "/api/team?crm_route=site_contact"
     },

@@ -29,7 +29,7 @@ import {
 } from "lucide-react";
 import { branding } from "./branding.mjs";
 import { HelixChat } from "./components/HelixChat";
-import { db, readAll, saveRecord, deleteRecord, saveNoteWithFollowup } from "./store";
+import { nativePostgres, db, readAll, saveRecord, deleteRecord, saveNoteWithFollowup } from "./store";
 import {
   blank,
   stages,
@@ -168,11 +168,14 @@ function App() {
     [compose, setCompose] = useState(null),
     [spaces, setSpaces] = useState([]),
     [syncing, setSyncing] = useState(false);
+  const exchangingPostgresLink = useRef(nativePostgres && new URLSearchParams(location.hash.slice(1)).has("crm_access"));
   const activeWorkspace = useRef(workspace);
   activeWorkspace.current = workspace;
   useEffect(() => {
     const loginParams = new URLSearchParams(location.search);
-    const loginHash = loginParams.get("token_hash");
+    const loginHash = nativePostgres
+      ? new URLSearchParams(location.hash.slice(1)).get("crm_access")
+      : loginParams.get("token_hash");
     if (loginHash && db) {
       history.replaceState(null, "", location.pathname);
       db.auth.verifyOtp({token_hash: loginHash, type: "email"}).then(({error})=>{
@@ -201,7 +204,7 @@ function App() {
       readAll().then(setData);
       return;
     }
-    db.auth.getSession().then(({ data }) => setSession(data.session));
+    if (!exchangingPostgresLink.current) db.auth.getSession().then(({ data }) => setSession(data.session));
     const {
       data: { subscription },
     } = db.auth.onAuthStateChange((_, s) => setSession(s));
@@ -250,7 +253,7 @@ function App() {
     refresh();
     loadMembers();
     loadConnections();
-    const channel = db.channel("crm-live").on(
+    const channel = nativePostgres ? null : db.channel("crm-live").on(
       "postgres_changes",
       {
         event: "*",
@@ -260,7 +263,7 @@ function App() {
       },
       () => refresh()
     );
-    channel.on(
+    channel?.on(
       "postgres_changes",
       {
         event: "*",
@@ -270,8 +273,8 @@ function App() {
       },
       () => loadBusySlots()
     );
-    channel.on("postgres_changes",{event:"*",schema:"public",table:"crm_members",filter:`workspace_id=eq.${workspace}`},()=>loadMembers());
-    channel.subscribe();
+    channel?.on("postgres_changes",{event:"*",schema:"public",table:"crm_members",filter:`workspace_id=eq.${workspace}`},()=>loadMembers());
+    channel?.subscribe();
     loadBusySlots();
     const poll = setInterval(() => {
       if (document.visibilityState === "visible") {
@@ -281,7 +284,7 @@ function App() {
       }
     }, 60000);
     return () => {
-      db.removeChannel(channel);
+      if (channel) db.removeChannel(channel);
       clearInterval(poll);
     };
   }, [workspace]);
@@ -301,6 +304,7 @@ function App() {
     }
   }
   async function api(path, body) {
+    if (nativePostgres) throw Error("Cette intégration n’est pas encore disponible sur PostgreSQL.");
     if (!db || !workspace)
       throw Error(
         "Activez la base partagée et connectez-vous pour utiliser cette fonction."
@@ -355,7 +359,7 @@ function App() {
     if(external.error)setError(external.error.message);
     if (activeWorkspace.current === workspace) setBusySlots([...(data || []),...(external.data||[])]);
   }
-  useEffect(()=>{if(!db||!workspace)return;let stopped=false,running=false;const sync=async()=>{if(stopped||running||document.visibilityState!=="visible")return;running=true;try{const r=await api("/api/team",{action:"calendar_sync_due"});if(r.results?.some(x=>!x.ok))setNotice("Un agenda externe n’a pas pu être synchronisé. Vérifiez Connexions.");if(!stopped)await loadBusySlots();}catch(e){if(!stopped)setNotice(e.message);}finally{running=false;}};const first=setTimeout(sync,3000),timer=setInterval(sync,300000);return()=>{stopped=true;clearTimeout(first);clearInterval(timer);};},[workspace]);
+  useEffect(()=>{if(!db||!workspace||nativePostgres)return;let stopped=false,running=false;const sync=async()=>{if(stopped||running||document.visibilityState!=="visible")return;running=true;try{const r=await api("/api/team",{action:"calendar_sync_due"});if(r.results?.some(x=>!x.ok))setNotice("Un agenda externe n’a pas pu être synchronisé. Vérifiez Connexions.");if(!stopped)await loadBusySlots();}catch(e){if(!stopped)setNotice(e.message);}finally{running=false;}};const first=setTimeout(sync,3000),timer=setInterval(sync,300000);return()=>{stopped=true;clearTimeout(first);clearInterval(timer);};},[workspace]);
   const connectionKey = connections.map((c) => c.id).join(",");
   useEffect(() => {
     if (!workspace || !connectionKey) return;

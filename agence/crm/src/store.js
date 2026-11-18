@@ -1,6 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 import { blank, entities } from "./domain.mjs";
-export const db =
+import { postgresClient } from "./postgres-client.js";
+export const nativePostgres = import.meta.env.VITE_CRM_BACKEND === "postgres";
+export const db = nativePostgres ? postgresClient :
   import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY
     ? createClient(
         import.meta.env.VITE_SUPABASE_URL,

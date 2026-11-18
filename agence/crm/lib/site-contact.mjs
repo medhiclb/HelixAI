@@ -1,6 +1,22 @@
 import { timingSafeEqual, createHash } from "node:crypto";
 import { admin, AppError, check, fail } from "./server.mjs";
 
+async function persistContact(delivery, payload) {
+  const databaseUrl = process.env.CRM_INTAKE_DATABASE_URL;
+  if (!databaseUrl) {
+    return check(await admin().rpc("crm_receive_site_contact", { delivery, payload }));
+  }
+  try {
+    const { neon } = await import("@neondatabase/serverless");
+    const sql = neon(databaseUrl);
+    const [row] = await sql`select public.crm_receive_site_contact(${delivery}::text, ${JSON.stringify(payload)}::jsonb) as result`;
+    if (typeof row?.result?.duplicate !== "boolean") throw Error("Résultat incomplet");
+    return row.result;
+  } catch {
+    throw new AppError("Enregistrement de la demande indisponible.", 503);
+  }
+}
+
 export async function receiveSiteContact(req, res) {
   res.setHeader("Cache-Control", "no-store");
   try {
@@ -31,7 +47,7 @@ export async function receiveSiteContact(req, res) {
     };
     // Web3Forms transmet les champs du formulaire. Le même contenu rejoué ne recrée pas de relance.
     const delivery = wrapped ? body.delivery_id : hash(JSON.stringify(payload)).toString("hex");
-    const result = check(await admin().rpc("crm_receive_site_contact", { delivery, payload }));
+    const result = await persistContact(delivery, payload);
     return res.json({ ok: true, duplicate: result.duplicate });
   } catch (error) {
     return fail(res, error);

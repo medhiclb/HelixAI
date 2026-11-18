@@ -1,3 +1,4 @@
+import { postgresAccess } from "../lib/postgres-access.mjs";
 import healthHandler from '../lib/health-handler.mjs';
 import {draftWithHelix} from '../lib/helix-ai.mjs';
 import {receiveSiteContact} from '../lib/site-contact.mjs';
@@ -7,6 +8,7 @@ import {authorize,check,fail,AppError,encrypt} from '../lib/server.mjs';
 import {calendarUrl,discoverCalendars,syncExternalCalendar} from '../lib/calendars.mjs';
 const BUCKET='crm-documents';
 export default async function handler(req,res) {
+ if(req.query?.crm_route==='postgres_access')return postgresAccess(req,res);
  if(req.query?.crm_route==='health')return healthHandler(req,res);
  if(req.query?.crm_route==='site_contact')return receiveSiteContact(req,res);
  try {
