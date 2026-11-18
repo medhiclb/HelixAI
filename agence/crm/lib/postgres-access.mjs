@@ -1,3 +1,4 @@
+import { googleIdentity } from "./google-identity.mjs";
 import { postgresData } from "./postgres-data.mjs";
 import { createHash, randomBytes } from "node:crypto";
 import nodemailer from "nodemailer";
@@ -9,8 +10,8 @@ const opaqueToken = () => randomBytes(32).toString("base64url");
 const validToken = value => typeof value === "string" && /^[a-zA-Z0-9_-]{43}$/.test(value);
 const digest = value => createHash("sha256").update(value).digest("hex");
 
-function cookie(token, age) {
-  return `${cookieName}=${token}; Max-Age=${age}; Path=/; Secure; HttpOnly; SameSite=Lax`;
+function cookie(token, age, name = cookieName) {
+  return `${name}=${token}; Max-Age=${age}; Path=/; Secure; HttpOnly; SameSite=Lax`;
 }
 
 export async function postgresAccess(req, res) {
@@ -27,6 +28,30 @@ export async function postgresAccess(req, res) {
     const { action, email, token } = req.body || {};
     const current = req.headers.cookie?.split(/;\s*/).find(value => value.startsWith(cookieName + "="))?.slice(cookieName.length + 1);
 
+    if (action === "google_challenge" || action === "google_exchange") {
+      const clientId = process.env.CRM_GOOGLE_LOGIN_CLIENT_ID;
+      if (!clientId) throw new AppError("Connexion Google indisponible.", 503);
+      const challengeName = "__Host-helix-google";
+      if (action === "google_challenge") {
+        const nonce = opaqueToken();
+        res.setHeader("Set-Cookie", cookie(nonce, 300, challengeName));
+        return res.json({ clientId, nonce });
+      }
+      const nonce = req.headers.cookie?.split(/;\s*/).find(value => value.startsWith(challengeName + "="))?.slice(challengeName.length + 1);
+      if (!validToken(nonce)) throw new AppError("Rechargez la page avant de vous connecter.", 401);
+      const addr = await googleIdentity(req.body.credential, nonce, clientId);
+      const linkDigest = digest(opaqueToken());
+      const sessionToken = opaqueToken();
+      // La limite et la liste d’accès existantes restent communes aux deux modes.
+      const [, rows] = await sql.transaction(tx => [
+        tx`select public.crm_native_request(${addr}, ${linkDigest})`,
+        tx`select public.crm_native_exchange(${linkDigest}, ${digest(sessionToken)}) as "user"`,
+      ]);
+      const user = rows[0]?.user;
+      if (!user) throw new AppError("Accès refusé ou demande trop récente. Réessayez dans deux minutes.", 403);
+      res.setHeader("Set-Cookie", [cookie("", 0, challengeName), cookie(sessionToken, maxAge)]);
+      return res.json({ user });
+    }
     if (action === "request") {
       const address = typeof email === "string" ? email.trim().toLowerCase() : "";
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address) || address.length > 254) {

@@ -1,3 +1,4 @@
+import { GoogleLogin } from "./components/GoogleLogin.jsx";
 import React, { useEffect, useState, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import {
@@ -620,7 +621,8 @@ function App() {
             mérite un suivi.
           </h1>
           <p>Connectez-vous à l’espace commun de l’équipe Helix. L’accès est réservé aux adresses autorisées.</p>
-          <form
+          {nativePostgres && <GoogleLogin auth={db.auth} onError={setError} />}
+          {(!nativePostgres || import.meta.env.VITE_CRM_EMAIL_LOGIN === "true") && <form
             onSubmit={async (e) => {
               e.preventDefault();
               if (busy) return;
@@ -645,7 +647,7 @@ function App() {
             <button className="primary" disabled={busy}>
               {busy ? "Envoi en cours…" : "Recevoir mon lien de connexion"} <ArrowRight size={16} />
             </button>
-          </form>
+          </form>}
           {error && <p role="alert">{error}</p>}
           {notice && <p>{notice}</p>}
         </div>

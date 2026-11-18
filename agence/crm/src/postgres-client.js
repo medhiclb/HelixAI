@@ -44,6 +44,12 @@ export const postgresClient = {
       listeners.add(listener);
       return { data: { subscription: { unsubscribe: () => listeners.delete(listener) } } };
     },
+    googleChallenge: () => request("google_challenge"),
+    async signInWithGoogle(credential) {
+      const result = await request("google_exchange", { credential });
+      if (result.user) notify({ user: result.user });
+      return result;
+    },
     async signInWithOtp({ email }) { return request("request", { email }); },
     async verifyOtp({ token_hash: token }) {
       const result = await request("exchange", { token });
