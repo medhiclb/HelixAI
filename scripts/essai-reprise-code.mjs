@@ -39,7 +39,7 @@ const demarrage=await compiler('export async function ensureServer()', '/**\n * 
  const proc={stdout:{on(){}},stderr:{on(){}},on(n,f){evenements.set(n,f)}};
  vm.runInNewContext(demarrage,{module:mod,exports:mod.exports,port:null,child:null,starting:null,lastError:undefined,console:{log(){},error(){}},
  locate:async()=>'/opencode.exe',dossierParDefaut:()=>'/projet',rtkEnFond(){},menageBases(){},writeConfig:async()=>{},portLibre:async()=>1234,
- spawn:()=>proc,environnementOpenCode:()=>({}),
+ spawn:()=>proc,environnementOpenCode:()=>({}),tf:(texte,...valeurs)=>texte.replace(/\{(\d+)\}/g,(_,n)=>String(valeurs[Number(n)])),
  setTimeout(f){evenements.get('error')?.(Error('EACCES'));f()},arreterArbre(){arrete=true},});
  assert.equal(await mod.exports.ensureServer(),null);
  assert.equal(arrete,true,'le lancement refusé termine proprement sans sonde fantôme');
