@@ -1,0 +1,62 @@
+/* Charte claire de l’application Helix AI, issue de src/styles/tokens.css. */
+:root {
+  --background: hsl(40 22% 97%);
+  --foreground: hsl(30 8% 9%);
+  --primary: hsl(30 8% 9%);
+  --primary-foreground: hsl(40 22% 97%);
+  --brand: hsl(162 70% 38%);
+  --muted: hsl(30 6% 38%);
+  --muted-surface: hsl(40 16% 93%);
+  --sidebar: hsl(40 20% 96%);
+  --sidebar-border: hsl(40 12% 90%);
+  --sidebar-active: hsl(40 24% 99%);
+  --border: hsl(40 10% 88%);
+  --input-border: hsl(40 10% 88%);
+  --card: hsl(40 22% 97%);
+  --popover: hsl(0 0% 100%);
+  --success: hsl(142 71% 45%);
+  --warning: hsl(38 92% 50%);
+  --destructive: hsl(0 84% 60%);
+  --overlay: hsl(240 10% 10%);
+  --brand-soft: hsl(162 70% 38% / 0.10);
+  --brand-ink: color-mix(in srgb, var(--brand) 65%, var(--foreground));
+  --font-body: "Plus Jakarta Sans", "Plus Jakarta Sans Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans", "Plus Jakarta Sans Fallback", ui-sans-serif, system-ui, sans-serif;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-pop: 0 8px 30px rgba(0, 0, 0, 0.08);
+  --text-sm: 0.875rem;
+  --text-lg: 1.125rem;
+  --text-3xl: 1.875rem;
+  color-scheme: light;
+}
+
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  src: url("/fonts/plus-jakarta-sans-latin.woff2") format("woff2");
+  font-weight: 200 800;
+  font-display: swap;
+  font-style: normal;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  src: url("/fonts/plus-jakarta-sans-latin-ext.woff2") format("woff2");
+  font-weight: 200 800;
+  font-display: swap;
+  font-style: normal;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* Repli calé sur Arial le temps du chargement ; réglages approchés, pas mesurés. */
+@font-face {
+  font-family: "Plus Jakarta Sans Fallback";
+  src: local("Arial");
+  ascent-override: 96%;
+  descent-override: 30%;
+  line-gap-override: 0%;
+  size-adjust: 106%;
+}
