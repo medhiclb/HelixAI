@@ -1,0 +1,5 @@
+{
+  "source": "/crm",
+  "destination": "https://crm.helix-agence.fr",
+  "permanent": false
+}
