@@ -3193,9 +3193,10 @@ async function handleCodeSession(
 
   // Un modèle apparu depuis le démarrage d'OpenCode : il faut le lui faire relire.
   if (!(await assurerModeleCode(modele))) {
+    const etatMoteur = await codeStatus(qui.userId);
     return send(res, 503, {
       error: {
-        message: tf(
+        message: etatMoteur.error || tf(
           "L'agent de code ne dispose pas du modèle « {0} ». Choisissez-en un autre, ou vérifiez que LM Studio le sert.",
           modele,
         ),
@@ -3540,9 +3541,10 @@ async function traiterCodePrompt(
     if ("erreur" in voulu) return send(res, 503, { error: { message: voulu.erreur } });
     if (!connue || voulu.modele !== connue.modele || voulu.variante !== connue.variante) {
       if (!(await assurerModeleCode(voulu.modele))) {
+        const etatMoteur = await codeStatus(notee.userId);
         return send(res, 503, {
           error: {
-            message: tf(
+            message: etatMoteur.error || tf(
               "L'agent de code ne dispose pas du modèle « {0} ». Choisissez-en un autre, ou vérifiez que LM Studio le sert.",
               voulu.modele,
             ),

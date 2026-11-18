@@ -10,8 +10,8 @@ refaite à l'envers.
 
 | | |
 |---|---|
-| Version | 2026.1113.1 (`package.json`), publiée |
-| Dernière mise à jour | 13 novembre 2026 |
+| Version | 2026.1118.1 (`package.json`), en préparation |
+| Dernière mise à jour | 18 novembre 2026 |
 | Vérifié | 2026.1113.1 : typecheck, build, 2 736 contrôles sans échec ; catalogues 4 525 interface et 1 724 passerelle complets dans six langues ; session Code réelle Mac (9), connecteurs natifs (166), interface isolée Projets/MCP parcourue dans Chrome ; quatre paquets conformes aux ressources construites, signatures et 21 fichiers du brouillon contrôlés. Windows, Code Linux et réflexion Linux réussis sur la révision publiée ab17b57 (43507619090) |
 | Reste à essayer | sur les vraies machines : § 5, « Ce qui reste à essayer sur les postes de Medhi » |
 | Documents liés | [ARCHITECTURE.md](ARCHITECTURE.md), [SECURITE.md](SECURITE.md), [SCREENS.md](SCREENS.md), [SIGNATURE.md](SIGNATURE.md), [README.md](README.md), [docs/GUIDE.md](docs/GUIDE.md) |
@@ -8461,3 +8461,42 @@ et signature validées avec la clé de l'application installée. Preuves dans
 #35 fermé avec réponse et mode d'emploi, #20 déjà fermé par la PR et complété par
 la release ; #34 reçoit le lien et les essais Linux, laissé ouvert pour confirmer
 le résultat chez son auteur. Aucun engagement sur son poste sans retour concret.
+
+
+### 18/11/2026 : timeout Roblox, démarrage Code et retours utilisateurs
+
+Demande de Medhi : traiter les nouvelles PR/demandes, suivre les téléchargements,
+répondre humainement à un utilisateur débutant Roblox qui rencontre un timeout.
+Aucune nouvelle PR ouverte au relevé. #34 a un retour du 16/11 : choix du dossier
+réparé, mais tous ses modèles sont annoncés absents (Gpt-oss, Qwen et Voxtral).
+#19 reste une demande d'aide sur une 2026.1012.1 avec un modèle cloud sélectionné.
+
+- Roblox : première initialisation autorisée jusqu'à 120 s, au lieu de 60 s,
+  seulement pour le connecteur intégré. Politique MCP bornée à cinq minutes,
+  surcharge de test conservée ; appels d'outils inchangés. Timeout expliqué avec
+  ouverture d'un jeu, activation MCP dans Assistant/Settings/MCP Servers (ancien
+  Manage MCP Servers), Réessayer, redémarrage et témoin vert. Aucune activation
+  des permissions de Studio ni téléchargement Roblox automatique.
+- Aide intégrée : Blender gratuit, absence de clé pour les outils locaux, clés
+  réservées aux générateurs externes optionnels. Documentation Roblox relue sur
+  create.roblox.com/docs/studio/mcp ; les outils de génération de Roblox opèrent
+  chez Roblox, pas dans le modèle local de Helix. Réponse préparée pour Medhi,
+  aucune conversation privée envoyée à sa place.
+- #34 : le nom openai/gpt-oss-20b fonctionne sur un vrai OpenCode avec fournisseur
+  fictif (9 contrôles sur le Mac). Deux défauts de code distincts corrigés : un
+  échec de démarrage était présenté comme un modèle absent ; un modèle imposé
+  perdait ses préfixes lors du choix du modèle par défaut. Choix par uid exact
+  puis id exact parmi les modèles disponibles, sans nom inventé. Attente de santé
+  portée de 20 à 60 s avec échéance absolue, sortie de processus détectée et code
+  d'erreur affiché. Pas de relance d'un modèle différent, pas d'effacement de base.
+- Régression : faux binaire qui répond à --version puis s'arrête avec code 17 :
+  API 503, diagnostic de démarrage (pas « modèle absent »), 5 contrôles réussis.
+  Politique des délais et résolution des noms couvertes par un script dédié,
+  intégré à la batterie. Le job Code Linux couvre désormais le nom complet
+  openai/gpt-oss-20b contre le fournisseur fictif.
+
+Le timeout exact du Studio de cet utilisateur et l'échec de démarrage de l'Ubuntu
+ne sont pas reproduits sur leurs machines : ni leur système ni leurs journaux
+complets ne sont disponibles. Ne pas prétendre que tout timeout est éliminé.
+Build/typecheck et catalogues 4 527 / 1 729 complets dans les six langues ; 56
+contrôles Roblox/Blender réussis. Batterie complète finale en cours.

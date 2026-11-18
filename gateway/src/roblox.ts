@@ -154,3 +154,11 @@ export function conseilRoblox(reponse: { ok: boolean; content: string } | null):
     ? t("Aucun Roblox Studio ne répond pour l'instant. Ouvrez Roblox Studio et une place, puis activez son serveur MCP : Assistant, « … », Manage MCP Servers, « Enable Studio as MCP server » (un témoin vert le confirme).")
     : null;
 }
+
+/** Un délai dépassé ne prouve pas une mauvaise installation : rendre le parcours de connexion explicite. */
+export function echecConnexionRoblox(detail: string): string {
+  if (/timed?\s*out|timeout|délai|32001/i.test(detail)) {
+    return t("Roblox Studio n'a pas répondu dans le délai prévu. Ouvrez Studio et un jeu, puis Assistant → … → Settings → MCP Servers (ou Manage MCP Servers) et activez Enable Studio as MCP server. Revenez ici et cliquez sur Réessayer. Si cela persiste, redémarrez Studio et l'application, puis vérifiez le témoin vert de connexion dans Studio.");
+  }
+  return tf("Le serveur MCP de Roblox Studio n'a pas démarré : {0}. Ouvrez Studio avec un jeu et vérifiez Enable Studio as MCP server dans les réglages MCP de l'Assistant.", detail);
+}

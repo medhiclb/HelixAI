@@ -327,6 +327,11 @@ function limiteDe(m: ModelInfo): { context: number; output: number } | undefined
   return { context: borne, output: Math.min(8192, Math.floor(borne / 4)) };
 }
 
+/** Le modèle imposé garde son espace de noms : uid exact, puis identifiant exact. */
+export function modeleCodeParDefaut(disponibles: Pick<ModelInfo, "id" | "uid">[], impose?: string): string {
+  return disponibles.find(m => m.uid === impose)?.id ?? disponibles.find(m => m.id === impose)?.id ?? disponibles[0]?.id ?? "auto";
+}
+
 async function writeConfig(dir: string): Promise<void> {
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
 
@@ -390,8 +395,7 @@ async function writeConfig(dir: string): Promise<void> {
   noterPetitsModeles(usable.filter((m) => estPetitModele(m)).map((m) => m.id));
 
   const pinned = deployment().models?.code;
-  const preferred = pinned?.includes("/") ? pinned.split("/").pop()! : pinned;
-  const defaultModel = preferred ?? usable[0]?.id ?? "auto";
+  const defaultModel = modeleCodeParDefaut(usable, pinned);
 
   const fichierConfig = cheminConfig();
   /*
@@ -894,10 +898,13 @@ export async function ensureServer(): Promise<number | null> {
       if (text) console.error("[opencode]", text);
     });
     let sorti = false;
+    let pret = false;
+    lastError = undefined;
     // 08/11/2026 : un refus de création du processus (Windows compris) émet
     // « error », pas forcément « exit ». Ne pas laisser la passerelle tomber.
     proc.on("error", (erreur) => {
       sorti = true;
+      lastError = tf("Le moteur de Code n'a pas pu démarrer ({0}). Consultez les journaux dans Réglages.", (erreur as NodeJS.ErrnoException).code ?? "processus");
       console.error("[opencode] lancement refusé :", erreur.message);
       if (child === proc) {
         child = null;
@@ -906,6 +913,7 @@ export async function ensureServer(): Promise<number | null> {
     });
     proc.on("exit", (code) => {
       sorti = true;
+      if (!pret) lastError ??= tf("Le moteur de Code s'est arrêté pendant son démarrage (code {0}). Consultez les journaux dans Réglages.", code ?? "inconnu");
       console.log(`[opencode] serveur arrêté (code ${code})`);
       // Seulement si c'est bien lui qui tournait : un ancien serveur arrêté
       // après un redémarrage ne doit pas faire oublier le nouveau.
@@ -916,7 +924,8 @@ export async function ensureServer(): Promise<number | null> {
     });
 
     // Attend que le serveur réponde.
-    for (let attempt = 0; attempt < 40; attempt++) {
+    const finDemarrage = Date.now() + 60_000;
+    for (let attempt = 0; attempt < 120 && Date.now() < finDemarrage; attempt++) {
       await new Promise((r) => setTimeout(r, 500));
       // Notre serveur est mort (port pris entre-temps, binaire cassé) : ce qui
       // répondrait sur ce port n'est pas lui.
@@ -931,6 +940,8 @@ export async function ensureServer(): Promise<number | null> {
         const sante = res.ok ? await res.json().catch(() => null) as { healthy?: boolean } | null : null;
         if (res.ok && sante?.healthy === true) {
           await chauffer(chosen, dir);
+          if (sorti) break;
+          pret = true;
           child = proc;
           port = chosen;
           lastError = undefined;
@@ -943,7 +954,7 @@ export async function ensureServer(): Promise<number | null> {
     }
 
     arreterArbre(proc);
-    lastError = "Le serveur OpenCode n'a pas démarré à temps.";
+    lastError ??= t("Le moteur de Code n'a pas répondu après une minute. Réessayez après avoir fermé les autres applications lourdes ; si cela persiste, consultez les journaux dans Réglages.");
     return null;
   })();
 

@@ -20,7 +20,7 @@ import {
   type McpServerConfig,
 } from "./mcp.ts";
 import { ecouteurPalmier, palmierProposable, portPalmier, PORT_PALMIER, TELECHARGEMENT_PALMIER, type VerdictEcouteur } from "./palmier.ts";
-import { commandeRoblox, conseilRoblox, DOCUMENTATION_ROBLOX, refusRoblox, robloxProposable, TELECHARGEMENT_ROBLOX } from "./roblox.ts";
+import { commandeRoblox, conseilRoblox, echecConnexionRoblox, DOCUMENTATION_ROBLOX, refusRoblox, robloxProposable, TELECHARGEMENT_ROBLOX } from "./roblox.ts";
 import { CHEMIN_UNREAL, conseilUnreal, DOCUMENTATION_UNREAL, ecouteurUnreal, PORT_UNREAL, portUnreal, TELECHARGEMENT_UNREAL, unrealProposable } from "./unreal.ts";
 import { blenderProposable, commandeBlender, effacerServeurBlender, envBlender, preparerBlender, refusBlender, refusBlenderRecent, serveurBlenderAPoser, TELECHARGEMENT_BLENDER } from "./blender.ts";
 import * as bureau from "./bureau.ts";
@@ -838,6 +838,7 @@ function applicationLocale(entree: EntreeCatalogue | undefined) {
  * n'est jamais lancée.
  */
 interface ApplicationStdio {
+  delaiDemarrageMs?: number;
   proposable: () => boolean;
   commande: () => { command: string; args: string[] };
   env?: () => Record<string, string>;
@@ -859,6 +860,7 @@ const APPLICATIONS_STDIO: Record<string, ApplicationStdio> = {
   roblox: {
     proposable: robloxProposable,
     commande: commandeRoblox,
+    delaiDemarrageMs: 120_000,
     avantLancement: refusRoblox,
     // Une lecture, faite par Helix lui-même au branchement : un Studio a-t-il activé son serveur ?
     conseil: async (id) => conseilRoblox(await appelerOutilMcp(`${id}__list_roblox_studios`, {}).catch(() => null)),
@@ -1174,6 +1176,7 @@ const versConfig = (brut: ConnecteurEnregistre): McpServerConfig => {
       env: {},
       ...(stdio.env ? { envPublic: stdio.env() } : {}),
       avantLancement: stdio.avantLancement,
+      ...(stdio.delaiDemarrageMs ? { delaiDemarrageMs: stdio.delaiDemarrageMs } : {}),
       ...(stdio.avantAppel ? { avantAppel: stdio.avantAppel } : {}),
       ...(stdio.serie ? { serie: true, relancerApresDelai: true } : {}),
       autoStart: true,
@@ -2111,8 +2114,9 @@ async function brancherLocal(
     // En stdio (Roblox Studio, Blender), c'est le programme lancé par Helix qui a échoué : « est ouvert » n'est vérifié que pour Palmier Pro (relecture du 12/10/2026).
     return {
       ok: false,
-      message: stdio
-        ? tf("Le serveur d'outils de {0} n'a pas démarré : {1}", t(entree.label), demarrage.error ?? t("cause inconnue"))
+      message: entree.id === "roblox"
+        ? echecConnexionRoblox(demarrage.error ?? t("cause inconnue"))
+        : stdio ? tf("Le serveur d'outils de {0} n'a pas démarré : {1}", t(entree.label), demarrage.error ?? t("cause inconnue"))
         : tf("{0} est ouvert, mais son serveur d'outils n'a pas répondu : {1}", t(entree.label), demarrage.error ?? t("cause inconnue")),
     };
   }

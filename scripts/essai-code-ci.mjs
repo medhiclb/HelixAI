@@ -21,7 +21,7 @@
 import { spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { createServer } from "node:http";
-import { createWriteStream, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { chmodSync, createWriteStream, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -46,7 +46,8 @@ function verifier(nom, ok, obtenu) {
 }
 
 /* ── Le faux moteur : un modèle, une réponse courte en flux ─────────────── */
-const MODELE = "essai-code";
+const MODELE = arg("modele", "essai-code");
+const PANNE_DEMARRAGE = process.argv.includes("--panne-demarrage");
 // Ce que le modèle a reçu en résultat d'outil (étape 7).
 const RECU_PAR_LE_MODELE = [];
 const moteur = createServer((req, res) => {
@@ -108,6 +109,12 @@ mkdirSync(PROJET, { recursive: true });
 writeFileSync(join(PROJET, "README.md"), "# Projet d'essai\n");
 mkdirSync(join(PROJET, "app"), { recursive: true });
 writeFileSync(join(PROJET, "app", "PLAN.md"), "# Plan d'essai\n");
+let fauxBinaire;
+if (PANNE_DEMARRAGE) {
+  fauxBinaire = join(TMP, "opencode-en-panne");
+  writeFileSync(fauxBinaire, `#!${process.execPath}\nif(process.argv.includes('--version')){console.log('1.18.32');process.exit(0)}process.exit(17);\n`);
+  chmodSync(fauxBinaire, 0o700);
+}
 const PORT = 8797;
 const G = `http://127.0.0.1:${PORT}`;
 const journal = createWriteStream(join(SORTIE, "passerelle.log"), { flags: "w" });
@@ -116,6 +123,7 @@ const passerelle = spawn(process.execPath, [join(RACINE, "gateway", "src", "inde
   env: {
     ...process.env,
     HELIX_DATA_DIR: DONNEES,
+    ...(fauxBinaire ? { HELIX_OPENCODE_BIN: fauxBinaire } : {}),
     HELIX_CONFIG: join(TMP, "helix.config.json"),
     HELIX_GATEWAY_PORT: String(PORT),
     HELIX_CODE_DIR: PROJET,
@@ -191,7 +199,8 @@ try {
   const session = await lireJson(await fetch(`${G}/helix/code/session`, { method: "POST", headers: entetes(), body: JSON.stringify({ model: modele, effort: "moyen", dossier: PROJET }) }));
   dire(`   ${session.statut} en ${Date.now() - t0} ms : ${session.texte.slice(0, 400)}`);
   const id = session.corps?.data?.id;
-  verifier("la session s'ouvre (200, un identifiant)", session.statut === 200 && Boolean(id), `${session.statut} ${session.texte}`);
+  if (PANNE_DEMARRAGE) verifier("un crash du moteur est expliqué comme un échec de démarrage, jamais comme un modèle absent", session.statut === 503 && /démarrage.*17/.test(session.texte) && !/ne dispose pas du modèle/.test(session.texte), session.texte);
+  else verifier("la session s'ouvre (200, un identifiant)", session.statut === 200 && Boolean(id), `${session.statut} ${session.texte}`);
 
   if (id) {
     dire("6. Une demande dans la session");

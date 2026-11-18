@@ -1526,3 +1526,24 @@ transcription locale est envoyée au coach, qui prépare la question suivante.
 sa vitesse. Ajoutez une voix dans les réglages de langue du système si la liste
 est vide. Le bouton de préparation installe la transcription locale lorsqu'elle
 manque. Les échanges transcrits et le bilan restent consultables dans la séance.
+
+
+## Roblox Studio : connexion et usage gratuit
+
+Ouvrez Roblox Studio à jour, connecté à votre compte, avec un jeu ouvert.
+Dans Assistant, ouvrez Settings puis MCP Servers (Manage MCP Servers dans les
+anciennes versions) et activez **Enable Studio as MCP server**. Dans les
+Connecteurs, branchez **Roblox Studio**. Le premier dialogue peut prendre jusqu'à
+deux minutes ; un témoin vert dans Studio confirme la connexion du client.
+Demandez d'abord « Liste mes Studios ouverts et le nom du jeu » avant de modifier
+votre projet. Après un timeout, vérifiez ces étapes puis cliquez Réessayer.
+
+Avec un modèle local, vous pouvez demander des scripts Luau et faire créer des
+objets à partir des formes de Studio, avec les validations d'actions habituelles.
+Les outils de génération IA de Roblox, eux, utilisent les services et conditions
+de votre compte Roblox. Le modèle local ne les rend pas locaux ni sans quota.
+
+Blender est gratuit et ses outils locaux ne demandent ni abonnement ni clé API.
+Une fois Blender et son connecteur branchés, le modèle local peut piloter la scène
+par code Python. Les options de certains modules pour Hyper3D, Tripo ou d'autres
+services externes sont facultatives et ont leurs propres tarifs et quotas.

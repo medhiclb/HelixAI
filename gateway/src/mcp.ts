@@ -1,3 +1,4 @@
+import { delaiInitialisationMcp } from "./delaisMcp.ts";
 import { execFileSync } from "node:child_process";
 import { homedir } from "node:os";
 import { delimiter, join, dirname } from "node:path";
@@ -68,6 +69,8 @@ export interface McpServerConfig {
    * (connecteurs.ts), jamais par une requête.
    */
   avantLancement?: () => Promise<string | null>;
+  /** Délai du premier dialogue pour une application locale lente, borné à cinq minutes. */
+  delaiDemarrageMs?: number;
   avantAppel?: () => Promise<string | null>;
   /**
    * Un appel à la fois vers ce serveur (16/10/2026) : Unreal Editor exécute
@@ -738,7 +741,8 @@ async function demarrer(id: string, entry: Live): Promise<{ ok: boolean; error?:
      * processus. Cinq minutes pour `npx` ; un serveur déjà sur la machine garde
      * le délai ordinaire.
      */
-    await client.connect(transport, { timeout: entry.config.command === "npx" ? Math.max(DELAI_APPEL_MS, 5 * 60_000) : DELAI_APPEL_MS });
+    const delaiDemarrage = delaiInitialisationMcp(entry.config, DELAI_APPEL_MS, process.env.HELIX_MCP_DELAI_MS);
+    await client.connect(transport, { timeout: delaiDemarrage });
     const pid = transport.pid ?? undefined;
     entry.pid = pid;
 
