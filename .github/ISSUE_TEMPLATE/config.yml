@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Contact the Helix team about a project
+    url: https://www.helix-agence.fr/en/contact/?source=github
+    about: Request a demo, discover our services, or discuss a project privately.
   - name: Report a security vulnerability
     url: https://github.com/medhiclb/HelixAI/security/advisories/new
     about: Please report vulnerabilities privately, not in a public issue.
