@@ -9,6 +9,7 @@ import {
   Users,
   Kanban,
   CheckCheck,
+  GitPullRequest,
   CalendarDays,
   NotebookPen,
   FileCheck2,
@@ -56,7 +57,8 @@ const pages = [
   ["cabinets", "Entreprises", Building2],
   ["contacts", "Contacts", Users],
   ["opportunities", "Pipeline", Kanban],
-  ["tasks", "Relances & tâches", CheckCheck],
+  ["tasks", "Relances commerciales", CheckCheck],
+  ["product", "Tâches Helix AI", GitPullRequest],
   ["planning", "Planning commun", CalendarDays],
   ["meetings", "Rendez-vous", CalendarDays],
   ["mailbox", "Messagerie", Mail],
@@ -69,6 +71,15 @@ const pages = [
   ["team", "Équipe", Users],
   ["settings", "Connexions", Plug],
 ];
+const githubTaskURL = /^https:\/\/github\.com\/medhiclb\/HelixAI\/(issues|pull)\/\d+\/?$/i;
+
+function isProductTask(task) {
+  if (task.task_scope) return task.task_scope === "product";
+  return task.source === "GitHub HelixAI" ||
+    task.source_key?.startsWith("github:medhiclb/HelixAI:") ||
+    githubTaskURL.test(task.source_url || "");
+}
+
 const schemas = {
   cabinets: [
     ["name", "Nom de l’entreprise", "text", true],
@@ -103,7 +114,8 @@ const schemas = {
     ["name", "Action à réaliser", "text", true],
     ["cabinet_id", "Entreprise", "cabinet"],
     ["owner", "Responsable", "member"],
-    ["due_at", "Échéance", "datetime-local", true],
+    ["due_at", "Échéance", "datetime-local"],
+    ["task_scope", "Espace", "taskScope"],
     ["priority", "Priorité", "priority"],
     ["description", "Détails", "textarea"],
   ],
@@ -406,7 +418,7 @@ function App() {
     try {
       if (entity === "meetings" && (!record.starts_at || !record.ends_at))
         throw Error("Indiquez le début et la fin du rendez-vous.");
-      if (entity === "tasks" && !record.due_at)
+      if (entity === "tasks" && !isProductTask(record) && !record.due_at)
         throw Error("Indiquez une échéance pour la relance.");
       if (
         record.ends_at &&
@@ -486,14 +498,16 @@ function App() {
             .toLowerCase()
             .includes(query.toLowerCase()))
     );
-  const pending = data.tasks
+  const commercialTasks = data.tasks.filter(task => !isProductTask(task));
+  const taskView = filtered("tasks").filter(task => isProductTask(task) === (page === "product"));
+  const pending = commercialTasks
     .filter((x) => !x.done)
     .sort((a, b) => (a.due_at || "z").localeCompare(b.due_at || "z"));
   const upcoming = data.meetings
     .filter((x) => x.status !== "Annulé" && new Date(x.starts_at) >= new Date())
     .sort((a, b) => a.starts_at.localeCompare(b.starts_at));
   const add = (
-    entity = schemas[page]
+    entity = page === "product" ? "tasks" : schemas[page]
       ? page
       : ["planning", "meetings"].includes(page)
       ? "meetings"
@@ -502,6 +516,7 @@ function App() {
     setModal({
       entity,
       record: {
+        ...(entity === "tasks" ? { task_scope: page === "product" ? "product" : "commercial" } : {}),
         stage: stages[0],
         priority: "Normale",
         status: "Prévu",
@@ -510,12 +525,13 @@ function App() {
     });
   const edit = (entity, record) => {
     const value = { ...record };
+    if (entity === "tasks") value.task_scope = isProductTask(record) ? "product" : "commercial";
     for (const key of ["starts_at", "ends_at", "due_at"])
       if (value[key]) value[key] = localInput(value[key]);
     setModal({ entity, record: value });
   };
   function download(entity) {
-    const blob = new Blob([exportCsv(data[entity])], {
+    const blob = new Blob([exportCsv(entity === "product" || entity === "tasks" ? taskView : data[entity])], {
       type: "text/csv;charset=utf-8;",
     });
     const url = URL.createObjectURL(blob);
@@ -541,11 +557,14 @@ function App() {
         >
           <strong>{task.name}</strong>
           <small>
-            {cabinet(task.cabinet_id)} · {member(task.owner)}
+            {isProductTask(task) ? (task.source || "Helix AI") : cabinet(task.cabinet_id)} · {member(task.owner)}
           </small>
         </button>
+        {githubTaskURL.test(task.source_url || "") && (
+          <a className="secondary" href={task.source_url} target="_blank" rel="noreferrer">GitHub <ArrowUpRight size={14} /></a>
+        )}
         <span className={isOverdue(task) ? "badge red" : "badge"}>
-          {date(task.due_at)}
+          {task.due_at ? date(task.due_at) : "Sans échéance"}
         </span>
       </div>
     );
@@ -721,7 +740,7 @@ function App() {
           </CrmPageHeader>
           {page === "ai" ? <HelixChat api={api} data={data}/> : page === "proposals" ? <SalesWorkspace workspace={workspace} data={data} userId={session?.user.id} onSaved={refresh}/> : page === "documents" ? <Documents workspace={workspace} api={api} data={data}/> : page === "history" ? <Activity workspace={workspace} members={members}/> : page === "planning" ? (
             <Planning
-              data={data}
+              data={{ ...data, tasks: commercialTasks }}
               busy={busySlots}
               members={members}
               onEdit={edit}
@@ -989,10 +1008,10 @@ function App() {
                     </section>
                   ))}
                 </div>
-              ) : page === "tasks" ? (
+              ) : ["tasks", "product"].includes(page) ? (
                 <section className="panel">
-                  {filtered(page).length ? (
-                    filtered(page)
+                  {taskView.length ? (
+                    taskView
                       .sort(
                         (a, b) =>
                           Number(a.done || false) - Number(b.done || false) ||
@@ -1000,7 +1019,7 @@ function App() {
                       )
                       .map((t) => <TaskRow key={t.id} task={t} />)
                   ) : (
-                    <Empty entity={page} />
+                    <Empty entity="tasks" text={page === "product" ? "Ajoutez une tâche liée au produit Helix AI." : "Planifiez une relance commerciale."} />
                   )}
                 </section>
               ) : page === "meetings" ? (
@@ -1192,7 +1211,7 @@ function App() {
               }}
             >
               {modal.entity === "meetings" &&
-                conflicts(modal.record, scheduleItems(data, busySlots, members))
+                conflicts(modal.record, scheduleItems({ ...data, tasks: commercialTasks }, busySlots, members))
                   .length > 0 && (
                   <div className="local-banner">
                     Attention : ce créneau chevauche un autre rendez-vous ou une
@@ -1213,6 +1232,7 @@ function App() {
                         "member",
                         "stage",
                         "priority",
+                        "taskScope",
                         "status",
                         "meeting",
                       ].includes(type) ? (
@@ -1234,6 +1254,8 @@ function App() {
                             ? data.cabinets.map((x) => [x.id, x.name])
                             : type === "meeting"
                             ? data.meetings.map((x) => [x.id, x.name])
+                            : type === "taskScope"
+                            ? [["commercial", "Relance commerciale"], ["product", "Produit Helix AI"]]
                             : type === "member"
                             ? members.map((x) => [x.user_id, x.display_name])
                             : (type === "stage"
