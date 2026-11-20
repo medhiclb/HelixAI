@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 
 let googleScript;
 
-function loadGoogle() {
+export function loadGoogle() {
   googleScript ??= new Promise((resolve, reject) => {
     const script = document.createElement("script");
     script.src = "https://accounts.google.com/gsi/client";

@@ -1,6 +1,7 @@
 import React,{useEffect,useState} from 'react';
 import {Bell,Upload,Download,Trash2,RefreshCw} from 'lucide-react';
 import {db} from '../store';
+import {HelixDrive} from './HelixDrive.jsx';
 import {driveLinks} from '../drive-documents.mjs';
 
 export function DriveDocuments({records}) {
@@ -30,7 +31,7 @@ function useRows(table,workspace,select='*',recordId=null){
 export function Documents({workspace,api,data,recordId}) {
  const {rows,error,load,setError,limit,setLimit}=useRows('crm_files',workspace,'*',recordId),[busy,setBusy]=useState(false),[record,setRecord]=useState(recordId||'');
  async function upload(files){setBusy(true);setError('');try{for(const file of files){const r=await api('/api/team',{action:'file_begin',name:file.name,size:file.size,record_id:record||null});const result=await db.storage.from('crm-documents').uploadToSignedUrl(r.path,r.token,file,{contentType:'application/octet-stream'});if(result.error)throw result.error;await api('/api/team',{action:'file_commit',id:r.id});}await load();}catch(e){setError(e.message);}finally{setBusy(false);}}
- return <>{!recordId && <DriveDocuments records={[...(data?.cabinets || []), ...(data?.notes || [])]} />}<section className="panel team-tools"><h2>Documents partagés</h2><p>Documents privés de l’équipe, liés aux fiches. Maximum : 10 Mo par fichier.</p>{error&&<p className="error" role="alert">{error}</p>}
+ return <>{!recordId && <HelixDrive />}{!recordId && <DriveDocuments records={[...(data?.cabinets || []), ...(data?.notes || [])]} />}<section className="panel team-tools"><h2>Documents partagés</h2><p>Documents privés de l’équipe, liés aux fiches. Maximum : 10 Mo par fichier.</p>{error&&<p className="error" role="alert">{error}</p>}
  {!recordId&&<label>Fiche associée<select value={record} onChange={e=>setRecord(e.target.value)}><option value="">Document de l’équipe</option>{Object.entries(data||{}).flatMap(([entity,rs])=>rs.map(r=><option key={r.id} value={r.id}>{r.name||r.subject||entity}</option>))}</select></label>}
  <label className="secondary upload-button"><Upload size={16}/>{busy?'Envoi en cours…':'Ajouter des fichiers'}<input type="file" multiple disabled={busy} onChange={e=>{upload([...e.target.files]);e.target.value='';}}/></label>
  {!rows.length&&<p>Aucun document pour le moment.</p>}{rows.map(f=><div className="team-row" key={f.id}><div><strong>{f.name}</strong><small>{Math.ceil(f.size/1024)} Ko · {new Date(f.created_at).toLocaleDateString('fr-FR')}</small></div><button title="Télécharger" onClick={async()=>{try{const r=await api('/api/team',{action:'file_download',id:f.id});const a=document.createElement('a');a.href=r.url;a.rel='noopener';a.click();}catch(e){setError(e.message);}}}><Download size={17}/></button><button title="Supprimer" onClick={async()=>{if(!confirm('Supprimer ce document de l’espace partagé ?'))return;try{await api('/api/team',{action:'file_delete',id:f.id});load();}catch(e){setError(e.message);}}}><Trash2 size={17}/></button></div>)}{rows.length>=limit&&<button className="secondary" onClick={()=>setLimit(limit+300)}>Charger plus de documents</button>}</section></>;
