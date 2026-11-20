@@ -1,3 +1,4 @@
+import { HelixDrive } from "./components/HelixDrive.jsx";
 import { CrmSidebar } from "./components/CrmSidebar.jsx";
 import { CrmPageHeader } from "./components/CrmPageHeader.jsx";
 import { GoogleLogin } from "./components/GoogleLogin.jsx";
@@ -1308,6 +1309,13 @@ function App() {
                   )
                 )}
               </div>
+              {modal.entity === "cabinets" && modal.record.id &&
+                modal.record.name?.trim().toLowerCase() === "actelyo" && (
+                  <details className="record-tools">
+                    <summary>Parcourir les dossiers Drive Actelyo</summary>
+                    <HelixDrive actelyoOnly />
+                  </details>
+                )}
               {["cabinets", "notes"].includes(modal.entity) && (
                 <DriveDocuments records={modal.entity === "notes" ? [modal.record] : [
                   modal.record, ...data.notes.filter(note => note.cabinet_id === modal.record.id && modal.record.id),

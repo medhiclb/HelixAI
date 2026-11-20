@@ -3,6 +3,20 @@ import { db } from "../store";
 import { loadGoogle } from "./GoogleLogin.jsx";
 
 const root = { id: "1yJ7sJrrPaDbrLPTKQNG-N_n3HvDcR_1y", name: "Helix" };
+const actelyo = { id: "1htXBnWwDxNOqDjDmfw_ipa4rnzDj0aJa", name: "Actelyo" };
+const actelyoFolders = [
+  actelyo,
+  { id: "1l-iRgTd_3rDVV9pfnr2lEuwYVIMSJDD8", name: "Présentation commerciale" },
+  { id: "1YbRz7FbgWbd2vwMT_IzAGIO2xWzcz5f_", name: "TechnoDroit et salon" },
+  { id: "1gvdEux09EPN2Goe4YguZG8pckh_iWpdb", name: "Stratégie et prospection" },
+  { id: "1CUkLAS3h1YGUIK_B8yFrhilc7Df7gM5d", name: "Documentation du logiciel" },
+];
+const shortcuts = [
+  root, ...actelyoFolders,
+  { id: "1x8hS9NYoYOtlluJMNcO5PPAyZyRmsjHV", name: "Comptes rendus Helix" },
+  { id: "19c9IpbJatJIiRpAI-s43lyOuEvGHY7Os", name: "Clients Helix" },
+  { id: "1CqeNfxTaHZ4V8oGmndM7BN9WGotPru1H", name: "Livrables de prospection Helix" },
+];
 const folderType = "application/vnd.google-apps.folder";
 const scope = "https://www.googleapis.com/auth/drive.metadata.readonly";
 
@@ -14,14 +28,16 @@ function targetId(file) {
   return file.shortcutDetails?.targetId || file.id;
 }
 
-export function HelixDrive() {
+export function HelixDrive({ actelyoOnly = false }) {
   const [clientId, setClientId] = useState("");
   const [credential, setCredential] = useState(null);
-  const [path, setPath] = useState([root]);
+  const [path, setPath] = useState([actelyoOnly ? actelyo : root]);
   const [page, setPage] = useState({ files: [] });
   const [preview, setPreview] = useState(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [query, setQuery] = useState("");
+  const [search, setSearch] = useState("");
   const folder = path.at(-1);
 
   useEffect(() => {
@@ -71,6 +87,10 @@ export function HelixDrive() {
         orderBy: "folder,name_natural",
         pageSize: "100",
       });
+      if (search) {
+        const term = search.replaceAll("\\", "\\\\").replaceAll("'", "\\'");
+        params.set("q", params.get("q") + ` and name contains '${term}'`);
+      }
       if (nextPage) params.set("pageToken", nextPage);
       const response = await fetch("https://www.googleapis.com/drive/v3/files?" + params, {
         headers: { Authorization: "Bearer " + credential.token },
@@ -107,24 +127,44 @@ export function HelixDrive() {
     setPreview(null);
     if (credential) list(controller.signal);
     return () => controller.abort();
-  }, [folder.id, credential]);
+  }, [folder.id, credential, search]);
+
+  function navigate(nextPath) {
+    setQuery("");
+    setSearch("");
+    setPath(nextPath);
+  }
 
   return <section className="panel team-tools">
-    <h2>Drive Helix</h2>
+    <h2>{actelyoOnly ? "Dossiers Drive Actelyo" : "Drive Helix"}</h2>
+    <nav className="connection-buttons" aria-label="Accès rapides Drive">
+      {(actelyoOnly ? actelyoFolders : shortcuts).map(item => <button type="button" className="secondary"
+        key={item.id} aria-pressed={folder.id === item.id} onClick={() => navigate([item])}>{item.name}</button>)}
+    </nav>
     <a className="secondary" href={`https://drive.google.com/drive/folders/${folder.id}`} target="_blank" rel="noreferrer">Ouvrir dans Drive</a>
     {!credential && clientId && <button type="button" className="secondary" onClick={connect}>Connecter Google Drive</button>}
     {error && <p role="alert">{error}</p>}
     {credential && <>
       <nav aria-label="Dossiers Drive">
         {path.map((item, index) => <button key={index + ":" + item.id} type="button" className="secondary"
-          disabled={index === path.length - 1} onClick={() => setPath(path.slice(0, index + 1))}>{item.name}</button>)}
+          disabled={index === path.length - 1} onClick={() => navigate(path.slice(0, index + 1))}>{item.name}</button>)}
       </nav>
+      <label>Rechercher dans ce dossier
+        <input type="search" value={query} onChange={event => setQuery(event.target.value)}
+          onKeyDown={event => {
+            if (event.key !== "Enter") return;
+            event.preventDefault();
+            setSearch(query.trim());
+          }} />
+      </label>
+      <button type="button" className="secondary" onClick={() => setSearch(query.trim())}>Rechercher</button>
+      {search && <button type="button" className="secondary" onClick={() => { setQuery(""); setSearch(""); }}>Effacer</button>}
       {busy && <p role="status">Chargement du dossier…</p>}
-      {!busy && !error && !page.files.length && <p>Ce dossier est vide.</p>}
+      {!busy && !error && !page.files.length && <p>{search ? "Aucun résultat dans ce dossier." : "Ce dossier est vide."}</p>}
       {page.files.map(file => <div className="team-row" key={file.id}>
         <div>{file.name}</div>
         {isFolder(file) ? <button type="button" className="secondary"
-          onClick={() => setPath([...path, { name: file.name, id: targetId(file) }])}>Parcourir</button> :
+          onClick={() => navigate([...path, { name: file.name, id: targetId(file) }])}>Parcourir</button> :
           <button type="button" className="secondary" onClick={() => setPreview(file)}>Aperçu</button>}
       </div>)}
       {page.next && <button type="button" className="secondary" disabled={busy}
