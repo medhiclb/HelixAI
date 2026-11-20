@@ -48,7 +48,7 @@ import Mailbox, { Compose } from "./components/Mailbox";
 import Connections from "./components/Connections";
 import MeetingActions from "./components/MeetingActions";
 import {SalesWorkspace} from "./components/SalesWorkspace";
-import {Documents,Activity,Notifications,ExternalCalendars} from "./components/TeamTools";
+import {Documents,DriveDocuments,Activity,Notifications,ExternalCalendars} from "./components/TeamTools";
 import { localInput, scheduleItems, conflicts } from "./planning.mjs";
 document.title = branding.name;
 
@@ -1308,6 +1308,11 @@ function App() {
                   )
                 )}
               </div>
+              {["cabinets", "notes"].includes(modal.entity) && (
+                <DriveDocuments records={modal.entity === "notes" ? [modal.record] : [
+                  modal.record, ...data.notes.filter(note => note.cabinet_id === modal.record.id && modal.record.id),
+                ]} />
+              )}
               {modal.entity === "cabinets" && modal.record.id && (
                 <div className="related">
                   <h3>Historique de l’entreprise</h3>
